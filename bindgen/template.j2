@@ -1,0 +1,114 @@
+{# useful macros -#}
+
+{%- macro super(cls) -%}
+    {%- if cls.superclass == "Standard_Transient" -%} ,opencascade::handle<{{cls.name}}>
+    {%- elif cls.private_destructors|length>0 -%} ,std::unique_ptr<{{cls.name}}, Deleter<{{cls.name}}>>
+    {%- else -%} ,std::unique_ptr<{{cls.name}}>
+    {%- endif -%}
+{%- endmacro -%}
+
+{%- macro pointer(cls) -%}
+    {% if cls.rootclass %}, {{cls.superclass}} {% endif %}
+{%- endmacro -%}
+
+
+{%- macro argtypes(f) -%}
+    {% for arg in f.args %} {{ f.args[arg] }}{{ "," if not loop.last }}{% endfor %}
+{%- endmacro -%}
+
+{%- macro argnames(f) -%}
+    {% for arg in f.args %} py::arg("{{arg}}"){{ "," if not loop.last }}{% endfor %}
+{%- endmacro -%}
+
+{%- macro method_pointer(cls,f) -%}
+    ({{f.return_type}} (*)({% for a in f.args %} {{f.args[a]}} {{ "," if not loop.last }} {% endfor %})) &{{cls.name}}::{{f.name}}
+{%- endmacro -%}
+
+{%- macro function_pointer(f) -%}
+    ({{f.return_type}} (*)({% for a in f.args %} {{f.args[a]}} {{ "," if not loop.last }} {% endfor %})) &{{f.name}}
+{%- endmacro -%}
+
+{# end of macros macros -#}
+
+// pybind 11 related includes
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+
+namespace py = pybind11;
+
+// module includes
+{% for h in module.headers %}
+#include <{{ h.short_name }}>
+{% endfor %}
+
+// user-defined pre
+{% if include_pre %}
+#include {{ include_pre }}
+{% endif %}
+
+// Module definiiton
+PYBIND11_MODULE({{module.name}}, m) {
+    m.doc() = R"({{module.doc}})";
+    
+// dependencies
+{% for dep in module.dependencies %}
+    py::module::import({{project_name}}::{{dep}});
+{% endfor %}
+
+// enums
+{% for enum in module.enums %}
+    py.enum_<{{enum.name}}>(m, "{{enum.name}}",R"({{enum.comment}})")
+    {% for val in enum.values %}
+        .value("{{val}}",{{enum.name}}::{{val}}){{ ";" if loop.last }}
+    {% endfor %}
+{% endfor %}
+
+// classes
+{% for c in module.classes %}
+    py::class_<{{c.name}} {{pointer(c)}} {{super(c)}}>(m,"{{c.name}}",R"({{c.comment}})")
+    {% for con in c.constructors %}
+        .def(py::init< {{ argtypes(con) }} >(),{{argnames(con)}} )
+    {% endfor %}
+    {% for m in c.methods %}
+        .def("{{m.name}}",
+             {{ method_pointer(c,m) }},
+             R"({{m.comment}})",{{argnames(m)}})
+    {% endfor %}
+    {% for m in c.static_methods %}
+        .def_static("{{m.name}}",
+                    {{ method_pointer(c,m) }},
+                    R"({{m.comment}})",{{argnames(m)}})
+    {% endfor %}
+    {% for op in c.operators %}
+    {% if op.name in operator_dict %}
+        .def("{{operator_dict[op.name]}}",
+             {{ method_pointer(c,op) }},
+             py::is_operator(),
+             R"({{op.comment}})",{{argnames(op)}})
+    {% endif %}
+    {% endfor %};
+{% endfor %}
+
+// functions
+{% for f in module.functions %}
+    m.def("{{f.name}}", 
+          {{ function_pointer(f) }},
+          R"({{ f.comment }})",{{argnames(f)}});
+{% endfor %}
+
+// operators
+{% for op in module.operators %}
+{% if op.name in operator_dict %}
+    m.def("{{operator_dict[op.name]}}", 
+          {{ function_pointer(op) }},
+          py::is_operator(),
+          R"({{ op.comment }})",{{argnames(op)}});
+{% endif %}
+{% endfor %}
+
+}
+
+// user-defined post
+{% if include_post %}
+#include <{{ include_post }}>
+{% endif %}
