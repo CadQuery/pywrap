@@ -1,0 +1,35 @@
+name = "OCP"
+input_folder = "/home/adam/anaconda2/envs/cpp-py-bindgen/include/opencascade" 
+output_folder = "./generated"
+
+include = ["*.hxx",]
+
+module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
+
+[Operators]
+
+    "operator*" = "__mul__"
+    "operator*=" = "__imul__"
+    "operator/" = "__truediv__"
+    "operator/=" = "__itruediv__"
+    "operator+" = "__add__"
+    "operator+=" = "__iadd__"
+    "operator-" = "__sub__"
+    "operator-=" = "__isub__"
+    "operator^" = "__pow__"
+    "operator^=" = "__ipow__"
+
+[Extras]
+
+    include_pre = "OCP_specific.h"
+    include_post = "OCP_specific.h"
+
+[Modules]
+
+    [Modules.gp]
+    
+        include_header_pre = "gp_specific.h"
+        exclude_functions = ["some_function"]
+        exclude_classes = ["some_class"]
+        include_header_post = [""]
+        template_specializations = [""]
