@@ -52,12 +52,12 @@ PYBIND11_MODULE({{module.name}}, m) {
     
 // dependencies
 {% for dep in module.dependencies %}
-    py::module::import({{project_name}}::{{dep}});
+    py::module::import("{{project_name}}::{{dep}}");
 {% endfor %}
 
 // enums
 {% for enum in module.enums %}
-    py.enum_<{{enum.name}}>(m, "{{enum.name}}",R"({{enum.comment}})")
+    py::enum_<{{enum.name}}>(m, "{{enum.name}}",R"({{enum.comment}})")
     {% for val in enum.values %}
         .value("{{val}}",{{enum.name}}::{{val}}){{ ";" if loop.last }}
     {% endfor %}
