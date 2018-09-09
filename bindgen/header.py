@@ -1,7 +1,23 @@
+import sys
+
 from clang.cindex import CursorKind, AccessSpecifier
 from path import Path
 
 from .utils import get_index
+
+def parse_tu(path,args=['-x', 'c++', '-std=c++11', '-D__CODE_GENERATOR__',
+                        '-Iexternal/pybind11/include',]):
+    '''Run a translation unit thorugh clang
+    '''
+
+    args.append('-I{}'.format(Path(sys.prefix) / 'include/python{}.{}m'.format(sys.version_info.major, sys.version_info.minor)))
+    args.append('-I{}'.format(Path(sys.prefix) / 'lib/clang/6.0.1/include/'))
+    args.append('-I{}'.format(Path(sys.prefix) / 'include/opencascade'))
+    
+    ix = get_index()
+    tr_unit = ix.parse(path, args)
+    
+    return tr_unit
 
 def paths_approximately_equal(p1,p2):
     '''Approximate path equality. This is due to 
@@ -201,7 +217,11 @@ class MethodInfo(FunctionInfo):
     '''Container for method parsing results
     '''
 
-    pass
+    def __init__(self,cur):
+
+        super(MethodInfo,self).__init__(cur)
+
+        self.const = cur.is_const_method()
 
 class ConstructorInfo(FunctionInfo):
     '''Container for constructor parsing results
@@ -221,7 +241,7 @@ class ClassInfo(object):
     
     def __init__(self,cur):
         
-        self.name = cur.spelling
+        self.name = cur.type.spelling
         self.comment = cur.brief_comment
         
         self.constructors = [ConstructorInfo(el) for el in get_public_constructors(cur)]
@@ -270,8 +290,7 @@ class HeaderInfo(object):
     def parse(self, path,
               args=['-x', 'c++', '-std=c++11', '-D__CODE_GENERATOR__' ]):
 
-        ix = get_index()
-        tr_unit = ix.parse(path, args)
+        tr_unit = parse_tu(path, args)
 
         self.name = path
         self.short_name = path.splitpath()[-1]
