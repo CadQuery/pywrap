@@ -2,7 +2,10 @@ import click
 import logzero
 import pickle
 
+from path import Path
+
 from . import read_settings, run, parse_modules, render
+from .header import parse_tu
 
 
 @click.group()
@@ -35,6 +38,25 @@ def generate(configuration,input):
         parsing_result = pickle.load(f)
         
     render(settings,parsing_result)
+
+@main.command()
+@click.argument('folder')
+@click.option('-v','--verbose',is_flag=True)
+def validate(folder,verbose):
+    
+    p = Path(folder)
+    
+    for f in p.files('*.cpp'):
+        tu = parse_tu(f)
+        if len([d for d in tu.diagnostics if d.severity >2]):
+            logzero.logger.error('Validation {}: NOK'.format(f))
+            if verbose:
+                for d in tu.diagnostics:
+                    logzero.logger.warning(d)
+        else:
+            logzero.logger.info('Validation {}: OK'.format(f))
+        
+        
 
 @main.command()
 @click.argument('configuration')
