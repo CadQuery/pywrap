@@ -21,7 +21,11 @@
 {%- endmacro -%}
 
 {%- macro method_pointer(cls,f) -%}
-    ({{f.return_type}} ({{cls.name}}::*)({% for a in f.args %} {{f.args[a]}} {{ "," if not loop.last }} {% endfor %})) &{{cls.name}}::{{f.name}}
+    ({{f.return_type}} ({{cls.name}}::*)({% for a in f.args %} {{f.args[a]}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}::{{f.name}}
+{%- endmacro -%}
+
+{%- macro static_method_pointer(cls,f) -%}
+    ({{f.return_type}} (*)({% for a in f.args %} {{f.args[a]}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}::{{f.name}}
 {%- endmacro -%}
 
 {%- macro function_pointer(f) -%}
@@ -72,11 +76,11 @@ PYBIND11_MODULE({{module.name}}, m) {
     {% for m in c.methods %}
         .def("{{m.name}}",
              {{ method_pointer(c,m) }},
-             R"({{m.comment}})"{{argnames(m)}})
+             R"({{m.comment}})" {{argnames(m)}})
     {% endfor %}
     {% for m in c.static_methods %}
         .def_static("{{m.name}}",
-                    {{ method_pointer(c,m) }},
+                    {{ static_method_pointer(c,m) }},
                     R"({{m.comment}})" {{argnames(m)}})
     {% endfor %}
     {% for op in c.operators %}
@@ -84,7 +88,7 @@ PYBIND11_MODULE({{module.name}}, m) {
         .def("{{operator_dict[op.name]}}",
              {{ method_pointer(c,op) }},
              py::is_operator(),
-             R"({{op.comment}})",{{argnames(op)}})
+             R"({{op.comment}})" {{argnames(op)}})
     {% endif %}
     {% endfor %};
 {% endfor %}
@@ -93,7 +97,7 @@ PYBIND11_MODULE({{module.name}}, m) {
 {% for f in module.functions %}
     m.def("{{f.name}}", 
           {{ function_pointer(f) }},
-          R"({{ f.comment }})",{{argnames(f)}});
+          R"({{ f.comment }})" {{argnames(f)}});
 {% endfor %}
 
 // operators
@@ -102,7 +106,7 @@ PYBIND11_MODULE({{module.name}}, m) {
     m.def("{{operator_dict[op.name]}}", 
           {{ function_pointer(op) }},
           py::is_operator(),
-          R"({{ op.comment }})",{{argnames(op)}});
+          R"({{ op.comment }})" {{argnames(op)}});
 {% endif %}
 {% endfor %}
 
