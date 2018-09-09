@@ -1,5 +1,9 @@
 {# useful macros -#}
 
+{%- macro cls_name(cls) -%}
+    {{ cls.name|replace('<', '_')|replace('>', '') }}
+{%- endmacro -%}
+
 {%- macro super(cls) -%}
     {%- if cls.superclass == "Standard_Transient" -%} ,opencascade::handle<{{cls.name}}>
     {%- elif cls.private_destructors|length>0 -%} ,std::unique_ptr<{{cls.name}}, Deleter<{{cls.name}}>>
@@ -69,7 +73,7 @@ PYBIND11_MODULE({{module.name}}, m) {
 
 // classes
 {% for c in module.classes %}
-    py::class_<{{c.name}} {{pointer(c)}} {{super(c)}}>(m,"{{c.name}}",R"({{c.comment}})")
+    py::class_<{{c.name}} {{pointer(c)}} {{super(c)}}>(m,"{{cls_name(c)}}",R"({{c.comment}})")
     {% for con in c.constructors %}
         .def(py::init< {{ argtypes(con) }} >() {{argnames(con)}} )
     {% endfor %}
