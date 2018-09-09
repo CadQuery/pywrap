@@ -17,11 +17,11 @@
 {%- endmacro -%}
 
 {%- macro argnames(f) -%}
-    {% for arg in f.args %} py::arg("{{arg}}"){{ "," if not loop.last }}{% endfor %}
+    {% for arg in f.args %} {{ "," if loop.first }} py::arg("{{arg}}"){{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
 
 {%- macro method_pointer(cls,f) -%}
-    ({{f.return_type}} (*)({% for a in f.args %} {{f.args[a]}} {{ "," if not loop.last }} {% endfor %})) &{{cls.name}}::{{f.name}}
+    ({{f.return_type}} ({{cls.name}}::*)({% for a in f.args %} {{f.args[a]}} {{ "," if not loop.last }} {% endfor %})) &{{cls.name}}::{{f.name}}
 {%- endmacro -%}
 
 {%- macro function_pointer(f) -%}
@@ -67,17 +67,17 @@ PYBIND11_MODULE({{module.name}}, m) {
 {% for c in module.classes %}
     py::class_<{{c.name}} {{pointer(c)}} {{super(c)}}>(m,"{{c.name}}",R"({{c.comment}})")
     {% for con in c.constructors %}
-        .def(py::init< {{ argtypes(con) }} >(),{{argnames(con)}} )
+        .def(py::init< {{ argtypes(con) }} >() {{argnames(con)}} )
     {% endfor %}
     {% for m in c.methods %}
         .def("{{m.name}}",
              {{ method_pointer(c,m) }},
-             R"({{m.comment}})",{{argnames(m)}})
+             R"({{m.comment}})"{{argnames(m)}})
     {% endfor %}
     {% for m in c.static_methods %}
         .def_static("{{m.name}}",
                     {{ method_pointer(c,m) }},
-                    R"({{m.comment}})",{{argnames(m)}})
+                    R"({{m.comment}})" {{argnames(m)}})
     {% endfor %}
     {% for op in c.operators %}
     {% if op.name in operator_dict %}
