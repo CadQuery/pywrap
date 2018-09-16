@@ -1,4 +1,6 @@
 import imp
+from functools import reduce
+from operator import add
 
 import pytoml as toml
 
@@ -32,9 +34,9 @@ def parse_modules(settings,
                   settings_per_module):
 
     path = Path(settings['input_folder'])
-    file_pat = settings['include'][0]
+    file_pats = settings['include']
     
-    all_files = path.files(file_pat)
+    all_files = reduce(add,(path.files(pat) for pat in file_pats))
     module_names = sorted(set((module_mapping(p) for p in all_files)))
     
     modules = []
