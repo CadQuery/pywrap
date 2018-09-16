@@ -6,7 +6,7 @@ from path import Path
 from .utils import get_index
 
 def parse_tu(path,args=['-x', 'c++', '-std=c++11', '-D__CODE_GENERATOR__',
-                        '-Iexternal/pybind11/include',]):
+                        '-Iexternal/pybind11/include','-Wdeprecated-declarations']):
     '''Run a translation unit thorugh clang
     '''
 
@@ -55,11 +55,23 @@ def get_functions(tu):
 
     return (f for f in get_symbols(tu,CursorKind.FUNCTION_DECL) if 'operator' not in f.spelling)
 
+def get_function_templates(tu):
+    '''Function templates defined locally (i.e. without includes)
+    '''
+    
+    return (f for f in get_symbols(tu,CursorKind.FUNCTION_TEMPLATE) if 'operator' not in f.spelling)
+
 def get_operators(tu):
     '''Functions defined locally (i.e. without includes)
     '''
 
     return (f for f in get_symbols(tu,CursorKind.FUNCTION_DECL) if 'operator' in f.spelling)
+
+def get_operator_templates(tu):
+    '''Operator templates defined locally (i.e. without includes)
+    '''
+    
+    return (f for f in get_symbols(tu,CursorKind.FUNCTION_TEMPLATE) if 'operator' in f.spelling)
 
 def get_enums(tu):
     '''Enums defined locally (i.e. without includes)
@@ -75,11 +87,23 @@ def get_enum_values(cur):
         if child.kind is CursorKind.ENUM_CONSTANT_DECL:
                 yield child
 
+def get_typedefs(tu):
+    '''Typedefs defined locally (i.e. without includes)
+    '''
+    
+    return get_symbols(tu,CursorKind.TYPEDEF_DECL)   
+
 def get_classes(tu):
     '''Classes defined locally (i.e. without includes)
     '''
 
     return  get_symbols(tu,CursorKind.CLASS_DECL)
+
+def get_class_templates(tu):
+    '''Class templates defined locally (i.e. without includes)
+    '''
+
+    return  get_symbols(tu,CursorKind.CLASS_TEMPLATE)
 
 def get_x(cls,kind):
     '''Get children entities of the specified type excluding forward declataions
@@ -96,6 +120,13 @@ def get_xx(cls,kind,access):
     for child in cls.get_children():
         if child.kind is kind and child.access_specifier is access:
                 yield child
+                
+def get_template_type_params(cls):
+    '''Get all template type params
+    '''
+    
+    for t in get_x(cls,CursorKind.TEMPLATE_TYPE_PARAMETER):
+        yield t
     
 def get_base_class(c):
     '''Get all class-baseclass pairs
@@ -230,13 +261,13 @@ class ConstructorInfo(FunctionInfo):
     pass
 
 class DestructorInfo(FunctionInfo):
-    '''Container for constructor parsing results
+    '''Container for destructor parsing results
     '''
     
     pass
 
 class ClassInfo(object):
-    '''Container for constructor class results
+    '''Container for class parsing results
     '''
     
     def __init__(self,cur):
@@ -258,7 +289,29 @@ class ClassInfo(object):
         self.ptr = None
         self.superclass = None
         self.rootclass = None
+        
+class ClassTemplateInfo(ClassInfo):
+    
+    def __init__(self,cur):
+        
+         super(ClassTemplateInfo,self).__init__(cur)
+         self.name = cur.spelling
+         self.type_params = [el.spelling for el in get_template_type_params(cur)]
 
+class TypedefInfo(BaseInfo):
+    
+    def __init__(self,cur):
+
+        super(TypedefInfo,self).__init__(cur)
+        
+        t = cur.underlying_typedef_type
+        
+        self.type = t.spelling
+        self.pod = t.is_pod()
+        
+        if not self.pod:
+            self.template_base = [ch.spelling for ch in cur.get_children() if ch.kind == CursorKind.TEMPLATE_REF]
+            self.template_args = [ch.spelling for ch in cur.get_children() if ch.kind == CursorKind.TYPE_REF]
 
 class HeaderInfo(object):
     '''Container for header parsing results
@@ -272,6 +325,7 @@ class HeaderInfo(object):
         self.enums = []
         self.methods = []
         self.inheritance = {}
+        self.typedefs = {}
         
     def resolve_inheritance(self,cls):
         
@@ -299,7 +353,9 @@ class HeaderInfo(object):
         self.functions = [FunctionInfo(el) for el in get_functions(tr_unit)]
         self.operators = [FunctionInfo(el) for el in get_operators(tr_unit)]
         self.classes = {el.displayname:ClassInfo(el) for el in get_classes(tr_unit)}
+        self.class_templates = {el.displayname:ClassTemplateInfo(el) for el in get_class_templates(tr_unit)}
         self.inheritance = {k:v for k,v in get_inheritance_relations(tr_unit)}
+        self.typedefs = [TypedefInfo(el) for el in get_typedefs(tr_unit)]
         
         #handle freely defined methods
         methods = [el for el in get_free_method_definitions(tr_unit)]
