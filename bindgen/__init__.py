@@ -1,9 +1,9 @@
-import imp
 from functools import reduce
 from operator import add
 
-import pytoml as toml
+import toml as toml
 
+from joblib import Parallel, delayed
 from path import Path
 from tqdm import tqdm
 from jinja2 import Environment, FileSystemLoader
@@ -40,11 +40,17 @@ def parse_modules(settings,
     module_names = sorted(set((module_mapping(p) for p in all_files)))
     
     modules = []
-    for n in tqdm(module_names):
-        tqdm.write('Processing module {}'.format(n))
-        modules.append(ModuleInfo(n,path,path.files(n+'_*.hxx')))
-        
-    return modules
+    class_dict = {}
+    
+    def _process_module(n):
+        return ModuleInfo(n,path,path.files(n+'_*.hxx'))
+    
+    modules = Parallel(prefer='processes',n_jobs=-2)\
+        (delayed(_process_module)(n) for n in tqdm(module_names))
+    
+    for m in modules: class_dict.update(m.class_dict)
+    
+    return modules,class_dict
 
 def render(settings,modules):
     
@@ -52,6 +58,8 @@ def render(settings,modules):
     output_path = Path(settings['output_folder'])
     operator_dict = settings['Operators']
 
+    pre = settings['Extras']['include_pre']
+    post = settings['Extras']['include_post']
         
     jinja_env = Environment(loader=FileSystemLoader(Path(__file__).dirname()),
                             trim_blocks=True,
@@ -65,7 +73,9 @@ def render(settings,modules):
             with open('{}.cpp'.format(m.name),'w') as f:
                 f.write(template.render({'module' : m,
                                          'project_name' : name,
-                                         'operator_dict' : operator_dict}))
+                                         'operator_dict' : operator_dict,
+                                         'include_pre' : pre,
+                                         'include_post' : post}))
 
 def run(settings,
         module_mapping,
