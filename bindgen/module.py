@@ -11,7 +11,9 @@ class ModuleInfo(object):
         
         return Path(x).splitpath()[-1].split('.')[-2].split('_')[0]
     
-    def __init__(self,name,prefix,paths):
+    def __init__(self,name,prefix,paths,level=logzero.logging.INFO):
+        
+        logzero.logger.setLevel(level)
         
         self.prefix = prefix
         self.name = name
@@ -38,6 +40,7 @@ class ModuleInfo(object):
         self.dependencies = set(dependencies) - set((name,))
         
         self.classes = []
+        self.class_dict = {}
         self.enums = []
         self.functions = []
         self.operators = []
@@ -46,6 +49,7 @@ class ModuleInfo(object):
             self.enums.extend(h.enums)
             self.functions.extend(h.functions)
             self.operators.extend(h.operators)
+            self.class_dict.update(h.class_dict)
             
 if __name__ == '__main__':
     

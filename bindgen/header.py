@@ -39,6 +39,15 @@ def get_symbols(tu,kind):
             else:
                 yield child #legitimate
                 
+def get_forward_declarations(tu):
+    '''Get all symbols that are forward declared'''
+    tu_path = Path(tu.spelling)
+
+    for child in tu.cursor.get_children():
+        if paths_approximately_equal(Path(child.location.file.name),tu_path):
+            if child.get_definition() is None:
+                yield child 
+                
 def get_all_symbols(tu,kind):
     '''All defined symbols of given kind
     '''
@@ -312,6 +321,10 @@ class TypedefInfo(BaseInfo):
         if not self.pod:
             self.template_base = [ch.spelling for ch in cur.get_children() if ch.kind == CursorKind.TEMPLATE_REF]
             self.template_args = [ch.spelling for ch in cur.get_children() if ch.kind == CursorKind.TYPE_REF]
+            
+class ForwardInfo(BaseInfo):
+    
+    pass
 
 class HeaderInfo(object):
     '''Container for header parsing results
@@ -326,6 +339,7 @@ class HeaderInfo(object):
         self.methods = []
         self.inheritance = {}
         self.typedefs = {}
+        self.forwards = []
         
     def resolve_inheritance(self,cls):
         
@@ -353,9 +367,11 @@ class HeaderInfo(object):
         self.functions = [FunctionInfo(el) for el in get_functions(tr_unit)]
         self.operators = [FunctionInfo(el) for el in get_operators(tr_unit)]
         self.classes = {el.displayname:ClassInfo(el) for el in get_classes(tr_unit)}
+        self.class_dict = {k : self.name for k in self.classes}
         self.class_templates = {el.displayname:ClassTemplateInfo(el) for el in get_class_templates(tr_unit)}
         self.inheritance = {k:v for k,v in get_inheritance_relations(tr_unit)}
         self.typedefs = [TypedefInfo(el) for el in get_typedefs(tr_unit)]
+        self.forwards = [ForwardInfo(el) for el in get_forward_declarations(tr_unit)]
         
         #handle freely defined methods
         methods = [el for el in get_free_method_definitions(tr_unit)]
