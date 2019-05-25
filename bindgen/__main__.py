@@ -10,10 +10,13 @@ from .header import parse_tu
 
 @click.group()
 @click.option('-v','--verbose',is_flag=True)
-def main(verbose):
+@click.pass_context
+def main(ctx,verbose):
     
     if not verbose:
         logzero.logger.setLevel(logzero.logging.INFO)
+    
+    ctx.obj = verbose
 
 @main.command()
 @click.argument('configuration')
@@ -41,8 +44,8 @@ def generate(configuration,input):
 
 @main.command()
 @click.argument('folder')
-@click.option('-v','--verbose',is_flag=True)
-def validate(folder,verbose):
+@click.pass_obj
+def validate(verbose,folder):
     
     p = Path(folder)
     
