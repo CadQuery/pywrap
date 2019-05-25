@@ -22,7 +22,7 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 [Extras]
 
     include_pre = "OCP_specific.h"
-    include_post = "OCP_specific.h"
+    include_post = false
 
 [Modules]
 
