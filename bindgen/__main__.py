@@ -4,7 +4,7 @@ import pickle
 
 from path import Path
 
-from . import read_settings, run, parse_modules, render
+from . import read_settings, run, parse_modules, render, validate_result
 from .header import parse_tu
 
 
@@ -36,30 +36,27 @@ def parse(configuration,output):
 def generate(configuration,input):
     
     settings,module_mapping,modules = read_settings(configuration)
+    out = Path(settings['output_folder'])
+    out.rmtree_p()
     
     with open(input,'rb') as f:
-        parsing_result = pickle.load(f)
+        modules,class_dict = pickle.load(f)
         
-    render(settings,parsing_result)
+    render(settings,modules,class_dict)
+    
+    pre = settings['Extras']['include_pre']
+    post = settings['Extras']['include_pre']
+    
+    if pre: Path(pre).copy(out)
+    if post: Path(post).copy(out)
 
 @main.command()
 @click.argument('folder')
 @click.pass_obj
 def validate(verbose,folder):
     
-    p = Path(folder)
-    
-    for f in p.files('*.cpp'):
-        tu = parse_tu(f)
-        if len([d for d in tu.diagnostics if d.severity >2]):
-            logzero.logger.error('Validation {}: NOK'.format(f))
-            if verbose:
-                for d in tu.diagnostics:
-                    logzero.logger.warning(d)
-        else:
-            logzero.logger.info('Validation {}: OK'.format(f))
-        
-        
+    validate_result(verbose,folder)
+      
 
 @main.command()
 @click.argument('configuration')

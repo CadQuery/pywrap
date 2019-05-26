@@ -1,6 +1,8 @@
 from functools import reduce
 from operator import add
 
+
+import logzero
 import toml as toml
 
 from joblib import Parallel, delayed
@@ -9,6 +11,7 @@ from tqdm import tqdm
 from jinja2 import Environment, FileSystemLoader
 
 from .module import ModuleInfo
+from .header import parse_tu
 
 def read_settings(p):
     
@@ -43,7 +46,7 @@ def parse_modules(settings,
     class_dict = {}
     
     def _process_module(n):
-        return ModuleInfo(n,path,path.files(n+'_*.hxx'))
+        return ModuleInfo(n,path,path.files(n+'*.hxx'))
     
     modules = Parallel(prefer='processes',n_jobs=-2)\
         (delayed(_process_module)(n) for n in tqdm(module_names))
@@ -52,7 +55,7 @@ def parse_modules(settings,
     
     return modules,class_dict
 
-def render(settings,modules):
+def render(settings,modules,class_dict):
     
     name = settings['name']
     output_path = Path(settings['output_folder'])
@@ -72,10 +75,29 @@ def render(settings,modules):
             tqdm.write('Processing module {}'.format(m.name))
             with open('{}.cpp'.format(m.name),'w') as f:
                 f.write(template.render({'module' : m,
+                                         'class_dict' : class_dict,
                                          'project_name' : name,
                                          'operator_dict' : operator_dict,
                                          'include_pre' : pre,
                                          'include_post' : post}))
+    
+def validate_result(verbose,folder):
+    
+    def _validate(f):
+        
+        tu = parse_tu(f)
+        if len([d for d in tu.diagnostics if d.severity >2]):
+            logzero.logger.error('Validation {}: NOK'.format(f))
+            if verbose:
+                for d in tu.diagnostics:
+                    logzero.logger.warning(d)
+        else:
+            logzero.logger.info('Validation {}: OK'.format(f))
+            
+    result = Parallel(prefer='processes',n_jobs=-2)\
+        (delayed(_validate)(n) for n in Path(folder).files('*.cpp'))
+        
+    for r in result: pass
 
 def run(settings,
         module_mapping,
