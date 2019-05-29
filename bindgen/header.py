@@ -1,12 +1,16 @@
 import sys
 
-from clang.cindex import CursorKind, AccessSpecifier
+import logzero
+
+from clang.cindex import CursorKind, AccessSpecifier, TranslationUnit as TU
 from path import Path
 
 from .utils import get_index
 
-def parse_tu(path,args=['-x', 'c++', '-std=c++11', '-D__CODE_GENERATOR__',
-                        '-Iexternal/pybind11/include','-Wdeprecated-declarations']):
+def parse_tu(path,
+             args=['-x', 'c++', '-std=c++11', '-D__CODE_GENERATOR__',
+                   '-Iexternal/pybind11/include','-Wno-deprecated-declarations'],
+            pre_includes = '#include <Standard_Handle.hxx>'):
     '''Run a translation unit thorugh clang
     '''
 
@@ -15,7 +19,20 @@ def parse_tu(path,args=['-x', 'c++', '-std=c++11', '-D__CODE_GENERATOR__',
     args.append('-I{}'.format(Path(sys.prefix) / 'include/opencascade'))
     
     ix = get_index()
-    tr_unit = ix.parse(path, args)
+    
+    with open(path) as f:
+        src = f.read()
+    
+    tr_unit = ix.parse('dummy.cxx',
+                       args,
+                       unsaved_files=[('dummy.cxx',f'{pre_includes}\n{src}')],
+                       options=TU.PARSE_INCOMPLETE | TU.PARSE_SKIP_FUNCTION_BODIES)
+    
+    diag = list(tr_unit.diagnostics)
+    if diag:
+        logzero.logger.warning(path)
+        for d in diag: logzero.logger.warning(d)
+        
     
     return tr_unit
 
@@ -138,13 +155,15 @@ def get_template_type_params(cls):
         yield t
     
 def get_base_class(c):
-    '''Get all class-baseclass pairs
+    '''Get all class-baseclass pairs with public inheritance
     '''
-    #import pdb; pdb.set_trace()
+    
     if c.get_definition():
-        rv = list(get_x(c.get_definition(),CursorKind.CXX_BASE_SPECIFIER))
+        rv = [el for el in get_x(c.get_definition(),CursorKind.CXX_BASE_SPECIFIER) \
+              if el.access_specifier is AccessSpecifier.PUBLIC]
     else:
-        rv = list(get_x(c,CursorKind.CXX_BASE_SPECIFIER))
+        rv = [el for el in get_x(c,CursorKind.CXX_BASE_SPECIFIER) \
+              if el.access_specifier is AccessSpecifier.PUBLIC]
         
     if len(rv) == 0:
         return None
@@ -212,12 +231,21 @@ def get_private_destructors(cls):
 
     for child in get_xx(cls,CursorKind.DESTRUCTOR,AccessSpecifier.PRIVATE):
         yield child
+        
+def get_protected_destructors(cls):
+    '''Private destructors of a given class
+    '''
+
+    for child in get_xx(cls,CursorKind.DESTRUCTOR,AccessSpecifier.PROTECTED):
+        yield child
 
 def get_free_method_definitions(tu):
     '''Free method definitions
     '''
     
-    return get_symbols(tu,CursorKind.CXX_METHOD)
+    return (el for el in get_symbols(tu,CursorKind.CXX_METHOD) \
+            if not el.is_static_method() \
+            and el.access_specifier==AccessSpecifier.PUBLIC)
 
 class BaseInfo(object):
     '''Base class for the info objects
@@ -239,6 +267,14 @@ class EnumInfo(BaseInfo):
         
         self.comment = cur.brief_comment
         self.values = [el.spelling for el in get_enum_values(cur)]
+        self.anonymous = False
+        
+        if self.name == '':
+            name = cur.type.spelling
+            if 'anonymous' in name:
+                self.anonymous = True
+            else:
+                self.name = name
 
 class FunctionInfo(BaseInfo):
     '''Container for function parsing results
@@ -283,6 +319,7 @@ class ClassInfo(object):
         
         self.name = cur.type.spelling
         self.comment = cur.brief_comment
+        self.abstract = cur.is_abstract_record()
         
         self.constructors = [ConstructorInfo(el) for el in get_public_constructors(cur)]
         
@@ -293,7 +330,8 @@ class ClassInfo(object):
         self.static_operators = [MethodInfo(el) for el in get_public_static_operators(cur)]
         
         self.destructors = [DestructorInfo(el) for el in get_public_destructors(cur)]
-        self.private_destructors = [DestructorInfo(el) for el in get_private_destructors(cur)]
+        self.nonpublic_destructors = [DestructorInfo(el) for el in get_private_destructors(cur)]\
+            + [DestructorInfo(el) for el in get_protected_destructors(cur)]
         
         self.ptr = None
         self.superclass = None
@@ -385,7 +423,8 @@ class HeaderInfo(object):
         #resolve inheritance relations
         for c in self.classes.values():
             self.resolve_inheritance(c)
-                
+            
+        return tr_unit
 
 def process_header(path):
     '''Main function from this module
