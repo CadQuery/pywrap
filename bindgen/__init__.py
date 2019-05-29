@@ -32,7 +32,9 @@ def read_settings(p):
     return settings,module_mapping,modules
 
 
-def parse_modules(settings,
+def parse_modules(verbose,
+                  n_jobs,
+                  settings,
                   module_mapping,
                   settings_per_module):
 
@@ -46,11 +48,14 @@ def parse_modules(settings,
     class_dict = {}
     
     def _process_module(n):
+        if not verbose:
+            logzero.logger.setLevel(logzero.logging.INFO)
         return ModuleInfo(n,path,path.files(n+'*.hxx'))
     
-    modules = Parallel(prefer='processes',n_jobs=-2)\
+    modules = Parallel(prefer='processes',n_jobs=n_jobs)\
         (delayed(_process_module)(n) for n in tqdm(module_names))
-    
+    '''
+    modules=[ModuleInfo(n,path,path.files(n+'*.hxx')) for n in tqdm(module_names)]'''
     for m in modules: class_dict.update(m.class_dict)
     
     return modules,class_dict
@@ -81,11 +86,11 @@ def render(settings,modules,class_dict):
                                          'include_pre' : pre,
                                          'include_post' : post}))
     
-def validate_result(verbose,folder):
+def validate_result(verbose,n_jobs,folder):
     
     def _validate(f):
         
-        tu = parse_tu(f)
+        tu = parse_tu(f,pre_includes='')
         if len([d for d in tu.diagnostics if d.severity >2]):
             logzero.logger.error('Validation {}: NOK'.format(f))
             if verbose:
@@ -94,7 +99,7 @@ def validate_result(verbose,folder):
         else:
             logzero.logger.info('Validation {}: OK'.format(f))
             
-    result = Parallel(prefer='processes',n_jobs=-2)\
+    result = Parallel(prefer='processes',n_jobs=n_jobs)\
         (delayed(_validate)(n) for n in Path(folder).files('*.cpp'))
         
     for r in result: pass
