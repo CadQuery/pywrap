@@ -1,5 +1,5 @@
 name = "OCP"
-input_folder = "/home/adam/anaconda2/envs/cpp-py-bindgen/include/opencascade" 
+input_folder = "/home/adam/anaconda2/envs/cqgui/include/opencascade"
 output_folder = "./generated"
 
 include = ["*.hxx",]
@@ -21,7 +21,7 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 
 [Extras]
 
-    include_pre = "OCP_specific.h"
+    include_pre = "OCP_specific.inc"
     include_post = false
 
 [Modules]
