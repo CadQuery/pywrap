@@ -4,14 +4,14 @@
     {{ cls.name|replace('<', '_')|replace('>', '') }}
 {%- endmacro -%}
 
-{%- macro super(cls) -%}
+{%- macro pointer(cls) -%}
     {%- if cls.superclass == "Standard_Transient" -%} ,opencascade::handle<{{cls.name}}>
-    {%- elif cls.private_destructors|length>0 -%} ,std::unique_ptr<{{cls.name}}, Deleter<{{cls.name}}>>
+    {%- elif cls.nonpublic_destructors|length>0 -%} ,std::unique_ptr<{{cls.name}}, py::nodelete>
     {%- else -%} ,std::unique_ptr<{{cls.name}}>
     {%- endif -%}
 {%- endmacro -%}
 
-{%- macro pointer(cls) -%}
+{%- macro super(cls) -%}
     {% if cls.rootclass %}, {{cls.superclass}} {% endif %}
 {%- endmacro -%}
 
@@ -33,7 +33,7 @@
 {%- endmacro -%}
 
 {%- macro function_pointer(f) -%}
-    ({{f.return_type}} (*)({% for a in f.args %} {{f.args[a]}} {{ "," if not loop.last }} {% endfor %})) &{{f.name}}
+    ({{f.return_type}} (*)({% for a in f.args %} {{f.args[a]}} {{ "," if not loop.last }} {% endfor %}))  static_cast<{{f.return_type}} (*)({% for a in f.args %} {{f.args[a]}} {{ "," if not loop.last }} {% endfor %})>(&{{f.name}})
 {%- endmacro -%}
 
 {# end of macros macros -#}
@@ -44,6 +44,14 @@
 
 namespace py = pybind11;
 
+// Standard Handle
+#include <Standard_Handle.hxx>
+
+// includes to resolve forward declarations
+{% for h in module.headers %}{% for f in h.forwards %}{% if f.name in class_dict %}
+#include <{{ class_dict[f.name].splitpath()[-1] }}>
+{% endif %}{% endfor %}{% endfor %}
+
 // module includes
 {% for h in module.headers %}
 #include <{{ h.short_name }}>
@@ -51,12 +59,12 @@ namespace py = pybind11;
 
 // user-defined pre
 {% if include_pre %}
-#include {{ include_pre }}
+#include "{{ include_pre }}"
 {% endif %}
 
 // Module definiiton
 PYBIND11_MODULE({{module.name}}, m) {
-    m.doc() = R"({{module.doc}})";
+    m.doc() = R"#({{module.doc}})#";
     
 // dependencies
 {% for dep in module.dependencies %}
@@ -65,43 +73,52 @@ PYBIND11_MODULE({{module.name}}, m) {
 
 // enums
 {% for enum in module.enums %}
-    py::enum_<{{enum.name}}>(m, "{{enum.name}}",R"({{enum.comment}})")
+{% if enum.anonymous %}
     {% for val in enum.values %}
-        .value("{{val}}",{{enum.name}}::{{val}}){{ ";" if loop.last }}
+    m.attr("{{ val }}") = py::cast(int({{ val }}));
     {% endfor %}
+{% else %}
+    py::enum_<{{enum.name}}>(m, "{{enum.name}}",R"#({{enum.comment}})#")
+    {% for val in enum.values %}
+        .value("{{val}}",{{enum.name}}::{{val}}){{ ".export_values();" if loop.last }}
+    {% endfor %}
+{% endif %}
 {% endfor %}
 
 // classes
-{% for c in module.classes %}
-    py::class_<{{c.name}} {{pointer(c)}} {{super(c)}}>(m,"{{cls_name(c)}}",R"({{c.comment}})")
+{% for c in module.classes %}{% if not c.abstract %}
+    py::class_<{{c.name}} {{pointer(c)}} {{super(c)}}>(m,"{{cls_name(c)}}",R"#({{c.comment}})#")
     {% for con in c.constructors %}
         .def(py::init< {{ argtypes(con) }} >() {{argnames(con)}} )
     {% endfor %}
     {% for m in c.methods %}
         .def("{{m.name}}",
              {{ method_pointer(c,m) }},
-             R"({{m.comment}})" {{argnames(m)}})
+             R"#({{m.comment}})#" {{argnames(m)}})
     {% endfor %}
     {% for m in c.static_methods %}
         .def_static("{{m.name}}",
                     {{ static_method_pointer(c,m) }},
-                    R"({{m.comment}})" {{argnames(m)}})
+                    R"#({{m.comment}})#" {{argnames(m)}})
     {% endfor %}
     {% for op in c.operators %}
     {% if op.name in operator_dict %}
         .def("{{operator_dict[op.name]}}",
              {{ method_pointer(c,op) }},
              py::is_operator(),
-             R"({{op.comment}})" {{argnames(op)}})
+             R"#({{op.comment}})#" {{argnames(op)}})
     {% endif %}
     {% endfor %};
-{% endfor %}
+{% endif %}{% endfor %}
 
 // functions
-{% for f in module.functions %}
+{% for h in module.headers %}
+// {{h.name}}
+{% for f in h.functions %}
     m.def("{{f.name}}", 
           {{ function_pointer(f) }},
-          R"({{ f.comment }})" {{argnames(f)}});
+          R"#({{ f.comment }})#" {{argnames(f)}});
+{% endfor %}
 {% endfor %}
 
 // operators
@@ -110,7 +127,7 @@ PYBIND11_MODULE({{module.name}}, m) {
     m.def("{{operator_dict[op.name]}}", 
           {{ function_pointer(op) }},
           py::is_operator(),
-          R"({{ op.comment }})" {{argnames(op)}});
+          R"#({{ op.comment }})#" {{argnames(op)}});
 {% endif %}
 {% endfor %}
 
@@ -118,5 +135,5 @@ PYBIND11_MODULE({{module.name}}, m) {
 
 // user-defined post
 {% if include_post %}
-#include <{{ include_post }}>
+#include "{{ include_post }}"
 {% endif %}
