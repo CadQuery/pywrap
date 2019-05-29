@@ -1,5 +1,5 @@
 from .header import process_header
-import logzero
+from logzero import logger
 
 from path import Path
 
@@ -11,26 +11,24 @@ class ModuleInfo(object):
         
         return Path(x).splitpath()[-1].split('.')[-2].split('_')[0]
     
-    def __init__(self,name,prefix,paths,level=logzero.logging.INFO):
-        
-        logzero.logger.setLevel(level)
+    def __init__(self,name,prefix,paths):
         
         self.prefix = prefix
         self.name = name
         self.headers = []
 
-        logzero.logger.debug('Processing headers')        
+        logger.debug('Processing headers')        
         
         for p in paths:
-            logzero.logger.debug(p)
+            logger.debug(p)
             self.headers.append(process_header(p))
         
         dependencies = []
         
-        logzero.logger.debug('Processing dependancies')
+        logger.debug('Processing dependancies')
         
         for h in self.headers:            
-            logzero.logger.debug(h.name)
+            logger.debug(h.name)
             dependencies += \
             [self.get_module_name(inc) for inc in h.dependencies if \
              inc not in paths \
