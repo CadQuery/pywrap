@@ -1,0 +1,35 @@
+name = "OCP"
+input_folder = "/home/adam/anaconda2/envs/cqgui/include/opencascade"
+output_folder = "./generated_gp"
+
+include = ["gp*.hxx"]
+
+module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
+
+[Operators]
+
+    "operator*" = ["__mul__","__rmul__"]
+    "operator*=" = ["__imul__"]
+    "operator/" = ["__truediv__"]
+    "operator/=" = ["__itruediv__"]
+    "operator+" = ["__add__"]
+    "operator+=" = ["__iadd__"]
+    "operator-" = ["__sub__"]
+    "operator-=" = ["__isub__"]
+    "operator^" = ["__pow__"]
+    "operator^=" = ["__ipow__"]
+
+[Extras]
+
+    include_pre = "OCP_specific.inc"
+    include_post = false
+
+[Modules]
+
+    [Modules.gp]
+    
+        include_header_pre = false
+        exclude_functions = [,]
+        exclude_classes = ["gp_VectorWithNullMagnitude"]
+        include_header_post = false
+        template_specializations = [,]
