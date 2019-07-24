@@ -103,10 +103,12 @@ PYBIND11_MODULE({{module.name}}, m) {
     {% endfor %}
     {% for op in c.operators %}
     {% if op.name in operator_dict %}
-        .def("{{operator_dict[op.name]}}",
+    {% for py_op in operator_dict[op.name] %}
+        .def("{{py_op}}",
              {{ method_pointer(c,op) }},
              py::is_operator(),
              R"#({{op.comment}})#" {{argnames(op)}})
+    {% endfor %}
     {% endif %}
     {% endfor %};
 {% endif %}{% endfor %}
@@ -124,10 +126,12 @@ PYBIND11_MODULE({{module.name}}, m) {
 // operators
 {% for op in module.operators %}
 {% if op.name in operator_dict %}
-    m.def("{{operator_dict[op.name]}}", 
+{% for py_op in operator_dict[op.name] %}
+    m.def("{{py_op}}", 
           {{ function_pointer(op) }},
           py::is_operator(),
           R"#({{ op.comment }})#" {{argnames(op)}});
+{% endfor %}
 {% endif %}
 {% endfor %}
 
