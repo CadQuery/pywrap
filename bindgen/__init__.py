@@ -56,7 +56,14 @@ def parse_modules(verbose,
         (delayed(_process_module)(n) for n in tqdm(module_names))
     '''
     modules=[ModuleInfo(n,path,path.files(n+'*.hxx')) for n in tqdm(module_names)]'''
-    for m in modules: class_dict.update(m.class_dict)
+    
+    #ignore functions and classes based on settings and update the global class_dict
+    for m in modules:
+        s = settings_per_module[m.name]
+        m.classes = [c for c in m.classes if c.name not in s['exclude_classes']]
+        m.functions = [f for f in m.functions if f.name not in s['exclude_functions']]
+        
+        class_dict.update(m.class_dict)
     
     return modules,class_dict
 
@@ -108,37 +115,8 @@ def run(settings,
         module_mapping,
         settings_per_module):
     
-    name = settings['name']
-    path = Path(settings['input_folder'])
-    output_path = Path(settings['output_folder'])
-    file_pats = settings['include']
-    operator_dict = settings['Operators']
-    
-    pre = settings['Extras']['include_pre']
-    post = settings['Extras']['include_post']
-    
-    all_files = reduce(add,(path.files(pat) for pat in file_pats))
-    module_names = sorted(set((module_mapping(p) for p in all_files)))
-    
-    modules = []
-    for n in tqdm(module_names):
-        tqdm.write('Processing module {}'.format(n))
-        modules.append(ModuleInfo(n,path,path.files(n+'*.hxx')))
-        
-    jinja_env = Environment(loader=FileSystemLoader(Path(__file__).dirname()),
-                            trim_blocks=True,
-                            lstrip_blocks = True)
-    template = jinja_env.get_template('template.j2')
-    
-    output_path.mkdir_p()
-    with  output_path:
-        for m in tqdm(modules):
-            tqdm.write('Processing module {}'.format(m.name))
-            with open('{}.cpp'.format(m.name),'w') as f:
-                f.write(template.render({'module' : m,
-                                         'project_name' : name,
-                                         'operator_dict' : operator_dict,
-                                         'include_pre' : pre,
-                                         'include_post' : post}))
+    modules,class_dict = parse_modules(False,1,settings,
+                                       module_mapping,settings_per_module)    
+    render(settings,modules,class_dict)
     
     return modules
