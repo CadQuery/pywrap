@@ -15,7 +15,7 @@ from .header import parse_tu
 
 def read_settings(p):
     
-    with open('conf.toml') as f:
+    with open(p) as f:
         settings = toml.load(f)
     
     #extract and compile the module name extraction callable
@@ -68,7 +68,7 @@ def render(settings,modules,class_dict):
 
     pre = settings['Extras']['include_pre']
     post = settings['Extras']['include_post']
-        
+    
     jinja_env = Environment(loader=FileSystemLoader(Path(__file__).dirname()),
                             trim_blocks=True,
                             lstrip_blocks = True)
@@ -107,14 +107,17 @@ def validate_result(verbose,n_jobs,folder):
 def run(settings,
         module_mapping,
         settings_per_module):
-
+    
     name = settings['name']
     path = Path(settings['input_folder'])
     output_path = Path(settings['output_folder'])
-    file_pat = settings['include'][0]
+    file_pats = settings['include']
     operator_dict = settings['Operators']
     
-    all_files = path.files(file_pat)
+    pre = settings['Extras']['include_pre']
+    post = settings['Extras']['include_post']
+    
+    all_files = reduce(add,(path.files(pat) for pat in file_pats))
     module_names = sorted(set((module_mapping(p) for p in all_files)))
     
     modules = []
@@ -134,6 +137,8 @@ def run(settings,
             with open('{}.cpp'.format(m.name),'w') as f:
                 f.write(template.render({'module' : m,
                                          'project_name' : name,
-                                         'operator_dict' : operator_dict}))
+                                         'operator_dict' : operator_dict,
+                                         'include_pre' : pre,
+                                         'include_post' : post}))
     
     return modules
