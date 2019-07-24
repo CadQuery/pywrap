@@ -59,9 +59,10 @@ def parse_modules(verbose,
     
     #ignore functions and classes based on settings and update the global class_dict
     for m in modules:
-        s = settings_per_module[m.name]
-        m.classes = [c for c in m.classes if c.name not in s['exclude_classes']]
-        m.functions = [f for f in m.functions if f.name not in s['exclude_functions']]
+        s = settings_per_module.get(m.name,None)
+        if s:
+            m.classes = [c for c in m.classes if c.name not in s['exclude_classes']]
+            m.functions = [f for f in m.functions if f.name not in s['exclude_functions']]
         
         class_dict.update(m.class_dict)
     
