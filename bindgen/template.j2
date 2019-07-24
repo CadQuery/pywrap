@@ -97,7 +97,7 @@ PYBIND11_MODULE({{module.name}}, m) {
              R"#({{m.comment}})#" {{argnames(m)}})
     {% endfor %}
     {% for m in c.static_methods %}
-        .def_static("{{m.name}}",
+        .def_static("{{m.name}}_s",
                     {{ static_method_pointer(c,m) }},
                     R"#({{m.comment}})#" {{argnames(m)}})
     {% endfor %}
