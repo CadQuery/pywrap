@@ -5,7 +5,7 @@
 {%- endmacro -%}
 
 {%- macro pointer(cls) -%}
-    {%- if cls.rootclass == "Standard_Transient" -%} ,opencascade::handle<{{cls.name}}>
+    {%- if cls.rootclass == "Standard_Transient" or cls.name == "Standard_Transient" -%} ,opencascade::handle<{{cls.name}}>
     {%- elif cls.nonpublic_destructors|length>0 -%} ,std::unique_ptr<{{cls.name}}, py::nodelete>
     {%- else -%} ,std::unique_ptr<{{cls.name}}>
     {%- endif -%}
