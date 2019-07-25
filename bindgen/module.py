@@ -42,6 +42,7 @@ class ModuleInfo(object):
         self.enums = []
         self.functions = []
         self.operators = []
+        
         for h in self.headers:
             self.classes.extend(h.classes.values())
             self.enums.extend(h.enums)
@@ -59,14 +60,12 @@ class ModuleInfo(object):
         
         # put all rootclasses at the top
         for c in classes_old:
-            print(c.rootclass)
             root = class_dict.get(c.rootclass,None)
             if root in classes_old:
                 classes.append(root)
                 classes_old.remove(root)
         
         while classes_old:
-            #import pdb; pdb.set_trace()
             for c in classes_old:
                 superclass = class_dict.get(c.superclass,None)
                 if superclass in classes or superclass not in self.classes:
