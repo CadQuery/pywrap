@@ -33,18 +33,19 @@ def parse_tu(path,
         logzero.logger.warning(path)
         for d in diag: logzero.logger.warning(d)
         
+    tr_unit.path = ('dummy.cxx',path.name)
     
     return tr_unit
 
 def paths_approximately_equal(p1,p2):
     '''Approximate path equality. This is due to 
     '''
-    return p1.split('.')[0] == p2.split('.')[0]
+    return any([Path(p1).name.split('.')[0] == Path(p).name.split('.')[0] for p in p2])
 
 def get_symbols(tu,kind):
     '''Symbols defined locally (i.e. without includes) and are not forward declarations
     '''
-    tu_path = Path(tu.spelling)
+    tu_path = tu.path
 
     for child in tu.cursor.get_children():
         if paths_approximately_equal(Path(child.location.file.name),tu_path) \
@@ -58,7 +59,7 @@ def get_symbols(tu,kind):
                 
 def get_forward_declarations(tu):
     '''Get all symbols that are forward declared'''
-    tu_path = Path(tu.spelling)
+    tu_path = tu.path
 
     for child in tu.cursor.get_children():
         if paths_approximately_equal(Path(child.location.file.name),tu_path):
@@ -68,7 +69,7 @@ def get_forward_declarations(tu):
 def get_all_symbols(tu,kind):
     '''All defined symbols of given kind
     '''
-    tu_path = Path(tu.spelling)
+    tu_path = tu.path
 
     for child in tu.cursor.get_children():
         if paths_approximately_equal(Path(child.location.file.name),tu_path) \
@@ -432,7 +433,7 @@ def process_header(path):
 
     hi = HeaderInfo()
     hi.parse(path)
-
+    
     return hi
 
 __all__ = [process_header,]
