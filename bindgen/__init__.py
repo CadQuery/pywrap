@@ -63,8 +63,10 @@ def parse_modules(verbose,
     for m in modules:
         s = settings_per_module.get(m.name,None)
         if s:
-            m.classes = [c for c in m.classes if c.name not in s['exclude_classes']]
+            m.classes = [c for c in m.classes if c.name not in s['exclude_classes']]            
             m.functions = [f for f in m.functions if f.name not in s['exclude_functions']]
+            for h in m.headers:
+                h.functions = [f for f in h.functions if f.name not in s['exclude_functions']]
         
         class_dict.update(m.class_dict)
     
