@@ -40,8 +40,10 @@ def parse_modules(verbose,
 
     path = Path(settings['input_folder'])
     file_pats = settings['include']
+    file_exc = settings['exclude']
     
-    all_files = reduce(add,(path.files(pat) for pat in file_pats))
+    all_files = reduce(add,(path.files(pat) for pat in file_pats))    
+    all_files = [f for f in all_files if f.name not in file_exc]
     module_names = sorted(set((module_mapping(p) for p in all_files)))
     
     modules = []
@@ -50,7 +52,7 @@ def parse_modules(verbose,
     def _process_module(n):
         if not verbose:
             logzero.logger.setLevel(logzero.logging.INFO)
-        return ModuleInfo(n,path,path.files(n+'*.hxx'))
+        return ModuleInfo(n,path,[ f for f in path.files(n+'*.hxx') if f.name not in file_exc])
     
     modules = Parallel(prefer='processes',n_jobs=n_jobs)\
         (delayed(_process_module)(n) for n in tqdm(module_names))
