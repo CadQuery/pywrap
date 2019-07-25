@@ -42,20 +42,23 @@ def paths_approximately_equal(p1,p2):
     '''
     return any([Path(p1).name.split('.')[0] == Path(p).name.split('.')[0] for p in p2])
 
-def get_symbols(tu,kind):
+def get_symbols(tu,kind,ignore_forwards=True):
     '''Symbols defined locally (i.e. without includes) and are not forward declarations
     '''
     tu_path = tu.path
 
     for child in tu.cursor.get_children():
         if paths_approximately_equal(Path(child.location.file.name),tu_path) \
-        and child.kind is kind:
-            if child.get_definition() is None:
-                pass #forward declaration
-            elif not paths_approximately_equal(Path(child.get_definition().location.file.name),tu_path):
-                pass #forward declaration but declared in an include
+        and child.kind == kind:
+            if ignore_forwards:
+                if child.get_definition() is None:
+                    pass #forward declaration
+                elif not paths_approximately_equal(Path(child.get_definition().location.file.name),tu_path):
+                    pass #forward declaration but declared in an include
+                else:
+                    yield child #legitimate
             else:
-                yield child #legitimate
+                yield child
                 
 def get_forward_declarations(tu):
     '''Get all symbols that are forward declared'''
@@ -80,25 +83,25 @@ def get_functions(tu):
     '''Functions defined locally (i.e. without includes)
     '''
 
-    return (f for f in get_symbols(tu,CursorKind.FUNCTION_DECL) if 'operator' not in f.spelling)
+    return (f for f in get_symbols(tu,CursorKind.FUNCTION_DECL,False) if 'operator' not in f.spelling)
 
 def get_function_templates(tu):
     '''Function templates defined locally (i.e. without includes)
     '''
     
-    return (f for f in get_symbols(tu,CursorKind.FUNCTION_TEMPLATE) if 'operator' not in f.spelling)
+    return (f for f in get_symbols(tu,CursorKind.FUNCTION_TEMPLATE,False) if 'operator' not in f.spelling)
 
 def get_operators(tu):
     '''Functions defined locally (i.e. without includes)
     '''
 
-    return (f for f in get_symbols(tu,CursorKind.FUNCTION_DECL) if 'operator' in f.spelling)
+    return (f for f in get_symbols(tu,CursorKind.FUNCTION_DECL,False) if 'operator' in f.spelling)
 
 def get_operator_templates(tu):
     '''Operator templates defined locally (i.e. without includes)
     '''
     
-    return (f for f in get_symbols(tu,CursorKind.FUNCTION_TEMPLATE) if 'operator' in f.spelling)
+    return (f for f in get_symbols(tu,CursorKind.FUNCTION_TEMPLATE,False) if 'operator' in f.spelling)
 
 def get_enums(tu):
     '''Enums defined locally (i.e. without includes)
@@ -288,7 +291,7 @@ class FunctionInfo(BaseInfo):
         self.comment = cur.brief_comment
         self.full_name = cur.displayname
         self.return_type = cur.result_type.spelling
-        self.args = {el.spelling : el.type.spelling for el in cur.get_arguments()}
+        self.args = [(el.spelling,el.type.spelling) for el in cur.get_arguments()]
 
 class MethodInfo(FunctionInfo):
     '''Container for method parsing results
@@ -297,7 +300,7 @@ class MethodInfo(FunctionInfo):
     def __init__(self,cur):
 
         super(MethodInfo,self).__init__(cur)
-
+        
         self.const = cur.is_const_method()
 
 class ConstructorInfo(FunctionInfo):
