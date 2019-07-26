@@ -67,11 +67,6 @@ void register_{{module.name}}(py::module &main_module) {
 
 py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#");
     
-// dependencies
-{% for dep in module.dependencies %}
-    py::module::import("{{project_name}}::{{dep}}");
-{% endfor %}
-
 // enums
 {% for enum in module.enums %}
 {% if enum.anonymous %}
