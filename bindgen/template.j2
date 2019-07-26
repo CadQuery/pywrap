@@ -12,7 +12,7 @@
 {%- endmacro -%}
 
 {%- macro super(cls,classes) -%}
-    {% if cls.superclass in classes %}, {{cls.superclass}} {% endif %}
+    {% if cls.superclass in class_dict %}, {{cls.superclass}} {% endif %}
 {%- endmacro -%}
 
 
