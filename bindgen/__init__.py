@@ -141,6 +141,7 @@ def render(settings,modules,class_dict):
                             lstrip_blocks = True)
     template = jinja_env.get_template('template.j2')
     template_main = jinja_env.get_template('template_main.j2')
+    template_make = jinja_env.get_template('makefile.j2')
     
     output_path.mkdir_p()
     with  output_path:
@@ -157,6 +158,9 @@ def render(settings,modules,class_dict):
         with open('{}.cpp'.format(name),'w') as f:
                 f.write(template_main.render({'name' : name,
                                               'modules' : modules}))
+    
+        with open('makefile','w') as f:
+                f.write(template_make.render({'name' : name}))
     
 def validate_result(verbose,n_jobs,folder):
     
