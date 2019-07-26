@@ -12,13 +12,14 @@ from .header import parse_tu
 @click.group()
 @click.option('-n','--njobs', default=-2,type=int)
 @click.option('-v','--verbose',is_flag=True)
+@click.option('-c','--clean',is_flag=True)
 @click.pass_context
-def main(ctx,verbose,njobs):
+def main(ctx,clean,verbose,njobs):
     
     if not verbose:
         logzero.logger.setLevel(logzero.logging.INFO)
     
-    ctx.obj = SimpleNamespace(verbose=verbose,njobs=njobs)
+    ctx.obj = SimpleNamespace(verbose=verbose,njobs=njobs,clean=clean)
 
 @main.command()
 @click.argument('configuration')
@@ -41,7 +42,9 @@ def generate(obj,configuration,input):
     
     settings,module_mapping,modules = read_settings(configuration)
     out = Path(settings['output_folder'])
-    out.rmtree_p()
+    
+    if obj.clean:
+        out.rmtree_p()
     
     with open(input,'rb') as f:
         modules,class_dict = pickle.load(f)
@@ -64,7 +67,8 @@ def validate(obj,folder):
 
 @main.command()
 @click.argument('configuration')
-def all(configuration):
+@click.pass_obj
+def all(obj,configuration):
     
     settings,module_mapping,modules = read_settings(configuration)
     logzero.logger.setLevel(logzero.logging.INFO)
