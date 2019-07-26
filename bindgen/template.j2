@@ -86,7 +86,7 @@ PYBIND11_MODULE({{module.name}}, m) {
 {% endfor %}
 
 // classes
-{% for c in module.classes %}{% if not c.abstract %}
+{% for c in module.classes %}{#% if not c.abstract %#}
     py::class_<{{c.name}} {{pointer(c)}} {{super(c,module.classes)}}>(m,"{{cls_name(c)}}",R"#({{c.comment}})#")
     {% for con in c.constructors %}
         .def(py::init< {{ argtypes(con) }} >() {{argnames(con)}} )
@@ -111,7 +111,7 @@ PYBIND11_MODULE({{module.name}}, m) {
     {% endfor %}
     {% endif %}
     {% endfor %};
-{% endif %}{% endfor %}
+{#% endif %#}{% endfor %}
 
 // functions
 {% for h in module.headers %}
@@ -133,6 +133,11 @@ PYBIND11_MODULE({{module.name}}, m) {
           R"#({{ op.comment }})#" {{argnames(op)}});
 {% endfor %}
 {% endif %}
+{% endfor %}
+
+// exceptions
+{% for ex in module.exceptions %}
+register_occ_exception<{{ex.name}}>(m, "{{ex.name}}");
 {% endfor %}
 
 }
