@@ -42,6 +42,7 @@ class ModuleInfo(object):
         self.enums = []
         self.functions = []
         self.operators = []
+        self.exceptions = []
         
         for h in self.headers:
             self.classes.extend(h.classes.values())

@@ -1,5 +1,6 @@
 from functools import reduce
 from operator import add
+from re import match
 
 
 import logzero
@@ -32,6 +33,30 @@ def read_settings(p):
     return settings,module_mapping,modules
 
 
+def transform_module(m,
+                     settings,
+                     settings_per_module):
+    
+    s = settings_per_module.get(m.name,None)
+    if s:
+        #exclude classes
+        m.classes = [c for c in m.classes if c.name not in s['exclude_classes']]
+        #exclude functions
+        m.functions = [f for f in m.functions if f.name not in s['exclude_functions']]
+        for h in m.headers:
+            h.functions = [f for f in h.functions if f.name not in s['exclude_functions']]
+    #collect exceptions
+    for c in m.classes:
+        if any([match(pat,c.name) for pat in settings['exceptions']]):
+            m.exceptions.append(c)
+        elif c.superclass:
+            if any([match(pat,c.superclass) for pat in settings['exceptions']]):
+                m.exceptions.append(c)
+            elif any([match(pat,c.rootclass) for pat in settings['exceptions']]):
+                m.exceptions.append(c)
+    for ex in m.exceptions:
+        m.classes.remove(ex)
+
 def parse_modules(verbose,
                   n_jobs,
                   settings,
@@ -61,13 +86,7 @@ def parse_modules(verbose,
     
     #ignore functions and classes based on settings and update the global class_dict
     for m in modules:
-        s = settings_per_module.get(m.name,None)
-        if s:
-            m.classes = [c for c in m.classes if c.name not in s['exclude_classes']]            
-            m.functions = [f for f in m.functions if f.name not in s['exclude_functions']]
-            for h in m.headers:
-                h.functions = [f for f in h.functions if f.name not in s['exclude_functions']]
-        
+        transform_module(m,settings,settings_per_module)
         class_dict.update(m.class_dict)
     
     return modules,class_dict
