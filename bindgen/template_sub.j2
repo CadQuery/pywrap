@@ -65,7 +65,9 @@ namespace py = pybind11;
 // Module definiiton
 void register_{{module.name}}(py::module &main_module) {
 
-py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#");
+py::module m = main_module.def_submodule({{module.name}});
+
+m.doc() = R"#({{module.doc}})#";
     
 // dependencies
 {% for dep in module.dependencies %}

@@ -104,6 +104,7 @@ def render(settings,modules,class_dict):
                             trim_blocks=True,
                             lstrip_blocks = True)
     template = jinja_env.get_template('template.j2')
+    template_main = jinja_env.get_template('template_main.j2')
     
     output_path.mkdir_p()
     with  output_path:
@@ -116,6 +117,10 @@ def render(settings,modules,class_dict):
                                          'operator_dict' : operator_dict,
                                          'include_pre' : pre,
                                          'include_post' : post}))
+    
+        with open('{}.cpp'.format(name),'w') as f:
+                f.write(template_main.render({'name' : name,
+                                              'modules' : modules}))
     
 def validate_result(verbose,n_jobs,folder):
     
