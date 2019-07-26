@@ -1,9 +1,12 @@
 name = "OCP"
-input_folder = "/home/adam/anaconda2/envs/cqgui/include/opencascade"
+input_folder = "/home/adam/anaconda2/envs/cpp-py-bindgen/include/opencascade"
 output_folder = "./generated_gp"
 
-include = ["Standard*.hxx","gp*.hxx"]
-exclude = ["Standard_Handle.hxx"]
+include = ["Standard_*.hxx",
+           "gp_*.hxx",
+           "math.hxx"]
+
+exclude = ["Standard_Handle.hxx","math_GaussPoints.hxx"]
 
 exceptions = ["Standard_Failure","Standard_.+Error"]
 
@@ -27,6 +30,10 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 
     include_pre = "OCP_specific.inc"
     include_post = false
+    
+[Symbols]
+
+    path = "symbols.dat"
 
 [Modules]
 
@@ -35,7 +42,16 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
         include_header_pre = false
         exclude_functions = [,]
         exclude_classes = [,] 
-        #"gp_VectorWithNullMagnitude"]
+        exclude_methods = [,] 
+        include_header_post = false
+        template_specializations = [,]
+        
+    [Modules.math]
+    
+        include_header_pre = false
+        exclude_functions = [,]
+        exclude_classes = [,]
+        exclude_methods = [,]
         include_header_post = false
         template_specializations = [,]
         
@@ -44,5 +60,6 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
         include_header_pre = false
         exclude_functions = ["HashCode"]
         exclude_classes = [,]
+        exclude_methods = [,]
         include_header_post = false
         template_specializations = [,]

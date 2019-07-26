@@ -5,6 +5,7 @@ from re import match
 
 import logzero
 import toml as toml
+import pandas as pd
 
 from joblib import Parallel, delayed
 from path import Path
@@ -32,8 +33,30 @@ def read_settings(p):
         
     return settings,module_mapping,modules
 
+def read_symbols(p):
+    '''Read provided symbols file and return a dataframe
+    
+    This information is used later for flagging undefined symbols
+    '''
+    
+    sym = pd.read_table(p,header=None,names=['adr','code','name'],delimiter=' ',
+                        error_bad_lines=False).dropna()
+    
+    # return only defined symbols
+    return sym.query('code == "T"')
+
+def remove_undefined(m,sym):
+    
+       
+    #exclude methods
+    for c in m.classes:
+        c.methods = [m for m in c.methods if sym.name.str.contains('{}::{}'.format(c.name,m.name)).any()]
+    
+    #exclude functions
+    m.functions = [f for f in m.functions if sym.name.str.startswith(f.name).any()]
 
 def transform_module(m,
+                     sym,
                      settings,
                      settings_per_module):
     
@@ -41,10 +64,18 @@ def transform_module(m,
     if s:
         #exclude classes
         m.classes = [c for c in m.classes if c.name not in s['exclude_classes']]
+        
+        #exclude methods
+        for pat in s['exclude_methods']:
+            cls_pat,m_pat = pat.split('::')
+            for c in (c for c in m.classes if match(cls_pat,c.name)):
+                c.methods = [m for m in c.methods if not match(m_pat,m.name)]
+        
         #exclude functions
         m.functions = [f for f in m.functions if f.name not in s['exclude_functions']]
         for h in m.headers:
             h.functions = [f for f in h.functions if f.name not in s['exclude_functions']]
+    
     #collect exceptions
     for c in m.classes:
         if any([match(pat,c.name) for pat in settings['exceptions']]):
@@ -56,6 +87,9 @@ def transform_module(m,
                 m.exceptions.append(c)
     for ex in m.exceptions:
         m.classes.remove(ex)
+    
+    # remove undefined symbols
+    remove_undefined(m,sym)
 
 def parse_modules(verbose,
                   n_jobs,
@@ -70,6 +104,8 @@ def parse_modules(verbose,
     all_files = reduce(add,(path.files(pat) for pat in file_pats))    
     all_files = [f for f in all_files if f.name not in file_exc]
     module_names = sorted(set((module_mapping(p) for p in all_files)))
+    
+    sym = read_symbols(settings['Symbols']['path'])
     
     modules = []
     class_dict = {}
@@ -86,7 +122,7 @@ def parse_modules(verbose,
     
     #ignore functions and classes based on settings and update the global class_dict
     for m in modules:
-        transform_module(m,settings,settings_per_module)
+        transform_module(m,sym,settings,settings_per_module)
         class_dict.update(m.class_dict)
     
     return modules,class_dict
