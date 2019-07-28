@@ -78,6 +78,16 @@ def get_all_symbols(tu,kind):
         if paths_approximately_equal(Path(child.location.file.name),tu_path) \
         and child.kind is kind:
             yield child
+            
+def get_all_symbols_multi(tu,kinds):
+    '''All defined symbols of given kinds
+    '''
+    tu_path = tu.path
+
+    for child in tu.cursor.get_children():
+        if paths_approximately_equal(Path(child.location.file.name),tu_path) \
+        and any((child.kind is kind for kind in kinds)):
+            yield child
 
 def get_functions(tu):
     '''Functions defined locally (i.e. without includes)
@@ -142,6 +152,14 @@ def get_x(cls,kind):
     for child in cls.get_children():
         if child.kind is kind and child.get_definition():
                 yield child
+                
+def get_x_multi(cls,kinds):
+    '''Get children entities of the specified types excluding forward declataions
+    '''
+
+    for child in cls.get_children():
+        if any((child.kind is kind for kind in kinds)) and child.get_definition():
+            yield child
 
 def get_xx(cls,kind,access):
     '''Get children entities of the specified type with given access specifier
@@ -155,7 +173,7 @@ def get_template_type_params(cls):
     '''Get all template type params
     '''
     
-    for t in get_x(cls,CursorKind.TEMPLATE_TYPE_PARAMETER):
+    for t in get_x_multi(cls,(CursorKind.TEMPLATE_TYPE_PARAMETER, CursorKind.TEMPLATE_NON_TYPE_PARAMETER)):
         yield t
     
 def get_base_class(c):
@@ -347,7 +365,7 @@ class ClassTemplateInfo(ClassInfo):
         
          super(ClassTemplateInfo,self).__init__(cur)
          self.name = cur.spelling
-         self.type_params = [el.spelling for el in get_template_type_params(cur)]
+         self.type_params = [(None if el.spelling == el.type.spelling else el.type.spelling,el.spelling) for el in get_template_type_params(cur)]
 
 class TypedefInfo(BaseInfo):
     
