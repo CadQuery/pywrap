@@ -90,6 +90,29 @@ def transform_module(m,
     
     # remove undefined symbols
     remove_undefined(m,sym)
+    
+def sort_modules(modules):
+    
+    mod_dict = {m.name:m for m in modules}
+    
+    #add modules withouth any dependanceis to the top
+    modules_sorted = [m for m in modules if not m.dependencies]
+        
+    #remove them form the
+    for m in modules_sorted: modules.remove(m)
+    
+    #handle the rest
+    while modules:
+        to_append = []
+        for m in modules:
+            deps = [mod_dict[d] in modules_sorted for d in m.dependencies if d in mod_dict]
+            if all(deps):
+                to_append.append(m)
+        
+        for m in to_append: modules.remove(m)
+        modules_sorted.extend(to_append)
+        
+    return modules_sorted
 
 def parse_modules(verbose,
                   n_jobs,
@@ -117,13 +140,14 @@ def parse_modules(verbose,
     
     modules = Parallel(prefer='processes',n_jobs=n_jobs)\
         (delayed(_process_module)(n) for n in tqdm(module_names))
-    '''
-    modules=[ModuleInfo(n,path,path.files(n+'*.hxx')) for n in tqdm(module_names)]'''
     
     #ignore functions and classes based on settings and update the global class_dict
     for m in modules:
         transform_module(m,sym,settings,settings_per_module)
         class_dict.update(m.class_dict)
+        
+    #sort modules
+    modules = sort_modules(modules)
     
     return modules,class_dict
 
