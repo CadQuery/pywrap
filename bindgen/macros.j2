@@ -1,0 +1,62 @@
+{# useful macros -#}
+
+{%- macro cls_name(cls) -%}
+    {{ cls.name|replace('<', '_')|replace('>', '') }}
+{%- endmacro -%}
+
+{%- macro pointer(cls) -%}
+    {%- if cls.rootclass == "Standard_Transient" or cls.name == "Standard_Transient" -%} ,opencascade::handle<{{cls.name}}>
+    {%- elif cls.nonpublic_destructors|length>0 -%} ,std::unique_ptr<{{cls.name}}, py::nodelete>
+    {%- else -%} ,std::unique_ptr<{{cls.name}}>
+    {%- endif -%}
+{%- endmacro -%}
+
+{%- macro super(cls,classes) -%}
+    {% if cls.superclass in class_dict %}, {{cls.superclass}} {% endif %}
+{%- endmacro -%}
+
+
+{%- macro argtypes(f) -%}
+    {% for _,t in f.args %}{{ t }}{{ "," if not loop.last }}{% endfor %}
+{%- endmacro -%}
+
+{%- macro argnames(f) -%}
+    {% for arg,_ in f.args %} {{ "," if loop.first }} py::arg("{{arg}}"){{ "," if not loop.last }}{% endfor %}
+{%- endmacro -%}
+
+{%- macro method_pointer(cls,f) -%}
+    ({{f.return_type}} ({{cls.name}}::*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}::{{f.name}}
+{%- endmacro -%}
+
+{%- macro static_method_pointer(cls,f) -%}
+    ({{f.return_type}} (*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}::{{f.name}}
+{%- endmacro -%}
+
+{%- macro function_pointer(f) -%}
+    ({{f.return_type}} (*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}))  static_cast<{{f.return_type}} (*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %})>(&{{f.name}})
+{%- endmacro -%}
+
+{%- macro template_args_typename(t) -%}
+    <{% for type,name in t.type_params %}{% if type %}{{ type }}{% else %}typename{% endif %} {{name}}{{ "," if not loop.last }}{% endfor %}>
+{%- endmacro -%}
+
+{%- macro template_args(t) -%}
+    <{% for type,name in t.type_params %}{{name}}{{ "," if not loop.last }}{% endfor %}>
+{%- endmacro -%}
+
+{%- macro template_method_pointer(cls,f) -%}
+    ({{f.return_type}} ({{cls.name}}{{template_args(cls)}}::*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}{{template_args(cls)}}::{{f.name}}
+{%- endmacro -%}
+
+{%- macro template_static_method_pointer(cls,f) -%}
+    ({{f.return_type}} (*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}{{template_args(cls)}}::{{f.name}}
+{%- endmacro -%}
+
+{%- macro template_pointer(cls) -%}
+    {%- if cls.rootclass == "Standard_Transient" or cls.name == "Standard_Transient" -%} ,opencascade::handle<{{cls.name}}{{template_args(cls)}}>
+    {%- elif cls.nonpublic_destructors|length>0 -%} ,std::unique_ptr<{{cls.name}}{{template_args(cls)}}, py::nodelete>
+    {%- else -%} ,std::unique_ptr<{{cls.name}}{{template_args(cls)}}>
+    {%- endif -%}
+{%- endmacro -%}
+
+{# end of macros macros -#}

@@ -1,42 +1,6 @@
-{# useful macros -#}
-
-{%- macro cls_name(cls) -%}
-    {{ cls.name|replace('<', '_')|replace('>', '') }}
-{%- endmacro -%}
-
-{%- macro pointer(cls) -%}
-    {%- if cls.rootclass == "Standard_Transient" or cls.name == "Standard_Transient" -%} ,opencascade::handle<{{cls.name}}>
-    {%- elif cls.nonpublic_destructors|length>0 -%} ,std::unique_ptr<{{cls.name}}, py::nodelete>
-    {%- else -%} ,std::unique_ptr<{{cls.name}}>
-    {%- endif -%}
-{%- endmacro -%}
-
-{%- macro super(cls,classes) -%}
-    {% if cls.superclass in class_dict %}, {{cls.superclass}} {% endif %}
-{%- endmacro -%}
-
-
-{%- macro argtypes(f) -%}
-    {% for _,t in f.args %} {{ t }}{{ "," if not loop.last }}{% endfor %}
-{%- endmacro -%}
-
-{%- macro argnames(f) -%}
-    {% for arg,_ in f.args %} {{ "," if loop.first }} py::arg("{{arg}}"){{ "," if not loop.last }}{% endfor %}
-{%- endmacro -%}
-
-{%- macro method_pointer(cls,f) -%}
-    ({{f.return_type}} ({{cls.name}}::*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}::{{f.name}}
-{%- endmacro -%}
-
-{%- macro static_method_pointer(cls,f) -%}
-    ({{f.return_type}} (*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}::{{f.name}}
-{%- endmacro -%}
-
-{%- macro function_pointer(f) -%}
-    ({{f.return_type}} (*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}))  static_cast<{{f.return_type}} (*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %})>(&{{f.name}})
-{%- endmacro -%}
-
-{# end of macros macros -#}
+{% from "macros.j2" import cls_name,pointer,super,argtypes,argnames,method_pointer,
+static_method_pointer,function_pointer,template_args_typename,template_args,
+template_method_pointer,template_static_method_pointer, template_pointer %}
 
 // pybind 11 related includes
 #include <pybind11/pybind11.h>
@@ -65,14 +29,7 @@ namespace py = pybind11;
 // Module definiiton
 void register_{{module.name}}(py::module &main_module) {
 
-py::module m = main_module.def_submodule({{module.name}});
-
-m.doc() = R"#({{module.doc}})#";
-    
-// dependencies
-{% for dep in module.dependencies %}
-    py::module::import("{{project_name}}::{{dep}}");
-{% endfor %}
+py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#");
 
 // enums
 {% for enum in module.enums %}
