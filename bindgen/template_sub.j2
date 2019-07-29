@@ -21,6 +21,18 @@ namespace py = pybind11;
 #include <{{ h.short_name }}>
 {% endfor %}
 
+// template related includes
+{% for h in module.headers %}
+{% for td in h.typedefs %}
+{% if not td.pod and not "_H" in td.name and td.template_base.__len__()>0 and not td.type.startswith("opencascade::handle") %}
+// {{h.name}}
+{% set dep_module = td.type.split("_") %}
+#include "{{dep_module[0]}}.hxx"
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+
 // user-defined pre
 {% if include_pre %}
 #include "{{ include_pre }}"
@@ -95,12 +107,25 @@ py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#
 {% endif %}
 {% endfor %}
 
+// register typdefs
+{% for h in module.headers %}
+// {{h.name}}
+{% for td in h.typedefs %}
+{% if not td.pod and not "_H" in td.name and td.template_base.__len__()>0 and not td.type.startswith("opencascade::handle") %}
+{% set dep_module = td.template_base[0].split("_") %}
+{% set arg = td.type.split(td.template_base[0])[-1] %}
+    register_template_{{ td.template_base[0] }}{{ arg }}(m,"{{td.name}}");  
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+
 // exceptions
 {% for ex in module.exceptions %}
 register_occ_exception<{{ex.name}}>(m, "{{ex.name}}");
 {% endfor %}
 
-}
+};
 
 // user-defined post
 {% if include_post %}

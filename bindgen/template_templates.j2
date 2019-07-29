@@ -33,7 +33,7 @@ namespace py = pybind11;
 {% for n,t in h.class_templates.items()%}
 
 template {{template_args_typename(t)}}
-void register_template_{{t.name}}(py::object m, const char *name){
+void register_template_{{t.name}}(py::object &m, const char *name){
     py::class_<{{t.name}}{{template_args(t)}} {{template_pointer(t)}} {{super(t,module.classes)}}>(m,name,R"#({{t.comment}})#")
     {% for con in t.constructors %}
         .def(py::init< {{ argtypes(con) }} >() {{argnames(con)}} )
@@ -57,7 +57,8 @@ void register_template_{{t.name}}(py::object m, const char *name){
              R"#({{op.comment}})#" {{argnames(op)}})
     {% endfor %}
     {% endif %}
-    {% endfor %};
+    {% endfor %}
+    ;
 };
 {% endfor %}
 {% endfor %}
