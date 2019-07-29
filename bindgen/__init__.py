@@ -163,7 +163,8 @@ def render(settings,modules,class_dict):
     jinja_env = Environment(loader=FileSystemLoader(Path(__file__).dirname()),
                             trim_blocks=True,
                             lstrip_blocks = True)
-    template = jinja_env.get_template('template.j2')
+    template_sub = jinja_env.get_template('template_sub.j2')
+    template_tmpl = jinja_env.get_template('template_templates.j2')
     template_main = jinja_env.get_template('template_main.j2')
     template_make = jinja_env.get_template('makefile.j2')
     
@@ -172,12 +173,22 @@ def render(settings,modules,class_dict):
         for m in tqdm(modules):
             tqdm.write('Processing module {}'.format(m.name))
             with open('{}.cpp'.format(m.name),'w') as f:
-                f.write(template.render({'module' : m,
-                                         'class_dict' : class_dict,
-                                         'project_name' : name,
-                                         'operator_dict' : operator_dict,
-                                         'include_pre' : pre,
-                                         'include_post' : post}))
+                f.write(template_sub.render({'module' : m,
+                                             'class_dict' : class_dict,
+                                             'project_name' : name,
+                                             'operator_dict' : operator_dict,
+                                             'include_pre' : pre,
+                                             'include_post' : post,
+                                             'references_inner' : lambda name,method: name+"::" in method.return_type or any([name+"::" in a for _,a in method.args])}))
+    
+            with open('{}.hxx'.format(m.name),'w') as f:
+                f.write(template_tmpl.render({'module' : m,
+                                             'class_dict' : class_dict,
+                                             'project_name' : name,
+                                             'operator_dict' : operator_dict,
+                                             'include_pre' : pre,
+                                             'include_post' : post,
+                                             'references_inner' : lambda name,method: name+"::" in method.return_type or any([name+"::" in a for _,a in method.args])}))
     
         with open('{}.cpp'.format(name),'w') as f:
                 f.write(template_main.render({'name' : name,
