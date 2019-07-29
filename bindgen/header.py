@@ -2,7 +2,7 @@ import sys
 
 import logzero
 
-from clang.cindex import CursorKind, AccessSpecifier, TranslationUnit as TU
+from clang.cindex import CursorKind, TypeKind, AccessSpecifier, Type, TranslationUnit as TU
 from path import Path
 
 from .utils import get_index
@@ -15,7 +15,7 @@ def parse_tu(path,
     '''
 
     args.append('-I{}'.format(Path(sys.prefix) / 'include/python{}.{}m'.format(sys.version_info.major, sys.version_info.minor)))
-    args.append('-I{}'.format(Path(sys.prefix) / 'lib/clang/6.0.1/include/'))
+    args.append('-I{}'.format(Path(sys.prefix) / 'lib/clang/8.0.0/include/'))
     args.append('-I{}'.format(Path(sys.prefix) / 'include/opencascade'))
     
     ix = get_index()
@@ -301,6 +301,10 @@ class EnumInfo(BaseInfo):
 class FunctionInfo(BaseInfo):
     '''Container for function parsing results
     '''
+    
+    KIND_DICT = {TypeKind.LVALUEREFERENCE : ' &',
+                 TypeKind.RVALUEREFERENCE : ' &&',
+                 TypeKind.POINTER : ' *'}
 
     def __init__(self,cur):
 
@@ -309,7 +313,37 @@ class FunctionInfo(BaseInfo):
         self.comment = cur.brief_comment
         self.full_name = cur.displayname
         self.return_type = cur.result_type.spelling
-        self.args = [(el.spelling,el.type.spelling) for el in cur.get_arguments()]
+        self.args = [(el.spelling,self._underlying_type(el)) for el in cur.get_arguments()]
+        
+    def _underlying_type(self,cur):
+        '''Tries to resolve the underlying type. Needed for typedefed templates.
+        '''
+        
+        ptr = self.KIND_DICT.get(cur.type.kind,'')
+        
+        # if lvaule,rvalue or pointer type
+        if ptr:
+            pointee = cur.type.get_pointee()
+            const = 'const ' if pointee.is_const_qualified() else ''
+            decl = pointee.get_declaration()
+        else:
+            const = 'const ' if cur.type.is_const_qualified() else ''
+            decl = cur.type.get_declaration()
+        
+        # if typedef
+        if decl.kind == CursorKind.TYPEDEF_DECL:
+            spelling = decl.underlying_typedef_type.spelling
+            
+            if spelling.endswith('*'):
+                rv=spelling+ptr+const
+            else:
+                rv=const+spelling+ptr
+        else:
+            rv = cur.type.spelling
+            
+        return rv
+        
+            
 
 class MethodInfo(FunctionInfo):
     '''Container for method parsing results
