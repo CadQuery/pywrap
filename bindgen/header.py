@@ -377,10 +377,10 @@ class ClassInfo(object):
         self.comment = cur.brief_comment
         self.abstract = cur.is_abstract_record()
         
-        self.constructors = [ConstructorInfo(el) for el in get_public_constructors(cur)]
+        self.constructors = self.filter_rvalues((ConstructorInfo(el) for el in get_public_constructors(cur)))
         
-        self.methods = [MethodInfo(el) for el in get_public_methods(cur)]
-        self.static_methods = [MethodInfo(el) for el in get_public_static_methods(cur)]
+        self.methods = self.filter_rvalues((MethodInfo(el) for el in get_public_methods(cur)))
+        self.static_methods = self.filter_rvalues((MethodInfo(el) for el in get_public_static_methods(cur)))
 
         self.operators = [MethodInfo(el) for el in get_public_operators(cur)]        
         self.static_operators = [MethodInfo(el) for el in get_public_static_operators(cur)]
@@ -392,6 +392,10 @@ class ClassInfo(object):
         self.ptr = None
         self.superclass = None
         self.rootclass = None
+        
+    def filter_rvalues(self,funcs):
+        
+        return [f for f in funcs if not any(('&&' in arg for _,arg in f.args))]
         
 class ClassTemplateInfo(ClassInfo):
     
