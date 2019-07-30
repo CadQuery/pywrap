@@ -133,6 +133,7 @@ def parse_modules(verbose,
     modules = []
     class_dict = {}
     
+    #parse modules using libclang
     def _process_module(n):
         if not verbose:
             logzero.logger.setLevel(logzero.logging.INFO)
@@ -141,13 +142,26 @@ def parse_modules(verbose,
     modules = Parallel(prefer='processes',n_jobs=n_jobs)\
         (delayed(_process_module)(n) for n in tqdm(module_names))
     
-    #ignore functions and classes based on settings and update the global class_dict
-    for m in modules:
+    #ignore functions and classes based on settings and update the global class_dict        
+    def _filter_module(m):
+        if not verbose:
+            logzero.logger.setLevel(logzero.logging.INFO)
+        logzero.logger.debug(m.name)
         transform_module(m,sym,settings,settings_per_module)
+        
+        return m
+    
+    modules = Parallel(prefer='processes',n_jobs=n_jobs)\
+        (delayed(_filter_module)(m) for m in tqdm(modules))
+    
+    #update global class dictionary
+    for m in modules:
         class_dict.update(m.class_dict)
         
     #sort modules
-    modules = sort_modules(modules)
+    logzero.logger.info('sorting')
+    #import pdb; pdb.set_trace()
+    #modules = sort_modules(modules)
     
     return modules,class_dict
 
