@@ -313,7 +313,26 @@ class FunctionInfo(BaseInfo):
         self.comment = cur.brief_comment
         self.full_name = cur.displayname
         self.return_type = cur.result_type.spelling
+        self.pointer_by_ref = any(self._pointer_by_ref(el) for el in cur.get_arguments())
         self.args = [(el.spelling,self._underlying_type(el)) for el in cur.get_arguments()]
+        
+        
+    def _pointer_by_ref(self,cur):
+        '''Check is type is a Pointer passed by reference
+        '''
+        
+        rv = False
+        t = cur.type
+        
+        # if passed by ref
+        if t.kind == TypeKind.LVALUEREFERENCE:
+            tp = t.get_pointee().get_canonical()
+            # if underlying type is a pointer
+            if tp.kind in (TypeKind.POINTER,):
+                rv = True
+        
+        return rv
+            
         
     def _underlying_type(self,cur):
         '''Tries to resolve the underlying type. Needed for typedefed templates.
@@ -323,21 +342,19 @@ class FunctionInfo(BaseInfo):
         
         # if lvaule,rvalue or pointer type
         if ptr:
+            const_ptr = ' const ' if cur.type.is_const_qualified() else ''
             pointee = cur.type.get_pointee()
-            const = 'const ' if pointee.is_const_qualified() else ''
+            const = ' const ' if pointee.is_const_qualified() else ''
             decl = pointee.get_declaration()
         else:
-            const = 'const ' if cur.type.is_const_qualified() else ''
+            const_ptr = ''
+            const = ' const ' if cur.type.is_const_qualified() else ''
             decl = cur.type.get_declaration()
         
-        # if typedef
-        if decl.kind == CursorKind.TYPEDEF_DECL:
+        # if typedef that is not POD
+        if decl.kind == CursorKind.TYPEDEF_DECL and not decl.underlying_typedef_type.is_pod():
             spelling = decl.underlying_typedef_type.spelling
-            
-            if spelling.endswith('*'):
-                rv=spelling+ptr+const
-            else:
-                rv=const+spelling+ptr
+            rv=const+spelling+ptr+const_ptr
         else:
             rv = cur.type.spelling
             
