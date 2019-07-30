@@ -65,17 +65,22 @@ def transform_module(m,
         #exclude classes
         m.classes = [c for c in m.classes if c.name not in s['exclude_classes']]
         
-        #exclude methods
+        #exclude methods (including static methods)
         for pat in s['exclude_methods']:
             cls_pat,m_pat = pat.split('::')
             for c in (c for c in m.classes if match(cls_pat,c.name)):
                 c.methods = [m for m in c.methods if not match(m_pat,m.name)]
+                c.static_methods = [m for m in c.static_methods if not match(m_pat,m.name)]
         
         #exclude functions
         m.functions = [f for f in m.functions if f.name not in s['exclude_functions']]
         for h in m.headers:
             h.functions = [f for f in h.functions if f.name not in s['exclude_functions']]
-    
+            
+        #exclude typedefs
+        for h in m.headers:
+            h.typedefs = [t for t in h.typedefs if t.name not in s['exclude_typedefs']]
+        
     #collect exceptions
     for c in m.classes:
         if any([match(pat,c.name) for pat in settings['exceptions']]):
