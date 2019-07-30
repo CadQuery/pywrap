@@ -114,7 +114,10 @@ py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#
 {% if not td.pod and not "_H" in td.name and td.template_base.__len__()>0 and not td.type.startswith("opencascade::handle") %}
 {% set dep_module = td.template_base[0].split("_") %}
 {% set arg = td.type.split(td.template_base[0])[-1] %}
-    register_template_{{ td.template_base[0] }}{{ arg }}(m,"{{td.name}}");  
+{% set base =  td.template_base[0] %}
+{% if not arg.endswith("::Iterator") %}
+    register_template_{{ base }}{{ arg }}(m,"{{td.name}}");  
+{% endif %}
 {% endif %}
 {% endfor %}
 {% endfor %}
