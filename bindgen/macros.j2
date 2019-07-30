@@ -25,11 +25,11 @@
 {%- endmacro -%}
 
 {%- macro method_pointer(cls,f) -%}
-    ({{f.return_type}} ({{cls.name}}::*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}::{{f.name}}
+    ({{f.return_type}} ({{cls.name}}::*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) static_cast<{{f.return_type}} ({{cls.name}}::*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}>(&{{cls.name}}::{{f.name}})
 {%- endmacro -%}
 
 {%- macro static_method_pointer(cls,f) -%}
-    ({{f.return_type}} (*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}::{{f.name}}
+    ({{f.return_type}} (*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) static_cast<{{f.return_type}} (*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}>(&{{cls.name}}::{{f.name}})
 {%- endmacro -%}
 
 {%- macro function_pointer(f) -%}
