@@ -1,7 +1,7 @@
 CXX = g++-8
 RM = rm -f
 CPPFLAGS = -D_GLIBCXX_USE_CXX11_ABI=0 $(shell python3 -m pybind11 --includes) -I${CONDA_PREFIX}/include/opencascade
-CXXFLAGS = -O3 -Wall --std=c++11 -fPIC  -g
+CXXFLAGS = -O3 -Wall --std=c++11 -fPIC  -g -fpermissive
 LDFLAGS = -g -shared -L${CONDA_PREFIX}/lib
 LDLIBS = -l:libTKMath.so -l:libTKernel.so
 
