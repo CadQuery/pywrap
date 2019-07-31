@@ -39,8 +39,8 @@ def read_symbols(p):
     This information is used later for flagging undefined symbols
     '''
     
-    sym = pd.read_table(p,header=None,names=['adr','code','name'],delimiter=' ',
-                        error_bad_lines=False).dropna()
+    sym = pd.read_csv(p,header=None,names=['adr','code','name'],delimiter=' ',
+                      error_bad_lines=False).dropna()
     
     # return only defined symbols
     return sym.query('code == "T"')
@@ -119,6 +119,15 @@ def sort_modules(modules):
         
     return modules_sorted
 
+def split_into_modules(names,files):
+    
+    rv = {}
+    
+    for n in names:
+        rv[n] = [f for f in files if f.name.startswith(n+'_') or f.name.startswith(n+'.')]
+        
+    return rv
+
 def parse_modules(verbose,
                   n_jobs,
                   settings,
@@ -132,20 +141,23 @@ def parse_modules(verbose,
     all_files = reduce(add,(path.files(pat) for pat in file_pats))    
     all_files = [f for f in all_files if f.name not in file_exc]
     module_names = sorted(set((module_mapping(p) for p in all_files)))
+    #add top level module headers
+    all_files += reduce(add,(path.files(name+'.hxx') for name in module_names))
     
+    module_dict = split_into_modules(module_names,all_files)
     sym = read_symbols(settings['Symbols']['path'])
     
     modules = []
     class_dict = {}
     
     #parse modules using libclang
-    def _process_module(n):
+    def _process_module(name,files):
         if not verbose:
             logzero.logger.setLevel(logzero.logging.INFO)
-        return ModuleInfo(n,path,[ f for f in path.files(n+'*.hxx') if f.name not in file_exc])
+        return ModuleInfo(name,path,files)
     
     modules = Parallel(prefer='processes',n_jobs=n_jobs)\
-        (delayed(_process_module)(n) for n in tqdm(module_names))
+        (delayed(_process_module)(name,files) for name,files in tqdm(module_dict.items()))
     
     #ignore functions and classes based on settings and update the global class_dict        
     def _filter_module(m):
@@ -198,7 +210,9 @@ def render(settings,modules,class_dict):
                                              'operator_dict' : operator_dict,
                                              'include_pre' : pre,
                                              'include_post' : post,
-                                             'references_inner' : lambda name,method: name+"::" in method.return_type or any([name+"::" in a for _,a in method.args])}))
+                                             'references_inner' : lambda name,method: name+"::" in method.return_type or any([name+"::" in a for _,a in method.args]),
+                                             'proper_new_operator' : lambda cls: [op for op in cls.static_operators if op.name =='operator new' and len(op.args) == 1],
+                                             'proper_delete_operator' : lambda cls: [op for op in cls.static_operators if op.name =='operator delete' and len(op.args) == 1]}))
     
             with open('{}.hxx'.format(m.name),'w') as f:
                 f.write(template_tmpl.render({'module' : m,
