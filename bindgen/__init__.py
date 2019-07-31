@@ -54,6 +54,18 @@ def remove_undefined(m,sym):
     
     #exclude functions
     m.functions = [f for f in m.functions if sym.name.str.startswith(f.name).any()]
+    
+def remove_undefined_mangled(m,sym):
+    
+       
+    #exclude methods
+    for c in m.classes:
+        c.methods = [m for m in c.methods if sym.name.str.endswith(m.mangled_name).any()]
+        c.static_methods = [m for m in c.static_methods if sym.name.str.endswith(m.mangled_name).any()]
+        c.constructors = [m for m in c.constructors if sym.name.str.endswith(m.mangled_name).any()]
+    
+    #exclude functions
+    m.functions = [f for f in m.functions if sym.name.str.startswith(f.name).any()]
 
 def transform_module(m,
                      sym,
@@ -94,7 +106,7 @@ def transform_module(m,
         m.classes.remove(ex)
     
     # remove undefined symbols
-    remove_undefined(m,sym)
+    remove_undefined_mangled(m,sym)
     
 def sort_modules(modules):
     
@@ -145,7 +157,7 @@ def parse_modules(verbose,
     all_files += reduce(add,(path.files(name+'.hxx') for name in module_names))
     
     module_dict = split_into_modules(module_names,all_files)
-    sym = read_symbols(settings['Symbols']['path'])
+    sym = read_symbols(settings['Symbols']['path_mangled'])
     
     modules = []
     class_dict = {}

@@ -312,6 +312,7 @@ class FunctionInfo(BaseInfo):
 
         self.comment = cur.brief_comment
         self.full_name = cur.displayname
+        self.mangled_name = cur.mangled_name
         self.return_type = cur.result_type.spelling
         self.pointer_by_ref = any(self._pointer_by_ref(el) for el in cur.get_arguments())
         self.args = [(el.spelling,self._underlying_type(el)) for el in cur.get_arguments()]
