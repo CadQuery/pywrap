@@ -136,6 +136,53 @@ include = [
 "BRepPrimAPI_*.hxx",
 "BRepSweep_*.hxx",
 "Sweep_*.hxx",
+"ShapeAlgo_*.hxx",
+"ShapeAnalysis_*.hxx",
+"ShapeBuild_*.hxx",
+"ShapeConstruct_*.hxx",
+"ShapeCustom_*.hxx",
+"ShapeExtend_*.hxx",
+"ShapeFix_*.hxx",
+"ShapeProcess_*.hxx",
+"ShapeProcessAPI_*.hxx",
+"ShapeUpgrade_*.hxx",
+"Contap_*.hxx",
+"HLRAlgo_*.hxx",
+"HLRAppli_*.hxx",
+"HLRBRep_*.hxx",
+"HLRTopoBRep_*.hxx",
+"Intrv_*.hxx",
+"TopBas_*.hxx",
+"TopCnx_*.hxx",
+"BRepMesh_*.hxx",
+"XBRepMesh_*.hxx",
+"BOPAlgo_*.hxx",
+"BOPDS_*.hxx",
+"BOPTools_*.hxx",
+"BRepAlgoAPI_*.hxx",
+"IntTools_*.hxx",
+"BRepAlgo_*.hxx",
+"BRepFill_*.hxx",
+"BRepProj_*.hxx",
+"TopOpeBRep_*.hxx",
+"TopOpeBRepBuild_*.hxx",
+"TopOpeBRepDS_*.hxx",
+"TopOpeBRepTool_*.hxx",
+"BRepFeat_*.hxx",
+"LocOpe_*.hxx",
+"BRepBlend_*.hxx",
+"BRepFilletAPI_*.hxx",
+"Blend_*.hxx",
+"BlendFunc_*.hxx",
+"ChFi2d_*.hxx",
+"ChFi3d_*.hxx",
+"ChFiDS_*.hxx",
+"ChFiKPart_*.hxx",
+"FilletSurf_*.hxx",
+"BRepOffset_*.hxx",
+"BRepOffsetAPI_*.hxx",
+"BiTgte_*.hxx",
+"Draft_*.hxx",
 ]
 
 exclude = ["Standard_Handle.hxx","Standard_Assert.hxx",
@@ -352,7 +399,7 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
         include_header_post = false
         template_specializations = [,]
     
-    [Modules.MAT2D]
+    [Modules.MAT2d]
     
         include_header_pre = false
         exclude_functions = [,]
@@ -362,7 +409,7 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
         include_header_post = false
         template_specializations = [,]
         
-    [Modules.MAT2D]
+    [Modules.BRepExtrema]
     
         include_header_pre = false
         exclude_functions = [,]
