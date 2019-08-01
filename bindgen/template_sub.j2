@@ -59,7 +59,7 @@ py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#
 
 // classes
 {% for c in module.classes %}{% if (proper_new_operator(c) and proper_delete_operator(c)) or c.rootclass =='Standard_Transient' %}
-    py::class_<{{c.name}} {{pointer(c)}} {{super(c,module.classes)}}>(m,"{{cls_name(c)}}",R"#({{c.comment}})#")
+    py::class_<{{c.name}} {{pointer(c)}} {{super(c,class_dict)}}>(m,"{{cls_name(c)}}",R"#({{c.comment}})#")
     {% for con in c.constructors %}
     {% if not con.pointer_by_ref %}
         .def(py::init< {{ argtypes(con) }} >() {{argnames(con)}} )
