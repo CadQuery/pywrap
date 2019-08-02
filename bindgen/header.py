@@ -7,6 +7,8 @@ from path import Path
 
 from .utils import get_index
 
+
+
 def parse_tu(path,
              args=['-x', 'c++', '-std=c++11', '-D__CODE_GENERATOR__',
                    '-Iexternal/pybind11/include','-Wno-deprecated-declarations'],
@@ -26,7 +28,7 @@ def parse_tu(path,
     tr_unit = ix.parse('dummy.cxx',
                        args,
                        unsaved_files=[('dummy.cxx',f'{pre_includes}\n{src}')],
-                       options=TU.PARSE_INCOMPLETE | TU.PARSE_SKIP_FUNCTION_BODIES)
+                       options=TU.PARSE_INCOMPLETE )
     
     diag = list(tr_unit.diagnostics)
     if diag:
@@ -314,6 +316,7 @@ class FunctionInfo(BaseInfo):
         self.full_name = cur.displayname
         self.mangled_name = cur.mangled_name
         self.return_type = cur.result_type.spelling
+        self.inline = cur.get_definition().is_inline() if cur.get_definition() else False
         self.pointer_by_ref = any(self._pointer_by_ref(el) for el in cur.get_arguments())
         self.args = [(el.spelling,self._underlying_type(el)) for el in cur.get_arguments()]
         
@@ -394,6 +397,7 @@ class ClassInfo(object):
         self.name = cur.type.spelling
         self.comment = cur.brief_comment
         self.abstract = cur.is_abstract_record()
+        self.virtual = cur.is_virtual()
         
         self.constructors = self.filter_rvalues((ConstructorInfo(el) for el in get_public_constructors(cur)))
         
@@ -410,6 +414,7 @@ class ClassInfo(object):
         self.ptr = None
         self.superclass = None
         self.rootclass = None
+        self.superclasses = []
         
     def filter_rvalues(self,funcs):
         
@@ -464,9 +469,14 @@ class HeaderInfo(object):
         cls.superclass = inheritance.get(cls.name,None)
         
         rootclass = tmp = cls.superclass
+        if tmp:
+            cls.superclasses.append(tmp)
+        
         while tmp in inheritance:
             tmp = inheritance[tmp]
-            if tmp: rootclass = tmp
+            if tmp:
+                cls.superclasses.append(tmp)
+                rootclass = tmp
             
         cls.rootclass = rootclass
             
