@@ -5,8 +5,7 @@ import pickle
 from types import SimpleNamespace
 from path import Path
 
-from . import read_settings, run, parse_modules, render, validate_result
-from .header import parse_tu
+from . import read_settings, run, parse_modules, transform_modules, render, validate_result
 
 
 @click.group()
@@ -27,11 +26,27 @@ def main(ctx,clean,verbose,njobs):
 @click.pass_obj
 def parse(obj,configuration,output):
     
-    settings,module_mapping,modules = read_settings(configuration)
-    result = parse_modules(obj.verbose,obj.njobs,settings,module_mapping,modules)
+    settings,module_mapping,module_settings = read_settings(configuration)
+    result = parse_modules(obj.verbose,obj.njobs,settings,module_mapping,module_settings)
     
     with open(output,'wb') as f:
         pickle.dump(result,f)
+        
+@main.command()
+@click.argument('configuration')
+@click.argument('input')
+@click.argument('output')
+@click.pass_obj
+def transform(obj,configuration,input,output):
+    
+    with open(input,'rb') as f:
+        modules = pickle.load(f)
+    
+    settings,module_mapping,module_settings = read_settings(configuration)
+    modules,class_dict = transform_modules(obj.verbose,obj.njobs,settings,module_mapping,module_settings,modules)
+    
+    with open(output,'wb') as f:
+        pickle.dump((modules,class_dict),f)
 
 
 @main.command()

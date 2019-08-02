@@ -15,6 +15,7 @@ from jinja2 import Environment, FileSystemLoader
 from .module import ModuleInfo
 from .header import parse_tu
 
+
 def read_settings(p):
     
     with open(p) as f:
@@ -41,31 +42,35 @@ def read_symbols(p):
     
     sym = pd.read_csv(p,header=None,names=['adr','code','name'],delimiter=' ',
                       error_bad_lines=False).dropna()
-    
+    return sym
     # return only defined symbols
-    return sym.query('code == "T"')
+    #return sym.query('code == "T"')
 
 def remove_undefined(m,sym):
     
        
     #exclude methods
     for c in m.classes:
-        c.methods = [m for m in c.methods if sym.name.str.contains('{}::{}'.format(c.name,m.name)).any()]
+        c.methods = [el for el in c.methods if sym.name.str.contains('{}::{}'.format(c.name,el.name)).any()]
     
     #exclude functions
     m.functions = [f for f in m.functions if sym.name.str.startswith(f.name).any()]
     
 def remove_undefined_mangled(m,sym):
-    
        
     #exclude methods
     for c in m.classes:
-        c.methods = [m for m in c.methods if sym.name.str.endswith(m.mangled_name).any()]
-        c.static_methods = [m for m in c.static_methods if sym.name.str.endswith(m.mangled_name).any()]
-        c.constructors = [m for m in c.constructors if sym.name.str.endswith(m.mangled_name).any()]
+        c.methods_unfiltered = c.methods
+        c.static_methods_unfiltered = c.static_methods
+        c.constructors_unfiltered = c.constructors
+        
+        
+        c.methods = [el for el in c.methods if sym.name.str.endswith(el.mangled_name).any() or el.inline]
+        c.static_methods = [el for el in c.static_methods if sym.name.str.endswith(el.mangled_name).any() or el.inline]
+        c.constructors = [el for el in c.constructors if sym.name.str.endswith(el.mangled_name).any() or el.inline]
     
     #exclude functions
-    m.functions = [f for f in m.functions if sym.name.str.startswith(f.name).any()]
+    m.functions = [f for f in m.functions if sym.name.str.startswith(f.name).any() or f.inline]
 
 def transform_module(m,
                      sym,
@@ -97,11 +102,12 @@ def transform_module(m,
     for c in m.classes:
         if any([match(pat,c.name) for pat in settings['exceptions']]):
             m.exceptions.append(c)
-        elif c.superclass:
-            if any([match(pat,c.superclass) for pat in settings['exceptions']]):
-                m.exceptions.append(c)
-            elif any([match(pat,c.rootclass) for pat in settings['exceptions']]):
-                m.exceptions.append(c)
+        elif c.superclasses:
+            for s in c.superclasses:
+                if any([match(pat,s) for pat in settings['exceptions']]):
+                    m.exceptions.append(c)
+                    break
+    
     for ex in m.exceptions:
         m.classes.remove(ex)
     
@@ -147,20 +153,17 @@ def parse_modules(verbose,
                   settings_per_module):
 
     path = Path(settings['input_folder'])
-    file_pats = settings['include']
+    file_pats = settings['pats']
     file_exc = settings['exclude']
+    module_names = settings['modules']
+    file_pats = [p.format(m) for m in module_names for p in settings['pats']]
     
     all_files = reduce(add,(path.files(pat) for pat in file_pats))    
     all_files = [f for f in all_files if f.name not in file_exc]
-    module_names = sorted(set((module_mapping(p) for p in all_files)))
-    #add top level module headers
-    all_files += reduce(add,(path.files(name+'.hxx') for name in module_names))
     
     module_dict = split_into_modules(module_names,all_files)
-    sym = read_symbols(settings['Symbols']['path_mangled'])
     
     modules = []
-    class_dict = {}
     
     #parse modules using libclang
     def _process_module(name,files):
@@ -170,6 +173,17 @@ def parse_modules(verbose,
     
     modules = Parallel(prefer='processes',n_jobs=n_jobs)\
         (delayed(_process_module)(name,files) for name,files in tqdm(module_dict.items()))
+    
+    return modules
+    
+def transform_modules(verbose,
+                      n_jobs,
+                      settings,
+                      module_mapping,
+                      settings_per_module,
+                      modules):
+    
+    sym = read_symbols(settings['Symbols']['path_mangled'])
     
     #ignore functions and classes based on settings and update the global class_dict        
     def _filter_module(m):
@@ -183,13 +197,13 @@ def parse_modules(verbose,
     modules = Parallel(prefer='processes',n_jobs=n_jobs)\
         (delayed(_filter_module)(m) for m in tqdm(modules))
     
-    #update global class dictionary
+    #construct global class dictionary
+    class_dict = {}
     for m in modules:
         class_dict.update(m.class_dict)
         
     #sort modules
-    logzero.logger.info('sorting')
-    #import pdb; pdb.set_trace()
+    #logzero.logger.info('sorting')
     #modules = sort_modules(modules)
     
     return modules,class_dict
@@ -197,6 +211,7 @@ def parse_modules(verbose,
 def render(settings,modules,class_dict):
     
     name = settings['name']
+    module_names = settings['modules']
     output_path = Path(settings['output_folder'])
     operator_dict = settings['Operators']
 
@@ -237,7 +252,7 @@ def render(settings,modules,class_dict):
     
         with open('{}.cpp'.format(name),'w') as f:
                 f.write(template_main.render({'name' : name,
-                                              'modules' : modules}))
+                                              'modules' : module_names}))
     
         with open('makefile','w') as f:
                 f.write(template_make.render({'name' : name}))
