@@ -65,9 +65,9 @@ def remove_undefined_mangled(m,sym):
         c.constructors_unfiltered = c.constructors
         
         
-        c.methods = [el for el in c.methods if sym.name.str.endswith(el.mangled_name).any() or el.inline]
+        c.methods = [el for el in c.methods if sym.name.str.endswith(el.mangled_name).any() or el.inline or el.pure_virtual or el.virtual]
         c.static_methods = [el for el in c.static_methods if sym.name.str.endswith(el.mangled_name).any() or el.inline]
-        c.constructors = [el for el in c.constructors if sym.name.str.endswith(el.mangled_name).any() or el.inline]
+        c.constructors = [el for el in c.constructors if sym.name.str.endswith(el.mangled_name).any() or el.inline or el.pure_virtual or el.virtual]
     
     #exclude functions
     m.functions = [f for f in m.functions if sym.name.str.startswith(f.name).any() or f.inline]

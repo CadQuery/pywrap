@@ -6,7 +6,7 @@ namespace py = pybind11;
 
 // forward declaration of the register_* functions
 {% for mod in modules %}
-void register_{{mod.name}}(py::module&);
+void register_{{mod}}(py::module&);
 {% endfor %}
 
 // main module definiiton
@@ -14,7 +14,7 @@ PYBIND11_MODULE({{name}}, m) {
 
 // register submodules
 {% for mod in modules %}
-    register_{{mod.name}}(m);
+    register_{{mod}}(m);
 {% endfor %}
 
 }

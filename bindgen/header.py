@@ -375,8 +375,10 @@ class MethodInfo(FunctionInfo):
         super(MethodInfo,self).__init__(cur)
         
         self.const = cur.is_const_method()
+        self.virtual = cur.is_virtual_method()
+        self.pure_virtual = cur.is_pure_virtual_method()
 
-class ConstructorInfo(FunctionInfo):
+class ConstructorInfo(MethodInfo):
     '''Container for constructor parsing results
     '''
 
@@ -397,7 +399,6 @@ class ClassInfo(object):
         self.name = cur.type.spelling
         self.comment = cur.brief_comment
         self.abstract = cur.is_abstract_record()
-        self.virtual = cur.is_virtual()
         
         self.constructors = self.filter_rvalues((ConstructorInfo(el) for el in get_public_constructors(cur)))
         
@@ -419,6 +420,23 @@ class ClassInfo(object):
     def filter_rvalues(self,funcs):
         
         return [f for f in funcs if not any(('&&' in arg for _,arg in f.args))]
+    
+    def extend_defintion(self,other):
+        
+        new_comment = ''
+        if self.comment:
+            new_comment += self.comment
+        if other.comment:
+            new_comment += other.comment            
+        self.comment = new_comment
+        
+        self.constructors += other.constructors
+        self.methods += other.methods
+        self.static_methods += other.static_methods
+        self.operators += other.operators
+        self.static_operators += other.static_operators
+        self.destructors += other.destructors
+        self.nonpublic_destructors +=  other.nonpublic_destructors
         
 class ClassTemplateInfo(ClassInfo):
     
@@ -492,7 +510,14 @@ class HeaderInfo(object):
         self.enums = [EnumInfo(el) for el in get_enums(tr_unit)]
         self.functions = [FunctionInfo(el) for el in get_functions(tr_unit)]
         self.operators = [FunctionInfo(el) for el in get_operators(tr_unit)]
-        self.classes = {el.displayname:ClassInfo(el) for el in get_classes(tr_unit)}
+        
+        self.classes = {}
+        for el in get_classes(tr_unit):
+            if el.displayname in self.classes:
+                self.classes[el.displayname].extend_defintion(ClassInfo(el))                
+            else:
+                self.classes[el.displayname] = ClassInfo(el)
+        
         self.class_dict = {k : self.name for k in self.classes}
         self.class_templates = {el.displayname:ClassTemplateInfo(el) for el in get_class_templates(tr_unit)}
         self.inheritance = {k:v for k,v in get_inheritance_relations(tr_unit)}

@@ -15,6 +15,13 @@
     {% if cls.superclass in classes %}, {{cls.superclass}} {% endif %}
 {%- endmacro -%}
 
+{%- macro prototype(f) -%}
+    {{f.return_type}} {{f.name}}({% for n,t in f.args %}{{ t }} {{ n }}{{ "," if not loop.last }}{% endfor %})
+{%- endmacro -%}
+
+{%- macro pybind_overload(c,m) -%}
+    PYBIND11_OVERLOAD_PURE({{m.return_type}},{{c.name}},{{m.name}},{% for n,t in m.args %}{{ n }}{{ "," if not loop.last }}{% endfor %})
+{%- endmacro -%}
 
 {%- macro argtypes(f) -%}
     {% for _,t in f.args %}{{ t }}{{ "," if not loop.last }}{% endfor %}
