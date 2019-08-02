@@ -137,8 +137,8 @@ modules = [
 "BRepPrim",
 "BRepPrimAPI",
 "BRepSweep",
-"Sweep",]
-others=["ShapeAlgo",
+"Sweep",
+"ShapeAlgo",
 "ShapeAnalysis",
 "ShapeBuild",
 "ShapeConstruct",
@@ -172,14 +172,14 @@ others=["ShapeAlgo",
 "TopOpeBRepTool",
 "BRepFeat",
 "LocOpe",
+"Blend",
 "BRepBlend",
 "BRepFilletAPI",
-"Blend",
 "BlendFunc",
 "ChFi2d",
 "ChFi3d",
 "ChFiDS",
-"ChFiKPart",
+#"ChFiKPart",
 "FilletSurf",
 "BRepOffset",
 "BRepOffsetAPI",
@@ -346,7 +346,7 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
         include_header_pre = false
         exclude_functions = [,]
         exclude_classes = ["Poly_MakeLoops","Poly",]
-        exclude_methods = [,] 
+        exclude_methods = ["Poly_CoherentTriangulation::FindTriangle",] 
         exclude_typedefs = [,]
         include_header_post = false
         template_specializations = [,]
@@ -460,13 +460,108 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
         exclude_typedefs = ["BRepClass3d_BndBoxTree"]
         include_header_post = false
         template_specializations = [,]
-        
-    [Modules.BRepClass3d]
+    
+    [Modules.BRepAlgo]
     
         include_header_pre = false
         exclude_functions = [,]
         exclude_classes = [,] 
-        exclude_methods = ["Poly_CoherentTriangulation::FindTriangle",]
+        exclude_methods = [,]
+        exclude_typedefs = ["BRepAlgo_DataMapOfShapeInterference"]
+        include_header_post = false
+        template_specializations = [,]
+    
+    [Modules.BRepAlgo]
+    
+        include_header_pre = false
+        exclude_functions = [,]
+        exclude_classes = ["HLRBRep_CLPropsATool",] 
+        exclude_methods = [,]
         exclude_typedefs = [,]
         include_header_post = false
         template_specializations = [,]
+    
+    [Modules.TopOpeBRepDS]
+    
+        include_header_pre = false
+        exclude_functions = ["FDSSDM_s1s2makesordor","FUN_scanloi"]
+        exclude_classes = [,] 
+        exclude_methods = [,]
+        exclude_typedefs = ["TopOpeBRepDS_ShapeSurface"]
+        include_header_post = false
+        template_specializations = [,]
+        
+    [Modules.BRepAlgoAPI]
+    
+        include_header_pre = "BOPAlgo_Builder.hxx"
+        exclude_functions = [,]
+        exclude_classes = [,] 
+        exclude_methods = [,]
+        exclude_typedefs = ["TopOpeBRepDS_ShapeSurface"]
+        include_header_post = false
+        template_specializations = [,]
+        
+    [Modules.TopOpeBRep]
+    
+        include_header_pre = false
+        exclude_functions = [,]
+        exclude_classes = [,] 
+        exclude_methods = ["TopOpeBRep_DSFiller::PShapeClassifier","TopOpeBRep_FaceEdgeFiller::PShapeClassifier"]
+        exclude_typedefs = ["TopOpeBRep_DataMapOfTopolTool"]
+        include_header_post = false
+        template_specializations = [,]
+    
+    [Modules.BRepFill]
+    
+        include_header_pre = false
+        exclude_functions = [,]
+        exclude_classes = [,] 
+        exclude_methods = [,]
+        exclude_typedefs = ["BRepFill_DataMapOfShapeHArray2OfShape"]
+        include_header_post = false
+        template_specializations = [,]
+        
+     [Modules.ChFi3d]
+     #error: invalid use of incomplete type ‘class Geom_BSplineCurve’
+        include_header_pre = false
+        exclude_functions = ["ChFi3d_ApproxByC2","ChFi3d_SearchPivot","ChFi3d_EnlargeFace"]
+        exclude_classes = [,] 
+        exclude_methods = [,]
+        exclude_typedefs = [,]
+        include_header_post = false
+        template_specializations = [,]
+    
+    [Modules.BOPDS]
+    
+        include_header_pre = false
+        exclude_functions = [,]
+        exclude_classes = [,] 
+        exclude_methods = [,]
+        exclude_typedefs = ["BOPDS_DataMapOfPaveBlockCommonBlock"]
+        include_header_post = false
+        template_specializations = [,]
+        
+    [Modules.BRepMesh]
+    
+        include_header_pre = false
+        exclude_functions = [,]
+        exclude_classes = ["BRepMesh_Triangle",] #constructor with int&[3]
+        exclude_methods = ["BRepMesh_GeomTool::IntLinLin",]
+        exclude_typedefs = [,]
+        include_header_post = false
+        template_specializations = [,]
+        
+    [Modules.TopOpeBRepTool]
+    
+        include_header_pre = false
+        exclude_functions = [,]
+        exclude_classes = [,] 
+        exclude_methods = [,]
+        exclude_typedefs = ["TopOpeBRepTool_IndexedDataMapOfSolidClassifier"]
+        include_header_post = false
+        template_specializations = [,]
+        
+        
+        
+    
+    
