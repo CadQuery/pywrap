@@ -210,6 +210,22 @@ def get_public_methods(cls):
     for child in get_xx(cls,CursorKind.CXX_METHOD,AccessSpecifier.PUBLIC):
         if not child.is_static_method() and not child.spelling.startswith('operator'):
             yield child
+            
+def get_protected_pure_virtual_methods(cls):
+    '''Protected pure virtual methods of a given class
+    '''
+
+    for child in get_xx(cls,CursorKind.CXX_METHOD,AccessSpecifier.PROTECTED):
+        if not child.is_static_method() and not child.spelling.startswith('operator') and child.is_pure_virtual_method():
+            yield child
+            
+def get_private_pure_virtual_methods(cls):
+    '''Private pure virtual methods of a given class
+    '''
+
+    for child in get_xx(cls,CursorKind.CXX_METHOD,AccessSpecifier.PRIVATE):
+        if not child.is_static_method() and not child.spelling.startswith('operator') and child.is_pure_virtual_method():
+            yield child
 
 def get_public_static_methods(cls):
     '''Public static methods of a given class
@@ -403,6 +419,9 @@ class ClassInfo(object):
         self.constructors = self.filter_rvalues((ConstructorInfo(el) for el in get_public_constructors(cur)))
         
         self.methods = self.filter_rvalues((MethodInfo(el) for el in get_public_methods(cur)))
+        self.protected_virtual_methods = self.filter_rvalues((MethodInfo(el) for el in get_protected_pure_virtual_methods(cur)))
+        self.private_virtual_methods = self.filter_rvalues((MethodInfo(el) for el in get_private_pure_virtual_methods(cur)))
+        
         self.static_methods = self.filter_rvalues((MethodInfo(el) for el in get_public_static_methods(cur)))
 
         self.operators = [MethodInfo(el) for el in get_public_operators(cur)]        
@@ -416,6 +435,10 @@ class ClassInfo(object):
         self.superclass = None
         self.rootclass = None
         self.superclasses = []
+        
+        self.methods_dict = {m.name:m for m in self.methods}
+        self.protected_virtual_methods_dict = {m.name:m for m in self.protected_virtual_methods}
+        self.private_virtual_methods_dict = {m.name:m for m in self.private_virtual_methods}
         
     def filter_rvalues(self,funcs):
         
@@ -432,6 +455,8 @@ class ClassInfo(object):
         
         self.constructors += other.constructors
         self.methods += other.methods
+        self.protected_virtual_methods += other.protected_virtual_methods
+        self.private_virtual_methods += other.private_virtual_methods
         self.static_methods += other.static_methods
         self.operators += other.operators
         self.static_operators += other.static_operators
