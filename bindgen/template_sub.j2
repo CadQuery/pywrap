@@ -65,8 +65,16 @@ py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#
         using {{c.name}}::{{c.name}};
         
         {% for m in c.methods %}{% if m.pure_virtual %}
-        {{ prototype(m) }}{ {{pybind_overload(c,m)}} };
+        {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
         {% endif %}{% endfor %}
+        
+        {% for super in c.superclasses %}
+        {% for p in module.classes %}{% if super == p.name %}
+        {% for m in p.methods %}{% if m.pure_virtual and m.name not in c.methods_dict%}
+        {{ prototype(m) }} override { {{pybind_overload(p,m)}} };
+        {% endif %}{% endfor %}
+        {% endif %}{% endfor %}
+        {% endfor %}
     };
 {% endif %}{% endfor %}
 
