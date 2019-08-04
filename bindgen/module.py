@@ -12,7 +12,7 @@ class ModuleInfo(object):
         return Path(x).splitpath()[-1].split('.')[-2].split('_')[0]
     
     def __init__(self,name,prefix,paths):
-        
+            
         self.prefix = prefix
         self.name = name
         self.headers = []
@@ -22,20 +22,6 @@ class ModuleInfo(object):
         for p in paths:
             logger.debug(p)
             self.headers.append(process_header(p))
-        
-        dependencies = []
-        
-        logger.debug('Processing dependancies')
-        
-        for h in self.headers:            
-            logger.debug(h.name)
-            dependencies += \
-            [self.get_module_name(inc) for inc in h.dependencies if \
-             inc not in paths \
-             and prefix in inc \
-             and name not in Path(inc).splitpath()[-1]]
-             
-        self.dependencies = set(dependencies) - set((name,))
         
         self.classes = []
         self.class_dict = {}

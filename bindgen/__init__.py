@@ -119,23 +119,23 @@ def sort_modules(modules):
     mod_dict = {m.name:m for m in modules}
     
     #add modules withouth any dependanceis to the top
-    modules_sorted = [m for m in modules if not m.dependencies]
+    modules_sorted = [m.name for m in modules if not m.dependencies]
         
     #remove them form the
-    for m in modules_sorted: modules.remove(m)
+    for m in modules_sorted: modules.remove(mod_dict[m])
     
     #handle the rest
     while modules:
         to_append = []
         for m in modules:
-            deps = [mod_dict[d] in modules_sorted for d in m.dependencies if d in mod_dict]
+            deps = [d in modules_sorted for d in m.dependencies]
             if all(deps):
-                to_append.append(m)
+                to_append.append(m.name)
         
-        for m in to_append: modules.remove(m)
+        for m in to_append: modules.remove(mod_dict[m])
         modules_sorted.extend(to_append)
         
-    return modules_sorted
+    return [mod_dict[m] for m in modules_sorted]
 
 def split_into_modules(names,files):
     
@@ -203,8 +203,13 @@ def transform_modules(verbose,
         class_dict.update(m.class_dict)
         
     #sort modules
-    #logzero.logger.info('sorting')
-    #modules = sort_modules(modules)
+    logzero.logger.info('sorting')
+    
+    cls_dict = {c.name : m.name for m in modules for c in m.classes}
+    for m in modules:
+        m.dependencies = set([cls_dict[c.superclass] for c in m.classes if c.superclass in cls_dict and cls_dict[c.superclass] != m.name])
+        
+    modules = sort_modules(modules)
     
     return modules,class_dict
 
