@@ -44,11 +44,11 @@
 {%- endmacro -%}
 
 {%- macro template_args_typename(t) -%}
-    <{% for type,name in t.type_params %}{% if type %}{{ type }}{% else %}typename{% endif %} {{name}}{{ "," if not loop.last }}{% endfor %}>
+    <{% for type,name,default in t.type_params %}{% if type %}{{ type }}{% else %}typename{% endif %} {{name}}{% if default %}={{default}}{% endif %}{{ "," if not loop.last }}{% endfor %}>
 {%- endmacro -%}
 
 {%- macro template_args(t) -%}
-    <{% for type,name in t.type_params %}{{name}}{{ "," if not loop.last }}{% endfor %}>
+    <{% for type,name,default in t.type_params %}{{name}}{{ "," if not loop.last }}{% endfor %}>
 {%- endmacro -%}
 
 {%- macro template_method_pointer(cls,f) -%}

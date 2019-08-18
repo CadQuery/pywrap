@@ -176,7 +176,10 @@ def get_template_type_params(cls):
     '''
     
     for t in get_x_multi(cls,(CursorKind.TEMPLATE_TYPE_PARAMETER, CursorKind.TEMPLATE_NON_TYPE_PARAMETER)):
-        yield t
+        if len(list(t.get_children())) == 0:
+            yield t,None
+        else:
+            yield t,''.join([tok.spelling for tok in t.get_tokens()][3:])
     
 def get_base_class(c):
     '''Get all class-baseclass pairs with public inheritance
@@ -463,13 +466,19 @@ class ClassInfo(object):
         self.destructors += other.destructors
         self.nonpublic_destructors +=  other.nonpublic_destructors
         
+        self.methods_dict = {**self.methods_dict,**other.methods_dict}
+        self.protected_virtual_methods_dict = {**self.protected_virtual_methods_dict,**other.protected_virtual_methods_dict}
+        self.private_virtual_methods_dict = {**self.protected_virtual_methods_dict,**other.protected_virtual_methods_dict}
+        
 class ClassTemplateInfo(ClassInfo):
     
     def __init__(self,cur):
         
          super(ClassTemplateInfo,self).__init__(cur)
          self.name = cur.spelling
-         self.type_params = [(None if el.spelling == el.type.spelling else el.type.spelling,el.spelling) for el in get_template_type_params(cur)]
+         self.type_params = [(None if el.spelling == el.type.spelling else el.type.spelling,
+                              el.spelling,
+                              default) for el,default in get_template_type_params(cur)]
 
 class TypedefInfo(BaseInfo):
     
