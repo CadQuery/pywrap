@@ -211,9 +211,25 @@ def transform_modules(verbose,
         
     modules = sort_modules(modules)
     
+    #remove duplicate typedefs
+    logzero.logger.info('removing duplicate typedefs')
+    
+    typedefs_dict = {}
+    for m in modules:
+        for h in m.headers:
+            to_remove = []
+            for t in h.typedefs:
+                if t.type in typedefs_dict:
+                    typedefs_dict[t.type].append(t)
+                    to_remove.append(t)
+                else:
+                    typedefs_dict[t.type] = [t]
+                    
+            for t in to_remove: h.typedefs.remove(t)
+                    
     return modules,class_dict
 
-def render(settings,modules,class_dict):
+def render(settings,module_settings,modules,class_dict):
     
     name = settings['name']
     module_names = settings['modules']
@@ -244,7 +260,8 @@ def render(settings,modules,class_dict):
                                              'include_post' : post,
                                              'references_inner' : lambda name,method: name+"::" in method.return_type or any([name+"::" in a for _,a in method.args]),
                                              'proper_new_operator' : lambda cls: [op for op in cls.static_operators if op.name =='operator new' and len(op.args) == 1],
-                                             'proper_delete_operator' : lambda cls: [op for op in cls.static_operators if op.name =='operator delete' and len(op.args) == 1]}))
+                                             'proper_delete_operator' : lambda cls: [op for op in cls.static_operators if op.name =='operator delete' and len(op.args) == 1],
+                                             'module_settings' : module_settings.get(m.name,None)}))
     
             with open('{}.hxx'.format(m.name),'w') as f:
                 f.write(template_tmpl.render({'module' : m,
