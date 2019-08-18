@@ -55,7 +55,7 @@ def transform(obj,configuration,input,output):
 @click.pass_obj
 def generate(obj,configuration,input):
     
-    settings,module_mapping,modules = read_settings(configuration)
+    settings,module_mapping,module_settings = read_settings(configuration)
     out = Path(settings['output_folder'])
     
     if obj.clean:
@@ -64,7 +64,7 @@ def generate(obj,configuration,input):
     with open(input,'rb') as f:
         modules,class_dict = pickle.load(f)
         
-    render(settings,modules,class_dict)
+    render(settings,module_settings,modules,class_dict)
     
     pre = settings['Extras']['include_pre']
     post = settings['Extras']['include_pre']
