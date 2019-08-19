@@ -16,31 +16,31 @@
 {%- endmacro -%}
 
 {%- macro prototype(f) -%}
-    {{f.return_type}} {{f.name}}({% for n,t in f.args %}{{ t }} {{ n }}{{ "," if not loop.last }}{% endfor %}){% if f.const %} const {%endif%}
+    {{f.return_type}} {{f.name}}({% for n,t,d in f.args %}{{ t }} {{ n }}{{ "," if not loop.last }}{% endfor %}){% if f.const %} const {%endif%}
 {%- endmacro -%}
 
 {%- macro pybind_overload(c,m) -%}
-    PYBIND11_OVERLOAD_PURE({{m.return_type}},{{c.name}},{{m.name}},{% for n,t in m.args %}{{ n }}{{ "," if not loop.last }}{% endfor %})
+    PYBIND11_OVERLOAD_PURE({{m.return_type}},{{c.name}},{{m.name}},{% for n,t,d in m.args %}{{ n }}{{ "," if not loop.last }}{% endfor %})
 {%- endmacro -%}
 
 {%- macro argtypes(f) -%}
-    {% for _,t in f.args %}{{ t }}{{ "," if not loop.last }}{% endfor %}
+    {% for _,t,_ in f.args %}{{ t }}{{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
 
 {%- macro argnames(f) -%}
-    {% for arg,_ in f.args %} {{ "," if loop.first }} py::arg("{{arg}}"){{ "," if not loop.last }}{% endfor %}
+    {% for arg,t,d in f.args %} {{ "," if loop.first }} py::arg("{{arg}}"){% if d %}=static_cast<{{t}}>({{d}}){% endif %}{{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
 
 {%- macro method_pointer(cls,f) -%}
-    ({{f.return_type}} ({{cls.name}}::*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) static_cast<{{f.return_type}} ({{cls.name}}::*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}>(&{{cls.name}}::{{f.name}})
+    ({{f.return_type}} ({{cls.name}}::*)({% for _,t,d in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) static_cast<{{f.return_type}} ({{cls.name}}::*)({% for _,t,_ in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}>(&{{cls.name}}::{{f.name}})
 {%- endmacro -%}
 
 {%- macro static_method_pointer(cls,f) -%}
-    ({{f.return_type}} (*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) static_cast<{{f.return_type}} (*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}>(&{{cls.name}}::{{f.name}})
+    ({{f.return_type}} (*)({% for _,t,d in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) static_cast<{{f.return_type}} (*)({% for _,t,_ in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}>(&{{cls.name}}::{{f.name}})
 {%- endmacro -%}
 
 {%- macro function_pointer(f) -%}
-    ({{f.return_type}} (*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}))  static_cast<{{f.return_type}} (*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %})>(&{{f.name}})
+    ({{f.return_type}} (*)({% for _,t,d in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}))  static_cast<{{f.return_type}} (*)({% for _,t,_ in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %})>(&{{f.name}})
 {%- endmacro -%}
 
 {%- macro template_args_typename(t) -%}
@@ -52,11 +52,11 @@
 {%- endmacro -%}
 
 {%- macro template_method_pointer(cls,f) -%}
-    ({{f.return_type}} ({{cls.name}}{{template_args(cls)}}::*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}{{template_args(cls)}}::{{f.name}}
+    ({{f.return_type}} ({{cls.name}}{{template_args(cls)}}::*)({% for _,t,d in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}{{template_args(cls)}}::{{f.name}}
 {%- endmacro -%}
 
 {%- macro template_static_method_pointer(cls,f) -%}
-    ({{f.return_type}} (*)({% for _,t in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}{{template_args(cls)}}::{{f.name}}
+    ({{f.return_type}} (*)({% for _,t,d in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}{{template_args(cls)}}::{{f.name}}
 {%- endmacro -%}
 
 {%- macro template_pointer(cls) -%}

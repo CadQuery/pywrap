@@ -337,7 +337,7 @@ class FunctionInfo(BaseInfo):
         self.return_type = cur.result_type.spelling
         self.inline = cur.get_definition().is_inline() if cur.get_definition() else False
         self.pointer_by_ref = any(self._pointer_by_ref(el) for el in cur.get_arguments())
-        self.args = [(el.spelling,self._underlying_type(el)) for el in cur.get_arguments()]
+        self.args = [(el.spelling,self._underlying_type(el),self._default_value(el)) for el in cur.get_arguments()]
         
         
     def _pointer_by_ref(self,cur):
@@ -382,6 +382,18 @@ class FunctionInfo(BaseInfo):
             rv = cur.type.spelling
             
         return rv
+    
+    def _default_value(self,cur):
+        '''Tries to extract default value
+        '''
+        
+        rv = None
+        tokens = [t.spelling for t in cur.get_tokens()]
+        if '=' in tokens:
+            rv = tokens[-1]
+        
+        return rv
+        
         
             
 
@@ -445,7 +457,7 @@ class ClassInfo(object):
         
     def filter_rvalues(self,funcs):
         
-        return [f for f in funcs if not any(('&&' in arg for _,arg in f.args))]
+        return [f for f in funcs if not any(('&&' in arg for _,arg,_ in f.args))]
     
     def extend_defintion(self,other):
         
