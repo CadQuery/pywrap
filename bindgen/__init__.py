@@ -19,10 +19,12 @@ from .header import parse_tu
 
 module_schema = Schema({
         Optional('include_header_pre',default=None) : str,
+        Optional('include_body_pre',default=None) : str,
         Optional('exclude_functions',default=[]) : [str],
         Optional('exclude_classes',default=[]) : [str], 
         Optional('exclude_methods',default=[]) : [str],
         Optional('exclude_typedefs',default=[]) : [str],
+        Optional('include_body_post',default=None) : str,
         Optional('include_header_post',default=None) : str,
         Optional('template_specializations',default=[]) : [str]
         })

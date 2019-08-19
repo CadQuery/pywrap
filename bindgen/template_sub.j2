@@ -50,6 +50,11 @@ void register_{{module.name}}(py::module &main_module) {
 
 py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#");
 
+// user-defined inclusion per module in the body
+{% if module_settings['include_body_pre'] %}
+{{ module_settings['include_body_pre'] }}
+{% endif %}
+
 // enums
 {% for enum in module.enums %}
 {% if enum.anonymous %}
@@ -188,12 +193,17 @@ py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#
 register_occ_exception<{{ex.name}}>(m, "{{ex.name}}");
 {% endfor %}
 
+// user-defined post-inclusion per module in the body
+{% if module_settings['include_body_post'] %}
+{{ module_settings['include_body_post'] }}
+{% endif %}
+
+};
+
 // user-defined post-inclusion per module
 {% if module_settings['include_header_post'] %}
 {{ module_settings['include_header_post'] }}
 {% endif %}
-
-};
 
 // user-defined post
 {% if include_post %}
