@@ -17,6 +17,13 @@ from .module import ModuleInfo
 from .header import parse_tu
 
 
+class_schema = Schema({
+        Optional('exclude_constructors',default=None) : [int],
+        Optional('additional_constructors',default=None) : [str],
+        Optional('additional_methods',default=None) : [str],
+        Optional('additional_static_methods',default=None) : [str]
+        })
+
 module_schema = Schema({
         Optional('include_header_pre',default=None) : str,
         Optional('include_body_pre',default=None) : str,
@@ -26,7 +33,8 @@ module_schema = Schema({
         Optional('exclude_typedefs',default=[]) : [str],
         Optional('include_body_post',default=None) : str,
         Optional('include_header_post',default=None) : str,
-        Optional('template_specializations',default=[]) : [str]
+        Optional('template_specializations',default=[]) : [str],
+        Optional('Classes',default={}) : {str : class_schema}
         })
 
 global_schema = Schema({'name' : str,
