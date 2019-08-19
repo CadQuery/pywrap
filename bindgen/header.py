@@ -390,7 +390,7 @@ class FunctionInfo(BaseInfo):
         rv = None
         tokens = [t.spelling for t in cur.get_tokens()]
         if '=' in tokens:
-            rv = tokens[-1]
+            rv = ' '.join(tokens[tokens.index('=')+1:])
         
         return rv
         
