@@ -11,15 +11,46 @@ from joblib import Parallel, delayed
 from path import Path
 from tqdm import tqdm
 from jinja2 import Environment, FileSystemLoader
+from schema import Schema, Optional
 
 from .module import ModuleInfo
 from .header import parse_tu
+
+
+module_schema = Schema({
+        Optional('include_header_pre',default=None) : str,
+        Optional('exclude_functions',default=[]) : [str],
+        Optional('exclude_classes',default=[]) : [str], 
+        Optional('exclude_methods',default=[]) : [str],
+        Optional('exclude_typedefs',default=[]) : [str],
+        Optional('include_header_post',default=None) : str,
+        Optional('template_specializations',default=[]) : [str]
+        })
+
+global_schema = Schema({'name' : str,
+                        'input_folder' : str,
+                        'output_folder' : str,
+                        'pats' : [str],
+                        'modules' : [str],
+                        Optional('exclude',default=[]) : [str],
+                        Optional('exceptions',default=[]) : [str],
+                        'module_mapping' : str,
+                        'Operators' : {str:[str]},
+                        'Extras' : {Optional('include_pre',default=None) : str,
+                                    Optional('include_post',default=None) : str},
+                        'Symbols' : {'path' : str,
+                                     'path_mangled' : str},
+                        Optional('Modules',default=None) : {str : module_schema}
+                        })
 
 
 def read_settings(p):
     
     with open(p) as f:
         settings = toml.load(f)
+        
+    #validate
+    settings = global_schema.validate(settings)
     
     #extract and compile the module name extraction callable
     code = compile('func={}'.format(settings.pop('module_mapping')),'<tmp>','exec')
@@ -270,7 +301,7 @@ def render(settings,module_settings,modules,class_dict):
                                              'operator_dict' : operator_dict,
                                              'include_pre' : pre,
                                              'include_post' : post,
-                                             'references_inner' : lambda name,method: name+"::" in method.return_type or any([name+"::" in a for _,a in method.args])}))
+                                             'references_inner' : lambda name,method: name+"::" in method.return_type or any([name+"::" in a for _,a,_ in method.args])}))
     
         with open('{}.cpp'.format(name),'w') as f:
                 f.write(template_main.render({'name' : name,
