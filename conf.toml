@@ -1,8 +1,8 @@
 name = "OCP"
-input_folder = "/home/adam/anaconda2/envs/cqgui/include/opencascade"
+input_folder = "~/anaconda2/envs/cqgui/include/opencascade"
 output_folder = "./generated"
 
-include = ["*.hxx",]
+include = ["Standard*.hxx"]
 
 module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 

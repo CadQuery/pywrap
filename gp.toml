@@ -1,6 +1,6 @@
 name = "OCP"
 input_folder = "/home/adam/anaconda2/envs/cpp-py-bindgen/include/opencascade"
-output_folder = "./generated2"
+output_folder = "./generated3"
 
 pats = ["{}_*.hxx","{}.hxx"]
 
@@ -58,8 +58,8 @@ modules = ["Standard",
 "AdvApp2Var",
 "AppCont",
 "AppParCurves",
-"AppDef",
 "Approx",
+"AppDef",
 "BndLib",
 "CPnts",
 "Extrema",
@@ -212,7 +212,8 @@ modules = ["Standard",
 
 exclude = ["Standard_Handle.hxx","Standard",
            "math_GaussPoints.hxx","NCollection_Shared.hxx","OSD_WNT.hxx",
-           "Geom2dToIGES","BRepGProp_Gauss.hxx","BRepLib_CheckCurveOnSurface.hxx"]
+           "Geom2dToIGES","BRepGProp_Gauss.hxx","BRepLib_CheckCurveOnSurface.hxx",
+           "BVH_Types.hxx","BVH_RadixSorter.hxx"]
 
 exceptions = ["Standard_Failure"]
 
@@ -235,7 +236,6 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 [Extras]
 
     include_pre = "OCP_specific.inc"
-    include_post = false
     
 [Symbols]
 
@@ -246,450 +246,193 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 
     [Modules.gp]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,] 
         exclude_typedefs = ["gp",]
-        include_header_post = false
-        template_specializations = [,]
-        
-    [Modules.math]
-    
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,]
-        exclude_methods = [,]
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.Standard]
     
-        include_header_pre = false
         exclude_functions = ["HashCode"]
-        exclude_classes = [,]
-        exclude_methods = [,]
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.Resource]
     
-        include_header_pre = false
-        exclude_functions = [,]
         exclude_classes = ["Resource_NoSuchResource",]
-        exclude_methods = [,]
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.NCollection]
     
-        include_header_pre = false
-        exclude_functions = [,]
+        include_body_pre = "const size_t DefaultBlockSize = 24600;"
         exclude_classes = ["NCollection","NCollection_ListNode"]
-        exclude_methods = [,]
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.OSD]
     
-        include_header_pre = false
         exclude_functions = ["OSD","OSD_OpenStream"]
         exclude_classes = ["OSD",]
         exclude_methods = ["OSD::RealToCString","OSD_SharedLibrary::DlSymb"]
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.Storage]
     
-        include_header_pre = false
-        exclude_functions = [,]
         exclude_classes = ["Storage_StreamExtCharParityError","Storage_StreamTypeMismatchError","Storage_StreamUnknownTypeError"] 
-        exclude_methods = [,] 
         exclude_typedefs = ["Storage","Storage_MapOfCallBack","Storage_MapOfPers"]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.TCollection]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
         exclude_methods = ["TCollection_ExtendedString::ToUTF8CString"] 
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = [,]
-        
-    [Modules.Message]
-    
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,] 
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.TColStd]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,] 
         exclude_typedefs = ["TColStd_DataMapOfIntegerTransient","TColStd","TColStd_DataMapOfTransientTransient","TColStd_IndexedDataMapOfTransientTransient"]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.Plugin]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,] 
         exclude_typedefs = ["Plugin","Plugin_MapOfFunctions"]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.Units]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
         exclude_methods = ["UnitsMethods::RadianToDegree","UnitsMethods::DegreeToRadian","UnitsMethods::MirrorPCurve"] 
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.Poly]
     
-        include_header_pre = false
-        exclude_functions = [,]
         exclude_classes = ["Poly_MakeLoops","Poly",]
-        exclude_methods = ["Poly_CoherentTriangulation::FindTriangle",] 
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = [,]
+        exclude_methods = ["Poly_CoherentTriangulation::FindTriangle","Poly_CoherentTriangulation::RemoveDegenerated"]         
         
     [Modules.Expr]
     
-        include_header_pre = false
-        exclude_functions = [,]
         exclude_classes = ["ExprIntrp",]
-        exclude_methods = [,] 
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.BSplCLib]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,]
         exclude_methods = ["BSplCLib::DN",] 
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = [,]
+
         
     [Modules.TopoDS]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,] 
         exclude_typedefs = ["TopoDS_ListOfShape"]
-        include_header_post = false
-        template_specializations = [,]
-    
-    [Modules.GeomInt]
-    
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]#"GeomInt",] 
-        exclude_typedefs = []
-        include_header_post = false
-        template_specializations = [,]
-    
+       
     [Modules.IntPolyh]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["IntPolyh_ArrayOfEdges","IntPolyh_ArrayOfTriangles","IntPolyh_ArrayOfPointNormal","IntPolyh_ArrayOfSectionLines","IntPolyh","IntPolyh_ArrayOfTangentZones","IntPolyh_ArrayOfPoints"]
-        include_header_post = false
-        template_specializations = [,]    
     
     [Modules.BRepBuilderAPI]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["BRepBuilderAPI_CellFilter","BRepBuilderAPI_BndBoxTree"]
-        include_header_post = false
-        template_specializations = [,]
+
     
     [Modules.MAT2d]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["MAT2d_DataMapOfIntegerConnexion"]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.BRepExtrema]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["BRepExtrema_MapOfIntegerPackedMapOfInteger"]
-        include_header_post = false
-        template_specializations = [,]
         
      [Modules.MAT]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["MAT_DataMapOfIntegerBisector","MAT_DataMapOfIntegerArc","MAT","MAT_DataMapOfIntegerNode","MAT_DataMapOfIntegerBasicElt"]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.BRepCheck]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["BRepCheck_DataMapOfShapeResult"]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.BRepClass3d]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["BRepClass3d_BndBoxTree"]
-        include_header_post = false
-        template_specializations = [,]
     
     [Modules.BRepAlgo]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["BRepAlgo_DataMapOfShapeInterference"]
-        include_header_post = false
-        template_specializations = [,]
     
     [Modules.HLRBRep]
     
-        include_header_pre = false
-        exclude_functions = [,]
         exclude_classes = ["HLRBRep_CLPropsATool",] 
-        exclude_methods = [,]
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = [,]
     
     [Modules.TopOpeBRepDS]
     
-        include_header_pre = false
         exclude_functions = ["FDSSDM_s1s2makesordor","FUN_scanloi"]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["TopOpeBRepDS_ShapeSurface"]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.BRepAlgoAPI]
     
-        include_header_pre = "BOPAlgo_Builder.hxx"
-        exclude_functions = [,]
-        exclude_classes = [,] 
+        include_header_pre = "#include <BOPAlgo_Builder.hxx>"
         exclude_methods = ["BRepAlgoAPI_BuilderAlgo::Builder",] #this will be fixed by the include
         exclude_typedefs = ["TopOpeBRepDS_ShapeSurface"]
-        include_header_post = false
-        template_specializations = [,]
+
         
     [Modules.TopOpeBRep]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
         exclude_methods = ["TopOpeBRep_DSFiller::PShapeClassifier","TopOpeBRep_FaceEdgeFiller::PShapeClassifier","TopOpeBRep_FacesFiller::PShapeClassifier"]
         exclude_typedefs = ["TopOpeBRep_DataMapOfTopolTool"]
-        include_header_post = false
-        template_specializations = [,]
+
     
     [Modules.BRepFill]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["BRepFill_DataMapOfShapeHArray2OfShape"]
-        include_header_post = false
-        template_specializations = [,]
         
      [Modules.ChFi3d]
      #error: invalid use of incomplete type ‘class Geom_BSplineCurve’
-        include_header_pre = false
         exclude_functions = ["ChFi3d_ApproxByC2","ChFi3d_SearchPivot","ChFi3d_EnlargeFace"]
-        exclude_classes = [,] 
-        exclude_methods = [,]
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = [,]
+
     
     [Modules.BOPDS]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["BOPDS_DataMapOfPaveBlockCommonBlock"]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.BRepMesh]
     
-        include_header_pre = false
-        exclude_functions = [,]
         exclude_classes = ["BRepMesh_Triangle",] #constructor with int&[3]
         exclude_methods = ["BRepMesh_GeomTool::IntLinLin","BRepMesh_DataStructureOfDelaun::ElementNodes"]
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = [,]
-        
+                
     [Modules.TopOpeBRepTool]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["TopOpeBRepTool_IndexedDataMapOfSolidClassifier"]
-        include_header_post = false
-        template_specializations = [,]
     
     [Modules.BOPTools]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["BOPTools_BoxBndTree"]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.Aspect]
     
         include_header_pre = "struct __GLXFBConfigRec {};"
-        exclude_functions = [,]
-        exclude_classes = []
         exclude_methods = ["Aspect_NeutralWindow::NativeFBConfig","Aspect_Window::NativeFBConfig","Aspect_NeutralWindow::SetNativeHandles","Aspect_DisplayConnection::GetDisplay"]
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = [,]
+
         
     [Modules.SelectMgr]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["SelectMgr_IndexedMapOfOwner","SelectMgr_MapOfObjectSensitives","SelectMgr_FrustumCache","SelectMgr_IndexedMapOfHSensitive"]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.OpenGl]
     
         include_header_pre = "#include <Message_Messenger.hxx>"
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["OpenGl_SequenceOfLayers","OpenGl_SetterList","OpenGl_MapOfHatchStylesAndIds","OpenGl_MapOfZLayerSettings","OpenGl_IndexedMapOfStructure","OpenGl_MapOfShaderPrograms","OpenGl_IndexedMapOfStructure"]
-        include_header_post = false
-        template_specializations = [,]
     
     [Modules.StdSelect]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["StdSelect_IndexedDataMapOfOwnerPrs"]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.Xw]
     
         include_header_pre = "struct __GLXFBConfigRec {};"
-        exclude_functions = [,]
-        exclude_classes = []
-        exclude_methods = []
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = [,]
+        include_body_pre = 'py::class_<__GLXFBConfigRec>(m, "__GLXFBConfigRec");'
         
     [Modules.MeshVS]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["MeshVS_NodePair","MeshVS_DataMapOfIntegerOwner","MeshVS_DataMapOfHArray1OfSequenceOfInteger","MeshVS_DataMapOfIntegerMeshEntityOwner"]
-        include_header_post = false
-        template_specializations = [,]
         
     [Modules.AIS]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = ["AIS_DataMapOfShapeDrawer","AIS_DataMapOfIOStatus","AIS_DataMapOfILC","AIS_IndexedDataMapOfOwnerPrs"]
+        include_body_pre = "auto OptionsForAttach = [](){return AIS_Manipulator::OptionsForAttach();};"
+        exclude_typedefs = ["AIS_DataMapOfShapeDrawer","AIS_DataMapOfIOStatus","AIS_DataMapOfILC","AIS_IndexedDataMapOfOwnerPrs"]
     
     [Modules.Font]
     
         include_header_pre = "struct FT_LibraryRec_ {};"
-        exclude_functions = [,]
-        exclude_classes = []
-        exclude_methods = []
-        exclude_typedefs = [,]
-        include_header_post = false
-        template_specializations = [,]
 
     [Modules.Select3D]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["Select3D_IndexedMapOfEntity","Graphic3d_Vec3d","Select3D_BndBox3d"]  #couldn't deduce template parameter ‘Hasher’
-        include_header_post = false
-        template_specializations = [,]
+
     
     [Modules.Graphic3d]
     
-        include_header_pre = false
-        exclude_functions = [,]
-        exclude_classes = [,] 
-        exclude_methods = [,]
         exclude_typedefs = ["Graphic3d_IndexedMapOfView","Graphic3d_IndexedMapOfAddress","Graphic3d_MapOfStructure","Graphic3d_NMapOfTransient","Graphic3d_MapOfObject","Graphic3d_Vec4u","Graphic3d_Vec2u","Graphic3d_Vec3u","Graphic3d_Vec3d"]
-        include_header_post = false
-        template_specializations = [,]
+        
+    [Modules.AdvApprox]
+    
+        exclude_methods = ['AdvApprox_EvaluatorFunction::Evaluate']
