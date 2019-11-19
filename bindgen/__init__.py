@@ -166,6 +166,7 @@ def sort_modules(modules):
     for m in modules_sorted: modules.remove(mod_dict[m])
     
     #handle the rest
+    last_len = len(modules)
     while modules:
         to_append = []
         for m in modules:
@@ -174,7 +175,13 @@ def sort_modules(modules):
                 to_append.append(m.name)
         
         for m in to_append: modules.remove(mod_dict[m])
-        modules_sorted.extend(to_append)
+        modules_sorted.extend(to_append)        
+        logzero.logger.debug(len(modules))
+        
+        if len(modules)==last_len:
+            import pdb; pdb.set_trace()
+        
+        last_len = len(modules)
         
     return [mod_dict[m] for m in modules_sorted]
 
@@ -207,13 +214,13 @@ def parse_modules(verbose,
     modules = []
     
     #parse modules using libclang
-    def _process_module(name,files):
+    def _process_module(name,files,module_names):
         if not verbose:
             logzero.logger.setLevel(logzero.logging.INFO)
-        return ModuleInfo(name,path,files)
+        return ModuleInfo(name,path,files,module_names)
     
     modules = Parallel(prefer='processes',n_jobs=n_jobs)\
-        (delayed(_process_module)(name,files) for name,files in tqdm(module_dict.items()))
+        (delayed(_process_module)(name,files,module_names) for name,files in tqdm(module_dict.items()))
     
     return modules
     
@@ -247,9 +254,20 @@ def transform_modules(verbose,
     logzero.logger.info('sorting')
     
     cls_dict = {c.name : m.name for m in modules for c in m.classes}
+    enum_dict = {e.name : m.name for m in modules for e in m.enums}
+    #Update dependencies based on superclasses and default argument types
+    
     for m in modules:
-        m.dependencies = set([cls_dict[c.superclass] for c in m.classes if c.superclass in cls_dict and cls_dict[c.superclass] != m.name])
-        
+        m.dependencies.update([cls_dict[c.superclass] for c in m.classes if c.superclass in cls_dict and cls_dict[c.superclass] != m.name])
+        #Consts should be removed before
+        for t in (t for c in m.classes for method in c.methods+c.constructors+c.destructors for t in method.default_value_types):
+            if t.startswith('const '):
+                t=t.split('const ')[1]
+            if t in cls_dict and cls_dict[t] != m.name:
+                m.dependencies.add(cls_dict[t])
+            elif t in enum_dict and enum_dict[t] != m.name:
+                m.dependencies.add(enum_dict[t])
+    
     modules = sort_modules(modules)
     
     #remove duplicate typedefs
@@ -268,12 +286,12 @@ def transform_modules(verbose,
                     
             for t in to_remove: h.typedefs.remove(t)
                     
-    return modules,class_dict
+    return modules,class_dict,enum_dict
 
 def render(settings,module_settings,modules,class_dict):
     
     name = settings['name']
-    module_names = settings['modules']
+    module_names = [m.name for m in modules]
     output_path = Path(settings['output_folder'])
     operator_dict = settings['Operators']
 
