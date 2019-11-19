@@ -1,6 +1,6 @@
 name = "OCP"
 input_folder = "/home/adam/anaconda2/envs/cpp-py-bindgen/include/opencascade"
-output_folder = "./generated3"
+output_folder = "./generated4"
 
 pats = ["{}_*.hxx","{}.hxx"]
 
@@ -313,6 +313,7 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
     [Modules.BRepBuilderAPI]
     
         exclude_typedefs = ["BRepBuilderAPI_CellFilter","BRepBuilderAPI_BndBoxTree"]
+         exclude_methods = ["BRepBuilderAPI_FastSewing::GetStatuses"]
 
     
     [Modules.MAT2d]
@@ -436,3 +437,7 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
     [Modules.AdvApprox]
     
         exclude_methods = ['AdvApprox_EvaluatorFunction::Evaluate']
+        
+    [Modules.BVH]
+    
+        exclude_typedefs = ["BVH_PrimitiveSet3d"]
