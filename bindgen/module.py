@@ -4,14 +4,14 @@ from logzero import logger
 from path import Path
 
 class ModuleInfo(object):
-    '''Conatianer for the whole module
+    '''Container for the whole module
     '''    
     
     def get_module_name(self,x):
         
-        return Path(x).splitpath()[-1].split('.')[-2].split('_')[0]
+        return Path(x).splitpath()[-1].split('.')[0].split('_')[0]
     
-    def __init__(self,name,prefix,paths):
+    def __init__(self,name,prefix,paths,module_names):
             
         self.prefix = prefix
         self.name = name
@@ -29,6 +29,8 @@ class ModuleInfo(object):
         self.functions = []
         self.operators = []
         self.exceptions = []
+        self.dependencies = set()
+        self.dependencies_headers = set()
         
         for h in self.headers:
             self.classes.extend(h.classes.values())
@@ -36,7 +38,17 @@ class ModuleInfo(object):
             self.functions.extend(h.functions)
             self.operators.extend(h.operators)
             self.class_dict.update(h.class_dict)
+            self.dependencies_headers.update(h.dependencies)
             
+        #clean up dependencies
+        dependencies_clean = set()
+        for d in self.dependencies_headers:
+            name = self.get_module_name(d)
+            if name in module_names:
+                dependencies_clean.add(name)
+        
+        self.dependencies_headers = dependencies_clean - {self.name}
+        
         self.sort_classes()
             
     def sort_classes(self):
