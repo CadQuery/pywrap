@@ -338,6 +338,7 @@ class FunctionInfo(BaseInfo):
         self.inline = cur.get_definition().is_inline() if cur.get_definition() else False
         self.pointer_by_ref = any(self._pointer_by_ref(el) for el in cur.get_arguments())
         self.args = [(el.spelling,self._underlying_type(el),self._default_value(el)) for el in cur.get_arguments()]
+        self.default_value_types = [self._underlying_type(el,False) for el in cur.get_arguments() if self._default_value(el)]
         
         
     def _pointer_by_ref(self,cur):
@@ -357,7 +358,7 @@ class FunctionInfo(BaseInfo):
         return rv
             
         
-    def _underlying_type(self,cur):
+    def _underlying_type(self,cur,add_qualifiers=True):
         '''Tries to resolve the underlying type. Needed for typedefed templates.
         '''
         
@@ -377,7 +378,10 @@ class FunctionInfo(BaseInfo):
         # if typedef that is not POD
         if decl.kind == CursorKind.TYPEDEF_DECL and not decl.underlying_typedef_type.is_pod():
             spelling = decl.underlying_typedef_type.spelling
-            rv=const+spelling+ptr+const_ptr
+            if add_qualifiers:
+                rv=const+spelling+ptr+const_ptr
+            else:
+                rv=spelling
         else:
             rv = cur.type.spelling
             
