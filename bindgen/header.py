@@ -6,6 +6,7 @@ from clang.cindex import CursorKind, TypeKind, AccessSpecifier, Type, Translatio
 from path import Path
 
 from .utils import get_index
+from .type_parser import parse_type
 
 
 
@@ -355,8 +356,7 @@ class FunctionInfo(BaseInfo):
             if tp.kind in (TypeKind.POINTER,):
                 rv = True
         
-        return rv
-            
+        return rv            
         
     def _underlying_type(self,cur,add_qualifiers=True):
         '''Tries to resolve the underlying type. Needed for typedefed templates.
@@ -385,6 +385,10 @@ class FunctionInfo(BaseInfo):
         else:
             rv = cur.type.spelling
             
+        # strip possible opencascade::handle<T> when
+        if not add_qualifiers:
+            rv = parse_type(rv)
+        
         return rv
     
     def _default_value(self,cur):
