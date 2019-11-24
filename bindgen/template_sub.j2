@@ -48,26 +48,12 @@ namespace py = pybind11;
 void register_{{module.name}}(py::module &main_module) {
 
 
-py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#");
+py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
 
 // user-defined inclusion per module in the body
 {% if module_settings['include_body_pre'] %}
 {{ module_settings['include_body_pre'] }}
 {% endif %}
-
-// enums
-{% for enum in module.enums %}
-{% if enum.anonymous %}
-    {% for val in enum.values %}
-    m.attr("{{ val }}") = py::cast(int({{ val }}));
-    {% endfor %}
-{% else %}
-    py::enum_<{{enum.name}}>(m, "{{enum.name}}",R"#({{enum.comment}})#")
-    {% for val in enum.values %}
-        .value("{{val}}",{{enum.name}}::{{val}}){{ ".export_values();" if loop.last }}
-    {% endfor %}
-{% endif %}
-{% endfor %}
 
 //Python trampoline classes
 {% for c in module.classes %}{% if c.abstract %}

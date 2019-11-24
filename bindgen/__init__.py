@@ -265,8 +265,8 @@ def transform_modules(verbose,
                 t=t.split('const ')[1]
             if t in cls_dict and cls_dict[t] != m.name:
                 m.dependencies.add(cls_dict[t])
-            elif t in enum_dict and enum_dict[t] != m.name:
-                m.dependencies.add(enum_dict[t])
+            #elif t in enum_dict and enum_dict[t] != m.name:
+            #    m.dependencies.add(enum_dict[t])
     
     modules = sort_modules(modules)
     
@@ -302,6 +302,7 @@ def render(settings,module_settings,modules,class_dict):
                             trim_blocks=True,
                             lstrip_blocks = True)
     template_sub = jinja_env.get_template('template_sub.j2')
+    template_sub_enums = jinja_env.get_template('template_sub_enums.j2')
     template_tmpl = jinja_env.get_template('template_templates.j2')
     template_main = jinja_env.get_template('template_main.j2')
     template_make = jinja_env.get_template('makefile.j2')
@@ -310,6 +311,17 @@ def render(settings,module_settings,modules,class_dict):
     with  output_path:
         for m in tqdm(modules):
             tqdm.write('Processing module {}'.format(m.name))
+            with open('{}_enums.cpp'.format(m.name),'w') as f:
+                f.write(template_sub_enums.render({'module' : m,
+                                                   'class_dict' : class_dict,
+                                                   'project_name' : name,
+                                                   'operator_dict' : operator_dict,
+                                                   'include_pre' : pre,
+                                                   'include_post' : post,
+                                                   'references_inner' : lambda name,method: name+"::" in method.return_type or any([name+"::" in a for _,a in method.args]),
+                                                   'proper_new_operator' : lambda cls: [op for op in cls.static_operators if op.name =='operator new' and len(op.args) == 1],
+                                                   'proper_delete_operator' : lambda cls: [op for op in cls.static_operators if op.name =='operator delete' and len(op.args) == 1],
+                                                   'module_settings' : module_settings.get(m.name,None)}))
             with open('{}.cpp'.format(m.name),'w') as f:
                 f.write(template_sub.render({'module' : m,
                                              'class_dict' : class_dict,

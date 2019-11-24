@@ -5,6 +5,11 @@
 namespace py = pybind11;
 
 // forward declaration of the register_* functions
+
+{% for mod in modules %}
+void register_{{mod}}_enum(py::module&);
+{% endfor %}
+
 {% for mod in modules %}
 void register_{{mod}}(py::module&);
 {% endfor %}
@@ -13,6 +18,11 @@ void register_{{mod}}(py::module&);
 PYBIND11_MODULE({{name}}, m) {    
 
 // register submodules
+
+{% for mod in modules %}
+    register_{{mod}}_enum(m);
+{% endfor %}
+
 {% for mod in modules %}
     register_{{mod}}(m);
 {% endfor %}
