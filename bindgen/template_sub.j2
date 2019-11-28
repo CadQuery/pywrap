@@ -55,6 +55,7 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
 {{ module_settings['include_body_pre'] }}
 {% endif %}
 
+
 //Python trampoline classes
 {% for c in module.classes %}{% if c.abstract %}
     class Py_{{c.name}} : public {{c.name}}{
@@ -104,7 +105,7 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
 
 // classes
 {% for c in module.classes %}{% if (proper_new_operator(c) and proper_delete_operator(c)) or c.rootclass =='Standard_Transient' %}
-    py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,class_dict)}}>(m,"{{cls_name(c)}}",R"#({{c.comment}})#")
+    static_cast<py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,class_dict)}}>>(m.attr("{{cls_name(c)}}"))
     {% for con in c.constructors %}
     {% if not con.pointer_by_ref %}
         .def(py::init< {{ argtypes(con) }} >() {{argnames(con)}} )
