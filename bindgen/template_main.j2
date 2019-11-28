@@ -20,7 +20,7 @@ PYBIND11_MODULE({{name}}, m) {
 // register submodules
 
 {% for mod in modules %}
-    register_{{mod}}_enum(m);
+    register_{{mod}}_enums(m);
 {% endfor %}
 
 {% for mod in modules %}
