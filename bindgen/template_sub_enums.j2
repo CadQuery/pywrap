@@ -121,6 +121,21 @@ py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#
     py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,class_dict)}}>(m,"{{cls_name(c)}}",R"#({{c.comment}})#");
 {% endif %}{% endfor %}
 
+// pre-register typdefs
+{% for h in module.headers %}
+// {{h.name}}
+{% for td in h.typedefs %}
+{% if not td.pod and not "_H" in td.name and td.template_base.__len__()>0 and not td.type.startswith("opencascade::handle") %}
+{% set dep_module = td.template_base[0].split("_") %}
+{% set arg = td.type.split(td.template_base[0])[-1] %}
+{% set base =  td.template_base[0] %}
+{% if not arg.endswith("::Iterator") %}
+    preregister_template_{{ base }}{{ arg }}(m,"{{td.name}}");  
+{% endif %}
+{% endif %}
+{% endfor %}
+{% endfor %}
+
 };
 
 // user-defined post-inclusion per module
