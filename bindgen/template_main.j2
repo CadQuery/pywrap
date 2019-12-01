@@ -4,6 +4,11 @@
 
 namespace py = pybind11;
 
+// user-defined pre
+{% if include_pre %}
+#include "{{ include_pre }}"
+{% endif %}
+
 // forward declaration of the register_* functions
 
 {% for mod in modules %}
