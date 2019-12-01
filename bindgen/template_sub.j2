@@ -50,11 +50,6 @@ void register_{{module.name}}(py::module &main_module) {
 
 py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
 
-// user-defined inclusion per module in the body
-{% if module_settings['include_body_pre'] %}
-{{ module_settings['include_body_pre'] }}
-{% endif %}
-
 
 //Python trampoline classes
 {% for c in module.classes %}{% if c.abstract %}
