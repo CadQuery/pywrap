@@ -122,6 +122,7 @@ def transform_module(m,
     if s:
         #exclude classes
         m.classes = [c for c in m.classes if c.name not in s['exclude_classes']]
+        m.class_dict = {k:v for k,v, in m.class_dict.items() if k not in s['exclude_classes']}
         
         #exclude methods (including static methods)
         for pat in s['exclude_methods']:
@@ -307,6 +308,28 @@ def render(settings,module_settings,modules,class_dict):
     template_main = jinja_env.get_template('template_main.j2')
     template_make = jinja_env.get_template('makefile.j2')
     
+    def proper_new_operator(cls):
+    
+        new_ops = [op for op in cls.static_operators if op.name =='operator new']
+        
+        if not new_ops:
+            return True
+        
+        new_ops = [op for op in new_ops if len(op.args) == 1]
+        
+        return new_ops
+    
+    def proper_delete_operator(cls):
+    
+        del_ops = [op for op in cls.static_operators if op.name =='operator delete']
+        
+        if not del_ops:
+            return True
+        
+        del_ops = [op for op in del_ops if len(op.args) == 1]
+        
+        return del_ops
+    
     output_path.mkdir_p()
     with  output_path:
         for m in tqdm(modules):
@@ -319,8 +342,8 @@ def render(settings,module_settings,modules,class_dict):
                                                    'include_pre' : pre,
                                                    'include_post' : post,
                                                    'references_inner' : lambda name,method: name+"::" in method.return_type or any([name+"::" in a for _,a in method.args]),
-                                                   'proper_new_operator' : lambda cls: [op for op in cls.static_operators if op.name =='operator new' and len(op.args) == 1],
-                                                   'proper_delete_operator' : lambda cls: [op for op in cls.static_operators if op.name =='operator delete' and len(op.args) == 1],
+                                                   'proper_new_operator' : proper_new_operator,
+                                                   'proper_delete_operator' : proper_delete_operator,
                                                    'module_settings' : module_settings.get(m.name,None)}))
             with open('{}.cpp'.format(m.name),'w') as f:
                 f.write(template_sub.render({'module' : m,
