@@ -246,7 +246,7 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 
     [Modules.gp]
     
-        exclude_typedefs = ["gp",]
+        exclude_typedefs = ["gp","gp_TrsfNLerp"]
         
     [Modules.Standard]
     
@@ -258,7 +258,7 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
         
     [Modules.NCollection]
     
-        include_body_pre = "const size_t DefaultBlockSize = 24600;"
+        include_header_pre = "const size_t DefaultBlockSize = 24600;"
         exclude_classes = ["NCollection","NCollection_ListNode"]
         
     [Modules.OSD]
@@ -401,7 +401,7 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
     [Modules.OpenGl]
     
         include_header_pre = "#include <Message_Messenger.hxx>"
-        exclude_typedefs = ["OpenGl_SequenceOfLayers","OpenGl_SetterList","OpenGl_MapOfHatchStylesAndIds","OpenGl_MapOfZLayerSettings","OpenGl_IndexedMapOfStructure","OpenGl_MapOfShaderPrograms","OpenGl_IndexedMapOfStructure"]
+        exclude_typedefs = ["OpenGl_SequenceOfLayers","OpenGl_SetterList","OpenGl_MapOfHatchStylesAndIds","OpenGl_MapOfZLayerSettings","OpenGl_IndexedMapOfStructure","OpenGl_MapOfShaderPrograms","OpenGl_IndexedMapOfStructure","OpenGl_LayerSeqIds"]
     
     [Modules.StdSelect]
     
@@ -418,7 +418,8 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
         
     [Modules.AIS]
     
-        include_body_pre = "auto OptionsForAttach = [](){return AIS_Manipulator::OptionsForAttach();}; py::class_<AIS_Manipulator::OptionsForAttach>(m,\"AIS_Manipulator_OptionsForAttach\");"
+        include_header_pre = "auto OptionsForAttach = [](){return AIS_Manipulator::OptionsForAttach();};"
+        include_body_pre = "py::class_<AIS_Manipulator::OptionsForAttach>(m,\"AIS_Manipulator_OptionsForAttach\");"
         exclude_typedefs = ["AIS_DataMapOfShapeDrawer","AIS_DataMapOfIOStatus","AIS_DataMapOfILC","AIS_IndexedDataMapOfOwnerPrs"]
     
     [Modules.Font]
