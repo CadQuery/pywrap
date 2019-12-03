@@ -63,6 +63,11 @@ void register_template_{{t.name}}(py::object &m, const char *name){
     {% endfor %}
     {% endif %}
     {% endfor %}
+    {% if "begin" in t.methods_dict and "end" in t.methods_dict %}
+        .def("__iter__",[](const {{t.name}}{{template_args(t)}} &self)
+             { return py::make_iterator(self.begin(), self.end()); },
+             py::keep_alive<0, 1>())
+    {% endif %}
     ;
 };
 {% endfor %}
