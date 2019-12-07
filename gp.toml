@@ -207,7 +207,50 @@ modules = ["Standard",
 "OpenGl",
 "MeshVS",
 "NIS",
-"Voxel"
+"Voxel",
+"CDF",
+"CDM",
+"LDOM",
+"PCDM",
+"UTL",
+"AppStdL",
+"TDF",
+"TDataStd",
+"TDocStd",
+"TFunction",
+"BinLDrivers",
+"BinMDF",
+"BinMDataStd",
+"BinMDocStd",
+"BinMFunction",
+"BinObjMgt",
+"AppStd",
+"TDataXtd",
+"TNaming",
+"TObj",
+"XmlLDrivers",
+"XmlMDF",
+"XmlMDataStd",
+"XmlMDocStd",
+"XmlMFunction",
+"XmlObjMgt",
+"StdLDrivers",
+"StdLPersistent",
+"StdObjMgt",
+"BinDrivers",
+"BinMDataXtd",
+"BinMNaming",
+"BinTObjDrivers",
+"TPrsStd",
+"XmlDrivers",
+"XmlMDataXtd",
+"XmlMNaming",
+"XmlTObjDrivers",
+"ShapePersistent",
+"StdDrivers",
+"StdObject",
+"StdPersistent",
+"StdStorage"
 ]
 
 exclude = ["Standard_Handle.hxx","Standard",
@@ -443,3 +486,67 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
     [Modules.BVH]
     
         exclude_typedefs = ["BVH_PrimitiveSet3d"]
+        
+    [Module.TDocStd]
+    
+        include_header_pre = """#include <PCDM_RetrievalDriver.hxx>
+#include <PCDM_StorageDriver.hxx>"""
+
+    [Module.XmlMDF]
+    
+        exclude_typedefs = ["XmlMDF_MapOfDriver","XmlMDF_TypeADriverMap"]
+    
+    [Module.StdStorage]
+    
+        exclude_typedefs = ["StdStorage_MapOfRoots"]
+    
+    [Module.BinMDF]
+    
+        exclude_typedefs = ["BinMDF_TypeADriverMap"]
+    
+    [Module.CDM]
+    
+        exclude_typedefs = ["CDM_PresentationDirectory"]
+    
+    [Module.TDataStd]
+    
+        exclude_typedefs = ["TDataStd_DataMapOfStringHArray1OfReal","TDataStd_DataMapOfStringHArray1OfInteger"]
+        
+    [Module.StdLDrivers]
+        
+        include_header_pre = "#include <CDM_Document.hxx>"
+        
+    [Module.TFunction]
+        
+        exclude_typedefs = ["TFunction_DataMapOfGUIDDriver"]
+        
+    [Module.TObj]
+        
+        include_header_pre = """#include <TDF_RelocationTable.hxx>
+#include <TDF_DeltaOnModification.hxx>"""
+        exclude_typedefs = ["TObj_DataMapOfObjectHSequenceOcafObjects"]
+    
+    [Module.StdObjMgt]
+        
+        exclude_typedefs = ["StdObjMgt_TransientPersistentMap"]
+        
+    [Module.TNaming]
+        
+        exclude_typedefs = ["TNaming_DataMapOfShapePtrRefShape"]
+        exclude_methods = ["TNaming_RefShape::FirstUse"]
+        
+    [Module.TDF]
+    
+        exclude_typedefs = ["TDF_AttributeDataMap"]
+        exclude_classes = ["TDF_LabelNode"]
+        
+    [Module.XmlTObjDrivers]
+    
+        include_header_pre = """#include <TDF_Attribute.hxx>
+#include <XmlObjMgt_Persistent.hxx>"""
+
+    [Module.TPrsStd]
+    
+        exclude_typedefs = ["TPrsStd_DataMapOfGUIDDriver"]
+    
+        
