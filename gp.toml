@@ -250,8 +250,58 @@ modules = ["Standard",
 "StdDrivers",
 "StdObject",
 "StdPersistent",
-"StdStorage"
-]
+"StdStorage",
+"RWStl",
+"StlAPI",
+"RWStepBasic",
+"RWStepGeom",
+"RWStepRepr",
+"RWStepShape",
+"StepBasic",
+"StepGeom",
+"StepRepr",
+"StepShape",
+"RWStepDimTol",
+"RWStepVisual",
+"StepDimTol",
+"StepVisual",
+"RWStepElement",
+"RWStepFEA",
+"StepElement",
+"StepFEA",
+"GeomToStep",
+"RWStepAP203",
+"RWStepAP214",
+"RWStepAP242",
+"STEPConstruct",
+"STEPControl",
+"STEPEdit",
+"STEPSelections",
+"StepAP203",
+"StepAP209",
+"StepAP214",
+"StepAP242",
+"StepToGeom",
+"StepToTopoDS",
+"TopoDSToStep",
+"BRepToIGES",
+"BRepToIGESBRep",
+"Geom2dToIGES",
+"GeomToIGES",
+"IGESAppli",
+"IGESBasic",
+"IGESControl",
+"IGESConvGeom",
+"IGESData",
+"IGESDefs",
+"IGESDimen",
+"IGESDraw",
+"IGESFile",
+"IGESGeom",
+"IGESGraph",
+"IGESSelect",
+"IGESSolid",
+"IGESToBRep"]
 
 exclude = ["Standard_Handle.hxx","Standard",
            "math_GaussPoints.hxx","NCollection_Shared.hxx","OSD_WNT.hxx",
@@ -487,65 +537,65 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
     
         exclude_typedefs = ["BVH_PrimitiveSet3d"]
         
-    [Module.TDocStd]
+    [Modules.TDocStd]
     
         include_header_pre = """#include <PCDM_RetrievalDriver.hxx>
 #include <PCDM_StorageDriver.hxx>"""
 
-    [Module.XmlMDF]
+    [Modules.XmlMDF]
     
         exclude_typedefs = ["XmlMDF_MapOfDriver","XmlMDF_TypeADriverMap"]
     
-    [Module.StdStorage]
+    [Modules.StdStorage]
     
         exclude_typedefs = ["StdStorage_MapOfRoots"]
     
-    [Module.BinMDF]
+    [Modules.BinMDF]
     
         exclude_typedefs = ["BinMDF_TypeADriverMap"]
     
-    [Module.CDM]
+    [Modules.CDM]
     
         exclude_typedefs = ["CDM_PresentationDirectory"]
     
-    [Module.TDataStd]
+    [Modules.TDataStd]
     
         exclude_typedefs = ["TDataStd_DataMapOfStringHArray1OfReal","TDataStd_DataMapOfStringHArray1OfInteger"]
         
-    [Module.StdLDrivers]
+    [Modules.StdLDrivers]
         
         include_header_pre = "#include <CDM_Document.hxx>"
         
-    [Module.TFunction]
+    [Modules.TFunction]
         
         exclude_typedefs = ["TFunction_DataMapOfGUIDDriver"]
         
-    [Module.TObj]
+    [Modules.TObj]
         
         include_header_pre = """#include <TDF_RelocationTable.hxx>
 #include <TDF_DeltaOnModification.hxx>"""
         exclude_typedefs = ["TObj_DataMapOfObjectHSequenceOcafObjects"]
     
-    [Module.StdObjMgt]
+    [Modules.StdObjMgt]
         
         exclude_typedefs = ["StdObjMgt_TransientPersistentMap"]
         
-    [Module.TNaming]
+    [Modules.TNaming]
         
         exclude_typedefs = ["TNaming_DataMapOfShapePtrRefShape"]
         exclude_methods = ["TNaming_RefShape::FirstUse"]
         
-    [Module.TDF]
+    [Modules.TDF]
     
         exclude_typedefs = ["TDF_AttributeDataMap"]
         exclude_classes = ["TDF_LabelNode"]
         
-    [Module.XmlTObjDrivers]
+    [Modules.XmlTObjDrivers]
     
         include_header_pre = """#include <TDF_Attribute.hxx>
 #include <XmlObjMgt_Persistent.hxx>"""
 
-    [Module.TPrsStd]
+    [Modules.TPrsStd]
     
         exclude_typedefs = ["TPrsStd_DataMapOfGUIDDriver"]
     
