@@ -208,7 +208,7 @@ def parse_modules(verbose,
     file_pats = [p.format(m) for m in module_names for p in settings['pats']]
     
     all_files = reduce(add,(path.files(pat) for pat in file_pats))    
-    all_files = [f for f in all_files if f.name not in file_exc]
+    all_files = set(f for f in all_files if f.name not in file_exc)
     
     module_dict = split_into_modules(module_names,all_files)
     
