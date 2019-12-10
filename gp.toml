@@ -1,5 +1,5 @@
 name = "OCP"
-input_folder = "/home/adam/anaconda2/envs/cpp-py-bindgen/include/opencascade"
+input_folder = "./opencascade"
 output_folder = "./generated4"
 
 pats = ["{}_*.hxx","{}.hxx"]
@@ -23,7 +23,7 @@ modules = ["Standard",
 "Plugin",
 "Resource",
 "Units",
-"UnitsAPI",           
+"UnitsAPI",
 "TopLoc",
 "Poly",
 "Precision",
@@ -301,7 +301,15 @@ modules = ["Standard",
 "IGESGraph",
 "IGESSelect",
 "IGESSolid",
-"IGESToBRep"]
+"IGESToBRep",
+#Missed modules
+"Interface",
+"Transfer",
+"StepData",
+"XSControl",
+"IFSelect",
+"IFGraph"
+]
 
 exclude = ["Standard_Handle.hxx","Standard",
            "math_GaussPoints.hxx","NCollection_Shared.hxx","OSD_WNT.hxx",
@@ -329,7 +337,7 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 [Extras]
 
     include_pre = "OCP_specific.inc"
-    
+
 [Symbols]
 
     path = "symbols.dat"
@@ -338,282 +346,282 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 [Modules]
 
     [Modules.gp]
-    
+
         exclude_typedefs = ["gp","gp_TrsfNLerp"]
-        
+
     [Modules.Standard]
-    
+
         exclude_functions = ["HashCode"]
-        
+
     [Modules.Resource]
-    
+
         exclude_classes = ["Resource_NoSuchResource",]
-        
+
     [Modules.NCollection]
-    
+
         include_header_pre = "const size_t DefaultBlockSize = 24600;"
         exclude_classes = ["NCollection","NCollection_ListNode"]
-        
+
     [Modules.OSD]
-    
+
         exclude_functions = ["OSD","OSD_OpenStream"]
         exclude_classes = ["OSD",]
         exclude_methods = ["OSD::RealToCString","OSD_SharedLibrary::DlSymb"]
-        
-    [Modules.Storage]
-    
-        exclude_classes = ["Storage_StreamExtCharParityError","Storage_StreamTypeMismatchError","Storage_StreamUnknownTypeError"] 
-        exclude_typedefs = ["Storage","Storage_MapOfCallBack","Storage_MapOfPers"]
-        
-    [Modules.TCollection]
-    
-        exclude_methods = ["TCollection_ExtendedString::ToUTF8CString"] 
-        
-    [Modules.TColStd]
-    
-        exclude_typedefs = ["TColStd_DataMapOfIntegerTransient","TColStd","TColStd_DataMapOfTransientTransient","TColStd_IndexedDataMapOfTransientTransient"]
-        
-    [Modules.Plugin]
-    
-        exclude_typedefs = ["Plugin","Plugin_MapOfFunctions"]
-        
-    [Modules.Units]
-    
-        exclude_methods = ["UnitsMethods::RadianToDegree","UnitsMethods::DegreeToRadian","UnitsMethods::MirrorPCurve"] 
-        
-    [Modules.Poly]
-    
-        exclude_classes = ["Poly_MakeLoops","Poly",]
-        exclude_methods = ["Poly_CoherentTriangulation::FindTriangle","Poly_CoherentTriangulation::RemoveDegenerated"]         
-        
-    [Modules.Expr]
-    
-        exclude_classes = ["ExprIntrp",]
-        
-    [Modules.BSplCLib]
-    
-        exclude_methods = ["BSplCLib::DN",] 
 
-        
+    [Modules.Storage]
+
+        exclude_classes = ["Storage_StreamExtCharParityError","Storage_StreamTypeMismatchError","Storage_StreamUnknownTypeError"]
+        exclude_typedefs = ["Storage","Storage_MapOfCallBack","Storage_MapOfPers"]
+
+    [Modules.TCollection]
+
+        exclude_methods = ["TCollection_ExtendedString::ToUTF8CString"]
+
+    [Modules.TColStd]
+
+        exclude_typedefs = ["TColStd_DataMapOfIntegerTransient","TColStd","TColStd_DataMapOfTransientTransient","TColStd_IndexedDataMapOfTransientTransient"]
+
+    [Modules.Plugin]
+
+        exclude_typedefs = ["Plugin","Plugin_MapOfFunctions"]
+
+    [Modules.Units]
+
+        exclude_methods = ["UnitsMethods::RadianToDegree","UnitsMethods::DegreeToRadian","UnitsMethods::MirrorPCurve"]
+
+    [Modules.Poly]
+
+        exclude_classes = ["Poly_MakeLoops","Poly",]
+        exclude_methods = ["Poly_CoherentTriangulation::FindTriangle","Poly_CoherentTriangulation::RemoveDegenerated"]
+
+    [Modules.Expr]
+
+        exclude_classes = ["ExprIntrp",]
+
+    [Modules.BSplCLib]
+
+        exclude_methods = ["BSplCLib::DN",]
+
+
     [Modules.TopoDS]
-    
+
         exclude_typedefs = ["TopoDS_ListOfShape"]
-       
+
     [Modules.IntPolyh]
-    
+
         exclude_typedefs = ["IntPolyh_ArrayOfEdges","IntPolyh_ArrayOfTriangles","IntPolyh_ArrayOfPointNormal","IntPolyh_ArrayOfSectionLines","IntPolyh","IntPolyh_ArrayOfTangentZones","IntPolyh_ArrayOfPoints"]
-    
+
     [Modules.BRepBuilderAPI]
-    
+
         exclude_typedefs = ["BRepBuilderAPI_CellFilter","BRepBuilderAPI_BndBoxTree"]
          exclude_methods = ["BRepBuilderAPI_FastSewing::GetStatuses"]
 
-    
+
     [Modules.MAT2d]
-    
+
         exclude_typedefs = ["MAT2d_DataMapOfIntegerConnexion"]
-        
+
     [Modules.BRepExtrema]
-    
+
         exclude_typedefs = ["BRepExtrema_MapOfIntegerPackedMapOfInteger"]
-        
+
      [Modules.MAT]
-    
+
         exclude_typedefs = ["MAT_DataMapOfIntegerBisector","MAT_DataMapOfIntegerArc","MAT","MAT_DataMapOfIntegerNode","MAT_DataMapOfIntegerBasicElt"]
-        
+
     [Modules.BRepCheck]
-    
+
         exclude_typedefs = ["BRepCheck_DataMapOfShapeResult"]
-        
+
     [Modules.BRepClass3d]
-    
+
         exclude_typedefs = ["BRepClass3d_BndBoxTree"]
-    
+
     [Modules.BRepAlgo]
-    
+
         exclude_typedefs = ["BRepAlgo_DataMapOfShapeInterference"]
-    
+
     [Modules.HLRBRep]
-    
-        exclude_classes = ["HLRBRep_CLPropsATool",] 
-    
+
+        exclude_classes = ["HLRBRep_CLPropsATool",]
+
     [Modules.TopOpeBRepDS]
-    
+
         exclude_functions = ["FDSSDM_s1s2makesordor","FUN_scanloi"]
         exclude_typedefs = ["TopOpeBRepDS_ShapeSurface"]
-        
+
     [Modules.BRepAlgoAPI]
-    
+
         include_header_pre = "#include <BOPAlgo_Builder.hxx>"
         exclude_methods = ["BRepAlgoAPI_BuilderAlgo::Builder",] #this will be fixed by the include
         exclude_typedefs = ["TopOpeBRepDS_ShapeSurface"]
 
-        
+
     [Modules.TopOpeBRep]
-    
+
         exclude_methods = ["TopOpeBRep_DSFiller::PShapeClassifier","TopOpeBRep_FaceEdgeFiller::PShapeClassifier","TopOpeBRep_FacesFiller::PShapeClassifier"]
         exclude_typedefs = ["TopOpeBRep_DataMapOfTopolTool"]
 
-    
+
     [Modules.BRepFill]
-    
+
         exclude_typedefs = ["BRepFill_DataMapOfShapeHArray2OfShape"]
-        
+
      [Modules.ChFi3d]
      #error: invalid use of incomplete type ‘class Geom_BSplineCurve’
         exclude_functions = ["ChFi3d_ApproxByC2","ChFi3d_SearchPivot","ChFi3d_EnlargeFace"]
 
-    
+
     [Modules.BOPDS]
-    
+
         exclude_typedefs = ["BOPDS_DataMapOfPaveBlockCommonBlock"]
-        
+
     [Modules.BRepMesh]
-    
+
         exclude_classes = ["BRepMesh_Triangle",] #constructor with int&[3]
         exclude_methods = ["BRepMesh_GeomTool::IntLinLin","BRepMesh_DataStructureOfDelaun::ElementNodes"]
-                
+
     [Modules.TopOpeBRepTool]
-    
+
         exclude_typedefs = ["TopOpeBRepTool_IndexedDataMapOfSolidClassifier"]
-    
+
     [Modules.BOPTools]
-    
+
         exclude_typedefs = ["BOPTools_BoxBndTree"]
-        
+
     [Modules.Aspect]
-    
+
         include_header_pre = "struct __GLXFBConfigRec {};"
         exclude_methods = ["Aspect_NeutralWindow::NativeFBConfig","Aspect_Window::NativeFBConfig","Aspect_NeutralWindow::SetNativeHandles","Aspect_DisplayConnection::GetDisplay"]
 
-        
+
     [Modules.SelectMgr]
-    
+
         exclude_typedefs = ["SelectMgr_IndexedMapOfOwner","SelectMgr_MapOfObjectSensitives","SelectMgr_FrustumCache","SelectMgr_IndexedMapOfHSensitive"]
-        
+
     [Modules.OpenGl]
-    
+
         include_header_pre = "#include <Message_Messenger.hxx>"
         exclude_typedefs = ["OpenGl_SequenceOfLayers","OpenGl_SetterList","OpenGl_MapOfHatchStylesAndIds","OpenGl_MapOfZLayerSettings","OpenGl_IndexedMapOfStructure","OpenGl_MapOfShaderPrograms","OpenGl_IndexedMapOfStructure","OpenGl_LayerSeqIds"]
-    
+
     [Modules.StdSelect]
-    
+
         exclude_typedefs = ["StdSelect_IndexedDataMapOfOwnerPrs"]
-        
+
     [Modules.Xw]
-    
+
         include_header_pre = "struct __GLXFBConfigRec {};"
         include_body_pre = 'py::class_<__GLXFBConfigRec>(m, "__GLXFBConfigRec");'
-        
+
     [Modules.MeshVS]
-    
+
         exclude_typedefs = ["MeshVS_NodePair","MeshVS_DataMapOfIntegerOwner","MeshVS_DataMapOfHArray1OfSequenceOfInteger","MeshVS_DataMapOfIntegerMeshEntityOwner"]
-        
+
     [Modules.AIS]
-    
+
         include_header_pre = "auto OptionsForAttach = [](){return AIS_Manipulator::OptionsForAttach();};"
         include_body_pre = "py::class_<AIS_Manipulator::OptionsForAttach>(m,\"AIS_Manipulator_OptionsForAttach\");"
         exclude_typedefs = ["AIS_DataMapOfShapeDrawer","AIS_DataMapOfIOStatus","AIS_DataMapOfILC","AIS_IndexedDataMapOfOwnerPrs"]
-    
+
     [Modules.Font]
-    
+
         exclude_classes = ["Font_BRepFont"]
         include_header_pre = "struct FT_LibraryRec_ {};"
 
     [Modules.Select3D]
-    
+
         exclude_typedefs = ["Select3D_IndexedMapOfEntity","Graphic3d_Vec3d","Select3D_BndBox3d"]  #couldn't deduce template parameter ‘Hasher’
 
-    
+
     [Modules.Graphic3d]
-    
+
         exclude_typedefs = ["Graphic3d_IndexedMapOfView","Graphic3d_IndexedMapOfAddress","Graphic3d_MapOfStructure","Graphic3d_NMapOfTransient","Graphic3d_MapOfObject","Graphic3d_Vec4u","Graphic3d_Vec2u","Graphic3d_Vec3u","Graphic3d_Vec3d"]
-        
+
     [Modules.AdvApprox]
-    
+
         exclude_methods = ['AdvApprox_EvaluatorFunction::Evaluate']
-        
+
     [Modules.BVH]
-    
+
         exclude_typedefs = ["BVH_PrimitiveSet3d"]
-        
+
     [Modules.TDocStd]
-    
+
         include_header_pre = """#include <PCDM_RetrievalDriver.hxx>
 #include <PCDM_StorageDriver.hxx>"""
 
     [Modules.XmlMDF]
-    
+
         exclude_typedefs = ["XmlMDF_MapOfDriver","XmlMDF_TypeADriverMap"]
-    
+
     [Modules.StdStorage]
-    
+
         exclude_typedefs = ["StdStorage_MapOfRoots"]
-    
+
     [Modules.BinMDF]
-    
+
         exclude_typedefs = ["BinMDF_TypeADriverMap"]
-    
+
     [Modules.CDM]
-    
+
         exclude_typedefs = ["CDM_PresentationDirectory"]
-    
+
     [Modules.TDataStd]
-    
+
         exclude_typedefs = ["TDataStd_DataMapOfStringHArray1OfReal","TDataStd_DataMapOfStringHArray1OfInteger"]
-        
+
     [Modules.StdLDrivers]
-        
+
         include_header_pre = "#include <CDM_Document.hxx>"
-        
+
     [Modules.TFunction]
-        
+
         exclude_typedefs = ["TFunction_DataMapOfGUIDDriver"]
-        
+
     [Modules.TObj]
-        
+
         include_header_pre = """#include <TDF_RelocationTable.hxx>
 #include <TDF_DeltaOnModification.hxx>"""
         exclude_typedefs = ["TObj_DataMapOfObjectHSequenceOcafObjects"]
-    
+
     [Modules.StdObjMgt]
-        
+
         exclude_typedefs = ["StdObjMgt_TransientPersistentMap"]
-        
+
     [Modules.TNaming]
-        
+
         exclude_typedefs = ["TNaming_DataMapOfShapePtrRefShape"]
         exclude_methods = ["TNaming_RefShape::FirstUse"]
-        
+
     [Modules.TDF]
-    
+
         exclude_typedefs = ["TDF_AttributeDataMap"]
         exclude_classes = ["TDF_LabelNode"]
-        
+
     [Modules.XmlTObjDrivers]
-    
+
         include_header_pre = """#include <TDF_Attribute.hxx>
 #include <XmlObjMgt_Persistent.hxx>"""
 
     [Modules.TPrsStd]
-    
+
         exclude_typedefs = ["TPrsStd_DataMapOfGUIDDriver"]
-        
+
     [Modules.RWStepRepr]
-    
+
         include_header_pre = """#include <StepData_StepWriter.hxx>
 #include <StepData_StepReaderData.hxx>
 #include <Interface_EntityIterator.hxx>"""
-        
+
     [Modules.IGESBasic]
-    
+
         include_header_pre = """#include <Interface_EntityIterator.hxx>
 #include <Interface_CopyTool.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Interface_Check.hxx>"""
 
     [Modules.RWStepAP214]
-    
+
         include_header_pre = """#include <StepData_StepWriter.hxx>
 #include <StepData_StepReaderData.hxx>
 #include <Interface_EntityIterator.hxx>
@@ -621,92 +629,92 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 #include <Interface_CopyTool.hxx>"""
 
     [Modules.RWStepDimTol]
-    
+
         include_header_pre = """#include <StepData_StepWriter.hxx>
 #include <StepData_StepReaderData.hxx>
 #include <Interface_EntityIterator.hxx>"""
 
     [Modules.RWStepShape]
-    
+
         include_header_pre = """#include <StepData_StepWriter.hxx>
 #include <StepData_StepReaderData.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>"""
 
     [Modules.STEPSelections]
-    
+
         include_header_pre = """#include <XSControl_TransferReader.hxx>
 #include <Interface_EntityIterator.hxx>"""
 
     [Modules.STEPConstruct]
-    
+
         include_header_pre = """#include <StepData_StepModel.hxx>"""
         exclude_typedefs = ["STEPConstruct_DataMapOfAsciiStringTransient","STEPConstruct_DataMapOfPointTransient"]
 
     [Modules.IGESDraw]
-    
+
         include_header_pre = """#include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Interface_CopyTool.hxx>
 #include <Interface_Check.hxx>"""
-        
+
     [Modules.StepAP209]
-    
+
         include_header_pre = """#include <StepData_StepModel.hxx>"""
 
     [Modules.RWStepBasic]
-    
+
         include_header_pre = """#include <StepData_StepWriter.hxx>
 #include <StepData_StepReaderData.hxx>
 #include <Interface_EntityIterator.hxx>"""
 
     [Modules.TopoDSToStep]
-    
+
         include_header_pre = """#include <Transfer_FinderProcess.hxx>"""
 
     [Modules.RWStepAP242]
-    
+
        include_header_pre = """#include <StepData_StepWriter.hxx>
 #include <StepData_StepReaderData.hxx>
 #include <Interface_EntityIterator.hxx>"""
-        
+
     [Modules.RWStl]
-    
+
         exclude_methods = ["RWStl_Reader::ReadAscii"]
-        
+
     [Modules.RWStepVisual]
-    
+
         include_header_pre = """#include <StepData_StepWriter.hxx>
 #include <Interface_Check.hxx>
 #include <Interface_EntityIterator.hxx>"""
 
     [Modules.IGESGeom]
-    
+
         include_header_pre = """#include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Interface_CopyTool.hxx>
 #include <Interface_Check.hxx>"""
 
     [Modules.StepShape]
-    
+
         include_header_pre = """#include <StepRepr_RepresentationContext.hxx>"""
 
     [Modules.IGESSolid]
-    
+
         include_header_pre = """#include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Interface_CopyTool.hxx>
 #include <Interface_Check.hxx>"""
 
     [Modules.IGESDefs]
-    
+
         include_header_pre = """#include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Interface_CopyTool.hxx>
 #include <Interface_Check.hxx>"""
 
     [Modules.IGESData]
-    
+
         include_header_pre = """#include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Interface_CopyTool.hxx>
@@ -716,14 +724,14 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 #include <Interface_UndefinedContent.hxx>"""
 
     [Modules.IGESDimen]
-    
+
         include_header_pre = """#include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Interface_CopyTool.hxx>
 #include <Interface_Check.hxx>"""
 
     [Modules.STEPControl]
-    
+
         include_header_pre = """#include <XSControl_WorkSession.hxx>
 #include <Interface_InterfaceModel.hxx>
 #include <StepData_StepModel.hxx>
@@ -731,21 +739,21 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 #include <Transfer_TransientProcess.hxx>"""
 
     [Modules.IGESAppli]
-    
+
         include_header_pre = """#include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Interface_CopyTool.hxx>
 #include <Interface_Check.hxx>"""
 
     [Modules.RWStepGeom]
-    
+
         include_header_pre = """#include <StepData_StepWriter.hxx>
 #include <StepData_StepReaderData.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>"""
 
     [Modules.IGESSelect]
-    
+
         include_header_pre = """#include <IFSelect_ContextWrite.hxx>
 #include <Interface_CopyTool.hxx>
 #include <IFSelect_ContextModif.hxx>
@@ -759,23 +767,23 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 #include <IFSelect_SessionFile.hxx>"""
 
     [Modules.BRepToIGES]
-    
+
         include_header_pre = """#include <Transfer_FinderProcess.hxx>"""
 
     [Modules.RWStepElement]
-    
+
          include_header_pre = """#include <StepData_StepWriter.hxx>
 #include <StepData_StepReaderData.hxx>
 #include <Interface_EntityIterator.hxx>"""
 
     [Modules.RWStepFEA]
-    
+
         include_header_pre = """#include <StepData_StepWriter.hxx>
 #include <StepData_StepReaderData.hxx>
 #include <Interface_EntityIterator.hxx>"""
 
     [Modules.STEPEdit]
-    
+
         include_header_pre = """#include <IFSelect_EditForm.hxx>
 #include <IFSelect_SelectSignature.hxx>
 #include <StepData_StepModel.hxx>
@@ -784,24 +792,24 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 #include <IFSelect_Signature.hxx>"""
 
     [Modules.IGESControl]
-    
+
         include_header_pre = """#include <Transfer_FinderProcess.hxx>
 #include <XSControl_WorkSession.hxx>
 #include <Transfer_ActorOfTransientProcess.hxx>"""
 
     [Modules.RWStepAP203]
-    
+
         include_header_pre = """#include <StepData_StepWriter.hxx>
 #include <StepData_StepReaderData.hxx>
 #include <Interface_EntityIterator.hxx>"""
 
     [Modules.StepToTopoDS]
-    
-        include_header_pre = """#include <Transfer_TransientProcess.hxx>,
+
+        include_header_pre = """#include <Transfer_TransientProcess.hxx>
 #include <Transfer_ActorOfTransientProcess.hxx>"""
-        
+
     [Modules.IGESGraph]
-    
+
         include_header_pre = """#include <Interface_EntityIterator.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Interface_CopyTool.hxx>
@@ -817,3 +825,7 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 #include <IFSelect_EditForm.hxx>
 #include <IFSelect_SessionPilot.hxx>
 #include <IFSelect_SessionFile.hxx>
+
+    [Modules.Transfer]
+
+        exclude_typedefs = ["Transfer_TransferMapOfProcessForFinder","Transfer_TransferMapOfProcessForTransient"]
