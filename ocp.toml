@@ -1,6 +1,6 @@
 name = "OCP"
 input_folder = "./opencascade"
-output_folder = "./generated4"
+output_folder = "./OCP"
 
 pats = ["{}_*.hxx","{}.hxx"]
 
