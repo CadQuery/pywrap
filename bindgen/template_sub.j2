@@ -101,15 +101,14 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
 // classes
 {% for c in module.classes %}{% if (proper_new_operator(c) and proper_delete_operator(c)) or c.rootclass =='Standard_Transient' %}
 
-    auto cls = static_cast<py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,class_dict)}}>>(m.attr("{{cls_name(c)}}"));
-
-    {% if not c.constrcutors %}
-    if constexpr (std::.is_default_constructible<cls>::value){
-        cls.def(py::init<const std::string &>());
+    {% if not c.constructors and not c.abstract %}
+    if constexpr (std::is_default_constructible<{{c.name}}>::value){
+        static_cast<py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,class_dict)}}>>(m.attr("{{cls_name(c)}}"))
+            .def("__init__",[]({{c.name}} &self){ new (&self) {{c.name}}; });
     }
     {% endif %}
 
-    cls
+    static_cast<py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,class_dict)}}>>(m.attr("{{cls_name(c)}}"))
     {% for con in c.constructors %}
     {% if not con.pointer_by_ref %}
         .def(py::init< {{ argtypes(con) }} >() {{argnames(con)}} )
