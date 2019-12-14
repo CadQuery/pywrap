@@ -261,6 +261,21 @@ def get_public_constructors(cls):
 
     for child in get_xx(cls,CursorKind.CONSTRUCTOR,AccessSpecifier.PUBLIC):
         yield child
+        
+def get_private_constructors(cls):
+    '''Private constructors of a given class
+    '''
+
+    for child in get_xx(cls,CursorKind.CONSTRUCTOR,AccessSpecifier.PRIVATE):
+        yield child
+        
+def get_protected_constructors(cls):
+    '''Protected constructors of a given class
+    '''
+
+    for child in get_xx(cls,CursorKind.CONSTRUCTOR,AccessSpecifier.PROTECTED):
+        yield child
+
 
 def get_public_destructors(cls):
     '''Public destructors of a given class
@@ -440,6 +455,8 @@ class ClassInfo(object):
         self.abstract = cur.is_abstract_record()
         
         self.constructors = self.filter_rvalues((ConstructorInfo(el) for el in get_public_constructors(cur)))
+        self.nonpublic_constructors = [ConstructorInfo(el) for el in get_private_constructors(cur)]\
+            + [ConstructorInfo(el) for el in get_protected_constructors(cur)]
         
         self.methods = self.filter_rvalues((MethodInfo(el) for el in get_public_methods(cur)))
         self.protected_virtual_methods = self.filter_rvalues((MethodInfo(el) for el in get_protected_pure_virtual_methods(cur)))
