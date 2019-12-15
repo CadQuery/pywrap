@@ -494,6 +494,7 @@ class ClassInfo(object):
         self.comment = new_comment
         
         self.constructors += other.constructors
+        self.nonpublic_constructors +=  other.nonpublic_constructors
         self.methods += other.methods
         self.protected_virtual_methods += other.protected_virtual_methods
         self.private_virtual_methods += other.private_virtual_methods
