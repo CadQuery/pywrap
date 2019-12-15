@@ -623,3 +623,7 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
     [Modules.Transfer]
 
         exclude_typedefs = ["Transfer_TransferMapOfProcessForFinder","Transfer_TransferMapOfProcessForTransient"]
+        
+    [Modules.ShapeFix]
+    
+        include_header_pre_top = "#include <TColStd_HArray1OfReal.hxx>"
