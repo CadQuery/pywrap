@@ -12,13 +12,18 @@ namespace py = pybind11;
 // Standard Handle
 #include <Standard_Handle.hxx>
 
+// user-defined inclusion per module before includes
+{% if module_settings['include_header_pre_top'] %}
+{{ module_settings['include_header_pre_top'] }}
+{% endif %}
+
 // includes to resolve forward declarations
 {% for h in module.headers %}{% for f in h.forwards %}{% if f.name in class_dict %}
 #include <{{ class_dict[f.name].splitpath()[-1] }}>
 {% endif %}{% endfor %}{% endfor %}
 
 // module includes
-{% for h in module.headers %}
+{% for h in module.headers | sort(attribute='short_name') %}
 #include <{{ h.short_name }}>
 {% endfor %}
 
