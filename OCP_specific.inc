@@ -31,7 +31,7 @@ inline void register_default_constructor(py::module m, const char* name){
 
     if constexpr (std::is_constructible<T>::value){
         static_cast<py::class_<T ,Ptr>>(m.attr(name))
-            .def("__init__",[](T &self){ new (&self) T; });
+            .def(py::init([]() { return new T; }));
     }
 
 }
