@@ -17,11 +17,19 @@ from .module import ModuleInfo
 from .header import parse_tu
 
 
+method_schema = Schema({
+        'body' : str,
+        Optional('help',default=None) : str,
+        Optional('arguments',default=None) : [str]
+        })
+
+function_schema = method_schema
+
 class_schema = Schema({
         Optional('exclude_constructors',default=None) : [int],
-        Optional('additional_constructors',default=None) : [str],
-        Optional('additional_methods',default=None) : [str],
-        Optional('additional_static_methods',default=None) : [str]
+        Optional('additional_constructors',default=None) : {str : method_schema},
+        Optional('additional_methods',default=None) : {str : method_schema},
+        Optional('additional_static_methods',default=None) : {str : method_schema}
         })
 
 module_schema = Schema({
@@ -35,7 +43,8 @@ module_schema = Schema({
         Optional('include_body_post',default=None) : str,
         Optional('include_header_post',default=None) : str,
         Optional('template_specializations',default=[]) : [str],
-        Optional('Classes',default={}) : {str : class_schema}
+        Optional('Classes',default={}) : {str : class_schema},
+        Optional('additional_functions',default=None) : {str : function_schema}
         })
 
 global_schema = Schema({'name' : str,
@@ -53,7 +62,6 @@ global_schema = Schema({'name' : str,
                                      'path_mangled' : str},
                         Optional('Modules',default=None) : {str : module_schema}
                         })
-
 
 def read_settings(p):
     
