@@ -22,7 +22,7 @@ jobs:
 
   - bash: |
       conda env create -f env.yml && \
-      conda activate cpp-py-bindgen
+      source activate cpp-py-bindgen
     displayName: 'Prepare conda environment'
 
   - bash: |
