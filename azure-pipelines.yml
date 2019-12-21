@@ -36,6 +36,6 @@ jobs:
       source activate cpp-py-bindgen && \
       cd OCP && \
       cat makefile && \
-      make -j -n && \
+      make -j -k && \
       python -c"import OCP"
     displayName: 'Compile'
