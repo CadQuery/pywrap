@@ -37,5 +37,5 @@ jobs:
       cd OCP && \
       cat makefile && \
       make -j -n && \
-      make test
+      python -c"import OCP"
     displayName: 'Compile'
