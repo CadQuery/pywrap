@@ -33,7 +33,9 @@ jobs:
     displayName: 'Generate'
 
   - bash: |
+      source activate cpp-py-bindgen && \
       cd OCP && \
+      cat makefile && \
       make -j -n && \
       make test
     displayName: 'Compile'
