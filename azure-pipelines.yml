@@ -21,11 +21,11 @@ jobs:
   - template: conda-enable.yml@templates
 
   - bash: |
-      conda env create -f env.yml && \
-      source activate cpp-py-bindgen
+      conda env create -f env.yml
     displayName: 'Prepare conda environment'
 
   - bash: |
+      source activate cpp-py-bindgen && \
       python -m bindgen -n 1 -v parse ocp.toml out.pkl && \
       python -m bindgen -n 1 -v transform ocp.toml out.pkl out_f.pkl && \
       python -m bindgen -n 1 -v generate ocp.toml out_f.pkl
