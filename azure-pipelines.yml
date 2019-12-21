@@ -15,6 +15,7 @@ resources:
 
 jobs:
 - job: Linux
+  timeoutInMinutes: 360
   pool:
     vmImage: 'ubuntu-16.04'
   steps:
@@ -26,9 +27,9 @@ jobs:
 
   - bash: |
       source activate cpp-py-bindgen && \
-      python -m bindgen -n 1 -v parse ocp.toml out.pkl && \
-      python -m bindgen -n 1 -v transform ocp.toml out.pkl out_f.pkl && \
-      python -m bindgen -n 1 -v generate ocp.toml out_f.pkl
+      python -m bindgen -n 2 parse ocp.toml out.pkl && \
+      python -m bindgen -n 2 transform ocp.toml out.pkl out_f.pkl && \
+      python -m bindgen -n 2 generate ocp.toml out_f.pkl
     displayName: 'Generate'
 
   - bash: |
