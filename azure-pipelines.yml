@@ -32,6 +32,9 @@ jobs:
       python -m bindgen -n 2 generate ocp.toml out_f.pkl
     displayName: 'Generate'
 
+  - bash: sudo apt-get install g++-8
+    displayName: 'Install g++8'
+
   - bash: |
       source activate cpp-py-bindgen && \
       cd OCP && \
