@@ -32,8 +32,8 @@ jobs:
       python -m bindgen -n 2 generate ocp.toml out_f.pkl
     displayName: 'Generate'
 
-  - bash: sudo apt-get install g++-8
-    displayName: 'Install g++8'
+  - bash: sudo apt-get install g++-8 mesa-common-dev
+    displayName: 'Install g++8 and mesa headers'
 
   - bash: |
       source activate cpp-py-bindgen && \
