@@ -19,7 +19,7 @@ jobs:
   pool:
     vmImage: 'ubuntu-16.04'
   variables:
-    n_cores: 4
+    n_cores: 2
   steps:
   - template: conda-enable.yml@templates
 
@@ -32,6 +32,7 @@ jobs:
 
   - bash: |
       source activate cpp-py-bindgen && \
+      ls $CONDA_PREFIX/lib && \
       python -m bindgen -n $(n_cores) parse ocp.toml out.pkl && \
       python -m bindgen -n $(n_cores) transform ocp.toml out.pkl out_f.pkl && \
       python -m bindgen -n $(n_cores) generate ocp.toml out_f.pkl
