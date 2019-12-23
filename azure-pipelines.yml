@@ -32,13 +32,12 @@ jobs:
       python -m bindgen -n 2 generate ocp.toml out_f.pkl
     displayName: 'Generate'
 
-  - bash: sudo apt-get install g++-8 mesa-common-dev
-    displayName: 'Install g++8 and mesa headers'
+  - bash: sudo apt-get install g++-8 mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
+    displayName: 'Install g++8 and gl headers'
 
   - bash: |
       source activate cpp-py-bindgen && \
       cd OCP && \
-      cat makefile && \
-      make -k && \
+      make -j 2 -k && \
       python -c"import OCP"
     displayName: 'Compile'
