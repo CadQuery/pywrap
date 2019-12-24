@@ -42,6 +42,7 @@ jobs:
       source activate cpp-py-bindgen && \
       cd OCP && \
       make -j $(n_cores) -k && \
+      export LD_LIBRARY_PATH=$CONDA_PREFIX/lib && \
       make check && \
       python -c"import OCP"
     displayName: 'Compile'
