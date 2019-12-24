@@ -32,6 +32,13 @@ jobs:
 
   - bash: |
       source activate cpp-py-bindgen && \
+      conda info -a && \
+      which python && \
+      env
+    displayName: 'Conda env sanity checks'
+
+  - bash: |
+      source activate cpp-py-bindgen && \
       ls $CONDA_PREFIX/lib && \
       python -m bindgen -n $(n_cores) parse ocp.toml out.pkl && \
       python -m bindgen -n $(n_cores) transform ocp.toml out.pkl out_f.pkl && \
@@ -43,6 +50,7 @@ jobs:
       cd OCP && \
       make -j $(n_cores) -k && \
       export LD_LIBRARY_PATH=$CONDA_PREFIX/lib && \
+      ldd OCP*.so && \
       python -c"import OCP" && \
       make check
     displayName: 'Compile'
