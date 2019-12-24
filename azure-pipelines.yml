@@ -51,6 +51,7 @@ jobs:
       make -j $(n_cores) -k && \
       export LD_LIBRARY_PATH=$CONDA_PREFIX/lib && \
       ldd OCP*.so && \
-      python -c"import OCP" && \
+      LD_DEBUG=libs LD_LIBRARY_PATH=$CONDA_PREFIX/lib python -c"import OCP" && \
+      LD_DEBUG=libs python -c"import OCP" && \
       make check
     displayName: 'Compile'
