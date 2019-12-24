@@ -43,6 +43,6 @@ jobs:
       cd OCP && \
       make -j $(n_cores) -k && \
       export LD_LIBRARY_PATH=$CONDA_PREFIX/lib && \
-      make check && \
-      python -c"import OCP"
+      python -c"import OCP" && \
+      make check
     displayName: 'Compile'
