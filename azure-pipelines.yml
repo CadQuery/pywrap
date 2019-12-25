@@ -39,7 +39,7 @@ jobs:
 
   - bash: |
       source activate cpp-py-bindgen && \
-      objdump -TC $CONDA_PREFIX/lib/libTK*.so
+      nm -gDC $CONDA_PREFIX/lib/libTK*.so
     displayName: 'List symbols'
 
   - bash: |
