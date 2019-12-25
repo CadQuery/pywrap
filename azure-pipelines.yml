@@ -39,7 +39,7 @@ jobs:
 
   - bash: |
       source activate cpp-py-bindgen && \
-      ls $CONDA_PREFIX/lib && \
+      objdump -TC $CONDA_PREFIX/lib/libTKFillet.so && \
       python -m bindgen -n $(n_cores) parse ocp.toml out.pkl && \
       python -m bindgen -n $(n_cores) transform ocp.toml out.pkl out_f.pkl && \
       python -m bindgen -n $(n_cores) generate ocp.toml out_f.pkl
