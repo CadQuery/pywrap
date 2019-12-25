@@ -39,7 +39,11 @@ jobs:
 
   - bash: |
       source activate cpp-py-bindgen && \
-      objdump -TC $CONDA_PREFIX/lib/libTKFillet.so && \
+      objdump -TC $CONDA_PREFIX/lib/libTK*.so
+    displayName: 'List symbols'
+
+  - bash: |
+      source activate cpp-py-bindgen && \
       python -m bindgen -n $(n_cores) parse ocp.toml out.pkl && \
       python -m bindgen -n $(n_cores) transform ocp.toml out.pkl out_f.pkl && \
       python -m bindgen -n $(n_cores) generate ocp.toml out_f.pkl
@@ -54,9 +58,16 @@ jobs:
       source activate cpp-py-bindgen && \
       cd OCP && \
       make -j $(n_cores) -k && \
-      export LD_LIBRARY_PATH=$CONDA_PREFIX/lib && \
-      ldd OCP*.so && \
-      LD_DEBUG=libs LD_LIBRARY_PATH=$CONDA_PREFIX/lib python -c"import OCP" && \
-      LD_DEBUG=libs python -c"import OCP" && \
-      make check
     displayName: 'Compile'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: './OCP/OCP*.so'
+      artifactName: OCP
+
+  - bash: |
+      source activate cpp-py-bindgen && \
+      cd OCP && \
+      LD_LIBRARY_PATH=$CONDA_PREFIX/lib ldd OCP*.so && \
+      LD_DEBUG=libs python -c"import OCP" && \
+    displayName: 'Test'
