@@ -45,6 +45,11 @@ jobs:
       python -m bindgen -n $(n_cores) generate ocp.toml out_f.pkl
     displayName: 'Generate'
 
+  - task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: './OCP'
+    artifactName: OCP_src
+
   - bash: |
       source activate cpp-py-bindgen && \
       cd OCP && \
