@@ -57,7 +57,7 @@ jobs:
   - bash: |
       source activate cpp-py-bindgen && \
       cd OCP && \
-      make -j $(n_cores) -k && \
+      make -j $(n_cores) -k
     displayName: 'Compile'
 
   - task: PublishBuildArtifacts@1
