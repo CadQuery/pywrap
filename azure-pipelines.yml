@@ -46,9 +46,9 @@ jobs:
     displayName: 'Generate'
 
   - task: PublishBuildArtifacts@1
-  inputs:
-    pathtoPublish: './OCP'
-    artifactName: OCP_src
+    inputs:
+      pathtoPublish: './OCP'
+      artifactName: OCP_src
 
   - bash: |
       source activate cpp-py-bindgen && \
