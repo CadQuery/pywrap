@@ -49,10 +49,17 @@ jobs:
       python -m bindgen -n $(n_cores) generate ocp.toml out_f.pkl
     displayName: 'Generate'
 
+  - task: CopyFiles@2
+    inputs:
+      contents: 'out*.pkl'
+      targetFolder: OCP
+    displayName: 'Copy pkl outputs'
+
   - task: PublishBuildArtifacts@1
     inputs:
       pathtoPublish: './OCP'
       artifactName: OCP_src
+    displayName: 'Publish resulting code'
 
   - bash: |
       source activate cpp-py-bindgen && \
@@ -62,8 +69,9 @@ jobs:
 
   - task: PublishBuildArtifacts@1
     inputs:
-      pathtoPublish: './OCP/OCP*.so'
+      pathtoPublish: './OCP'
       artifactName: OCP
+    displayName: 'Publish compilation result'
 
   - bash: |
       source activate cpp-py-bindgen && \
