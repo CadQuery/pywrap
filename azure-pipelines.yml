@@ -76,6 +76,5 @@ jobs:
   - bash: |
       source activate cpp-py-bindgen && \
       cd OCP && \
-      LD_LIBRARY_PATH=$CONDA_PREFIX/lib ldd OCP*.so && \
       LD_DEBUG=libs python -c"import OCP"
     displayName: 'Test'
