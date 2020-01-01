@@ -28,7 +28,7 @@
 {%- endmacro -%}
 
 {%- macro argtypes_names(f) -%}
-    {% for arg,t,_ in f.args %}{{ t }}{{ arg }}{{ "," if not loop.last }}{% endfor %}
+    {% for arg,t,_ in f.args %}{{ t }} {{ arg }}{{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
 
 {%- macro argnames_wo_type(f) -%}

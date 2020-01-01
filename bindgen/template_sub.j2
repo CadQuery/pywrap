@@ -3,6 +3,9 @@ static_method_pointer,function_pointer,template_args_typename,template_args,
 template_method_pointer,template_static_method_pointer, template_pointer,
 prototype, pybind_overload, argtypes_names, argnames_wo_type, argnames_byref %}
 
+// std lib related includes
+#include <tuple>
+
 // pybind 11 related includes
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -127,7 +130,7 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
     {% for m in c.methods_byref %}
     {% if not m.pointer_by_ref %}
         .def("{{m.name}}",
-             []( {{c.name}} &self, {{argtypes_names(m)}} ){ self.{{m.name}}({{argnames_wo_type(m)}}); return { {{argnames_byref(m)}} }; },
+             []( {{c.name}} &self, {{argtypes_names(m)}} ){ self.{{m.name}}({{argnames_wo_type(m)}}); return std::make_tuple({{argnames_byref(m)}}); },
              R"#({{m.comment}})#" {{argnames(m)}})
     {% endif %}
     {% endfor %}
@@ -143,7 +146,7 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
     {% for m in c.static_methods_byref %}
     {% if not m.pointer_by_ref %}
         .def_static("{{m.name}}_s",
-                    []( {{argtypes_names(m)}} ){ {{c.name}}::{{m.name}}({{argnames_wo_type(m)}}); return { {{argnames_byref(m)}} }; },
+                    []( {{argtypes_names(m)}} ){ {{c.name}}::{{m.name}}({{argnames_wo_type(m)}}); return std::make_tuple({{argnames_byref(m)}}); },
                     R"#({{m.comment}})#" {{argnames(m)}})
     {% endif %}
     {% endfor %}
