@@ -321,6 +321,8 @@ exceptions = ["Standard_Failure"]
 
 module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 
+byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
+
 [Operators]
 
     "operator*" = ["__mul__","__rmul__"]

@@ -464,6 +464,9 @@ class ClassInfo(object):
         self.private_virtual_methods = self.filter_rvalues((MethodInfo(el) for el in get_private_pure_virtual_methods(cur)))
 
         self.static_methods = self.filter_rvalues((MethodInfo(el) for el in get_public_static_methods(cur)))
+        
+        self.static_methods_byref = []
+        self.methods_byref = []
 
         self.operators = [MethodInfo(el) for el in get_public_operators(cur)]
         self.static_operators = [MethodInfo(el) for el in get_public_static_operators(cur)]

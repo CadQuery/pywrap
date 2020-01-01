@@ -60,6 +60,7 @@ global_schema = Schema({'name' : str,
                                     Optional('include_post',default=None) : str},
                         'Symbols' : {'path' : str,
                                      'path_mangled' : str},
+                        Optional('byref_types',default=[]) : [str],
                         Optional('Modules',default=None) : {str : module_schema}
                         })
 
@@ -148,6 +149,35 @@ def transform_module(m,
         #exclude typedefs
         for h in m.headers:
             h.typedefs = [t for t in h.typedefs if t.name not in s['exclude_typedefs']]
+            
+    #collect methods and static methods using byref i.s.o. return
+    byref_types = settings['byref_types']
+    
+    def is_byref(met):
+        
+        rv = False
+        
+        if met.return_type == 'void':
+            for _,arg,_ in met.args:
+                if any(arg.startswith(byref_t) and arg.endswith('&')
+                       for byref_t in byref_types):
+                    rv=True
+                    break
+        
+        return rv
+            
+    if byref_types:
+        for c in m.classes:
+            
+            c.methods_byref = [met for met in c.methods if is_byref(met)]
+            c.static_methods_byref = [met for met in c.static_methods if is_byref(met)]
+            
+            for met in c.methods_byref:
+                c.methods.remove(met)
+                
+            for met in c.static_methods_byref:
+                c.static_methods.remove(met)
+            
         
     #collect exceptions
     for c in m.classes:

@@ -1,7 +1,7 @@
 {% from "macros.j2" import cls_name,pointer,super,argtypes,argnames,method_pointer,
 static_method_pointer,function_pointer,template_args_typename,template_args,
 template_method_pointer,template_static_method_pointer, template_pointer,
-prototype, pybind_overload %}
+prototype, pybind_overload, argtypes_names, argnames_wo_type, argnames_byref %}
 
 // pybind 11 related includes
 #include <pybind11/pybind11.h>
@@ -115,6 +115,7 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
         .def(py::init< {{ argtypes(con) }} >() {{argnames(con)}} )
     {% endif %}
     {% endfor %}
+    // methods
     {% for m in c.methods %}
     {% if not m.pointer_by_ref %}
         .def("{{m.name}}",
@@ -122,6 +123,15 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
              R"#({{m.comment}})#" {{argnames(m)}})
     {% endif %}
     {% endfor %}
+    // methods using call by reference i.s.o. return
+    {% for m in c.methods_byref %}
+    {% if not m.pointer_by_ref %}
+        .def("{{m.name}}",
+             []( {{c.name}} &self, {{argtypes_names(m)}} ){ self.{{m.name}}({{argnames_wo_type(m)}}); return { {{argnames_byref(m)}} }; },
+             R"#({{m.comment}})#" {{argnames(m)}})
+    {% endif %}
+    {% endfor %}
+    // static methods
     {% for m in c.static_methods %}
     {% if not m.pointer_by_ref %}
         .def_static("{{m.name}}_s",
@@ -129,6 +139,15 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
                     R"#({{m.comment}})#" {{argnames(m)}})
     {% endif %}
     {% endfor %}
+    // static methods using call by reference i.s.o. return
+    {% for m in c.static_methods_byref %}
+    {% if not m.pointer_by_ref %}
+        .def_static("{{m.name}}_s",
+                    []( {{argtypes_names(m)}} ){ {{c.name}}::{{m.name}}({{argnames_wo_type(m)}}); return { {{argnames_byref(m)}} }; },
+                    R"#({{m.comment}})#" {{argnames(m)}})
+    {% endif %}
+    {% endfor %}
+    // operators
     {% for op in c.operators %}
     {% if op.name in operator_dict %}
     {% for py_op in operator_dict[op.name] %}

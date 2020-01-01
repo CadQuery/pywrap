@@ -27,6 +27,18 @@
     {% for _,t,_ in f.args %}{{ t }}{{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
 
+{%- macro argtypes_names(f) -%}
+    {% for arg,t,_ in f.args %}{{ t }}{{ arg }}{{ "," if not loop.last }}{% endfor %}
+{%- endmacro -%}
+
+{%- macro argnames_wo_type(f) -%}
+    {% for arg,t,_ in f.args %}{{ arg }}{{ "," if not loop.last }}{% endfor %}
+{%- endmacro -%}
+
+{%- macro argnames_byref(f) -%}
+    {% for arg,t,_ in f.args %}{% if t.endswith('&') and not t.startswith('const') %}{{ arg }}{{ "," if not loop.last }}{% endif %}{% endfor %}
+{%- endmacro -%}
+
 {%- macro argnames(f) -%}
     {% for arg,t,d in f.args %} {{ "," if loop.first }} py::arg("{{arg}}"){% if d %}=static_cast<{{t}}>({{d}}){% endif %}{{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
