@@ -36,7 +36,7 @@
 {%- endmacro -%}
 
 {%- macro argnames_byref(f) -%}
-    {% for arg,t,_ in f.args %}{% if t.endswith('&') and not t.startswith('const') %}{{ arg }}{{ "," if not loop.last }}{% endif %}{% endfor %}
+    {% for arg,t,_ in f.args if is_byref(t) %}{{ arg }}{{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
 
 {%- macro argnames(f) -%}

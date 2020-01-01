@@ -123,6 +123,29 @@ def remove_undefined_mangled(m,sym):
     #exclude functions
     m.functions = [f for f in m.functions if sym.name.str.startswith(f.name).any() or f.inline]
 
+def is_byref_arg(arg,byref_types):
+        
+    rv = False
+    
+    if any(arg.startswith(byref_t) and arg.endswith('&')
+           for byref_t in byref_types):
+        rv=True
+    
+    return rv
+
+def is_byref(met,byref_types):
+        
+    rv = False
+    
+    if met.return_type == 'void':
+        for _,arg,_ in met.args:
+            if any(arg.startswith(byref_t) and arg.endswith('&')
+                   for byref_t in byref_types):
+                rv=True
+                break
+    
+    return rv
+
 def transform_module(m,
                      sym,
                      settings,
@@ -152,25 +175,12 @@ def transform_module(m,
             
     #collect methods and static methods using byref i.s.o. return
     byref_types = settings['byref_types']
-    
-    def is_byref(met):
-        
-        rv = False
-        
-        if met.return_type == 'void':
-            for _,arg,_ in met.args:
-                if any(arg.startswith(byref_t) and arg.endswith('&')
-                       for byref_t in byref_types):
-                    rv=True
-                    break
-        
-        return rv
             
     if byref_types:
         for c in m.classes:
             
-            c.methods_byref = [met for met in c.methods if is_byref(met)]
-            c.static_methods_byref = [met for met in c.static_methods if is_byref(met)]
+            c.methods_byref = [met for met in c.methods if is_byref(met,byref_types)]
+            c.static_methods_byref = [met for met in c.static_methods if is_byref(met,byref_types)]
             
             for met in c.methods_byref:
                 c.methods.remove(met)
@@ -341,6 +351,8 @@ def render(settings,module_settings,modules,class_dict):
     jinja_env = Environment(loader=FileSystemLoader(Path(__file__).dirname()),
                             trim_blocks=True,
                             lstrip_blocks = True)
+    jinja_env.globals['is_byref'] = lambda t: is_byref_arg(t,settings['byref_types'])
+    
     template_sub = jinja_env.get_template('template_sub.j2')
     template_sub_enums = jinja_env.get_template('template_sub_enums.j2')
     template_tmpl = jinja_env.get_template('template_templates.j2')
