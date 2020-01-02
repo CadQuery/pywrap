@@ -65,7 +65,7 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
         using {{c.name}}::{{c.name}};
         
         // public pure virtual
-        {% for m in c.methods %}{% if m.pure_virtual %}
+        {% for m in c.methods+c.methods_byref %}{% if m.pure_virtual %}
         {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
         {% endif %}{% endfor %}
         
@@ -130,7 +130,7 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
     {% for m in c.methods_byref %}
     {% if not m.pointer_by_ref %}
         .def("{{m.name}}",
-             []( {{c.name}} &self, {{argtypes_names(m)}} ){ {{c.name}} *self_ptr=&self; self_ptr->{{m.name}}({{argnames_wo_type(m)}}); return std::make_tuple({{argnames_byref(m)}}); },
+             []( {{c.name}} &self, {{argtypes_names(m)}} ){ self.{{m.name}}({{argnames_wo_type(m)}}); return std::make_tuple({{argnames_byref(m)}}); },
              R"#({{m.comment}})#" {{argnames(m)}})
     {% endif %}
     {% endfor %}

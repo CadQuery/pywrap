@@ -81,7 +81,7 @@ py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#
         using {{c.name}}::{{c.name}};
         
         // public pure virtual
-        {% for m in c.methods %}{% if m.pure_virtual %}
+        {% for m in c.methods+c.methods_byref %}{% if m.pure_virtual %}
         {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
         {% endif %}{% endfor %}
         
