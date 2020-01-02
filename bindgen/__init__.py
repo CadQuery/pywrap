@@ -112,12 +112,15 @@ def remove_undefined_mangled(m,sym):
     #exclude methods
     for c in m.classes:
         c.methods_unfiltered = c.methods
+        c.methods_byref_unfiltered = c.methods_byref
         c.static_methods_unfiltered = c.static_methods
+        c.static_methods_byref_unfiltered = c.static_methods_byref        
         c.constructors_unfiltered = c.constructors
         
-        
         c.methods = [el for el in c.methods if sym.name.str.endswith(el.mangled_name).any() or el.inline or el.pure_virtual or el.virtual]
+        c.methods_byref = [el for el in c.methods_byref if sym.name.str.endswith(el.mangled_name).any() or el.inline or el.pure_virtual or el.virtual]
         c.static_methods = [el for el in c.static_methods if sym.name.str.endswith(el.mangled_name).any() or el.inline]
+        c.static_methods_byref = [el for el in c.static_methods_byref if sym.name.str.endswith(el.mangled_name).any() or el.inline]
         c.constructors = [el for el in c.constructors if sym.name.str.endswith(el.mangled_name).any() or el.inline or el.pure_virtual or el.virtual]
     
     #exclude functions
