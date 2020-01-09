@@ -121,14 +121,8 @@ py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#
     };
 {% endif %}{% endfor %}
 
-// classes forward declarations only
-{% for c in module.classes %}{% if (proper_new_operator(c) and proper_delete_operator(c)) or c.rootclass =='Standard_Transient' %}
-    py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,class_dict)}}>(m,"{{cls_name(c)}}",R"#({{c.comment}})#");
-{% endif %}{% endfor %}
-
 // pre-register typdefs
 {% for h in module.headers %}
-// {{h.name}}
 {% for td in h.typedefs %}
 {% if not td.pod and not "_H" in td.name and td.template_base.__len__()>0 and not td.type.startswith("opencascade::handle") %}
 {% set dep_module = td.template_base[0].split("_") %}
@@ -140,6 +134,11 @@ py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#
 {% endif %}
 {% endfor %}
 {% endfor %}
+
+// classes forward declarations only
+{% for c in module.classes %}{% if (proper_new_operator(c) and proper_delete_operator(c)) or 'Standard_Transient' in c.rootclass %}
+    py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,class_dict,module.typedef_dict)}}>(m,"{{cls_name(c)}}",R"#({{c.comment}})#");
+{% endif %}{% endfor %}
 
 };
 
