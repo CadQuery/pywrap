@@ -195,9 +195,9 @@ def get_base_class(c):
               if el.access_specifier is AccessSpecifier.PUBLIC]
 
     if len(rv) == 0:
-        return None
+        return []
     else:
-        return rv[0].type.spelling
+        return [el.type.spelling for el in rv]
 
 def get_inheritance_relations(tu):
     '''Inheritance relations pairs
@@ -476,8 +476,8 @@ class ClassInfo(object):
             + [DestructorInfo(el) for el in get_protected_destructors(cur)]
 
         self.ptr = None
-        self.superclass = None
-        self.rootclass = None
+        self.superclass = []
+        self.rootclass = []
         self.superclasses = []
 
         self.methods_dict = {m.name:m for m in self.methods}
@@ -559,20 +559,23 @@ class HeaderInfo(object):
     def resolve_inheritance(self,cls):
 
         inheritance = self.inheritance
-
-        cls.superclass = inheritance.get(cls.name,None)
-
-        rootclass = tmp = cls.superclass
-        if tmp:
-            cls.superclasses.append(tmp)
-
-        while tmp in inheritance:
-            tmp = inheritance[tmp]
-            if tmp:
-                cls.superclasses.append(tmp)
-                rootclass = tmp
-
-        cls.rootclass = rootclass
+        superclasses = cls.superclasses
+        rootclass = cls.rootclass
+        
+        cls.superclass = inheritance.get(cls.name,[])
+        
+        def _resolve_inheritance(node):
+            '''Recurisvely traverse the inheritance tree'''
+            
+            for el in node:
+                superclasses.append(el)
+                
+                if el in inheritance:
+                    _resolve_inheritance(inheritance[el])
+                else:
+                    rootclass.append(el)
+        
+        _resolve_inheritance(cls.superclass)
 
 
     def parse(self, path,
@@ -596,8 +599,9 @@ class HeaderInfo(object):
 
         self.class_dict = {k : self.name for k in self.classes}
         self.class_templates = {el.displayname:ClassTemplateInfo(el) for el in get_class_templates(tr_unit)}
-        self.inheritance = {k:v for k,v in get_inheritance_relations(tr_unit)}
+        self.inheritance = {k:v for k,v in get_inheritance_relations(tr_unit) if v}
         self.typedefs = [TypedefInfo(el) for el in get_typedefs(tr_unit)]
+        self.typedef_dict = {t.name : self.name for t in self.typedefs}
         self.forwards = [ForwardInfo(el) for el in get_forward_declarations(tr_unit)]
 
         #handle freely defined methods
