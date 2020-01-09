@@ -12,6 +12,7 @@ from path import Path
 from tqdm import tqdm
 from jinja2 import Environment, FileSystemLoader
 from schema import Schema, Optional
+from toposort import toposort_flatten
 
 from .module import ModuleInfo
 from .header import parse_tu
@@ -197,7 +198,7 @@ def transform_module(m,
         if any([match(pat,c.name) for pat in settings['exceptions']]):
             m.exceptions.append(c)
         elif c.superclasses:
-            for s in c.superclasses:
+            for s in (s for s in c.superclasses if s): #remove None etc
                 if any([match(pat,s) for pat in settings['exceptions']]):
                     m.exceptions.append(c)
                     break
@@ -311,7 +312,7 @@ def transform_modules(verbose,
     #Update dependencies based on superclasses and default argument types
     
     for m in modules:
-        m.dependencies.update([cls_dict[c.superclass] for c in m.classes if c.superclass in cls_dict and cls_dict[c.superclass] != m.name])
+        m.dependencies.update([cls_dict[s] for c in m.classes for s in c.superclass if s in cls_dict and cls_dict[s] != m.name])
         #Consts should be removed before
         for t in (t for c in m.classes for method in c.methods+c.constructors+c.destructors for t in method.default_value_types):
             if t.startswith('const '):
@@ -321,7 +322,7 @@ def transform_modules(verbose,
             #elif t in enum_dict and enum_dict[t] != m.name:
             #    m.dependencies.add(enum_dict[t])
     
-    modules = sort_modules(modules)
+    #modules = sort_modules(modules)
     
     #remove duplicate typedefs
     logzero.logger.info('removing duplicate typedefs')
@@ -341,6 +342,17 @@ def transform_modules(verbose,
                     
     return modules,class_dict,enum_dict
 
+
+def toposort_modules(modules):
+
+    deps = {}
+    cls_dict = {c.name : m.name for m in modules for c in m.classes}
+    for m in modules:
+        deps[m.name] = set(cls_dict[s] for c in m.classes for s in c.superclass if s in cls_dict) - {m.name}
+        
+    return toposort_flatten(deps)
+
+
 def render(settings,module_settings,modules,class_dict):
     
     name = settings['name']
@@ -354,6 +366,9 @@ def render(settings,module_settings,modules,class_dict):
     jinja_env = Environment(loader=FileSystemLoader(Path(__file__).dirname()),
                             trim_blocks=True,
                             lstrip_blocks = True)
+    
+    all_classes = {c.name : c for m in modules for c in m.classes}
+    jinja_env.globals['parent_has_nonpublic_destructor'] = lambda c: any(all_classes[p].nonpublic_destructors for p in c.superclasses if p in all_classes)
     jinja_env.globals['is_byref'] = lambda t: is_byref_arg(t,settings['byref_types'])
     
     template_sub = jinja_env.get_template('template_sub.j2')
@@ -422,6 +437,7 @@ def render(settings,module_settings,modules,class_dict):
     
         with open('{}.cpp'.format(name),'w') as f:
                 f.write(template_main.render({'name' : name,
+                                              'sorted_modules' : toposort_modules(modules),
                                               'modules' : module_names}))
     
         with open('makefile','w') as f:
