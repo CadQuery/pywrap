@@ -24,11 +24,11 @@ PYBIND11_MODULE({{name}}, m) {
 
 // register submodules
 
-{% for mod in modules %}
+{% for mod in sorted_modules %}
     register_{{mod}}_enums(m);
 {% endfor %}
 
-{% for mod in modules %}
+{% for mod in sorted_modules %}
     register_{{mod}}(m);
 {% endfor %}
 
