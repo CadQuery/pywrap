@@ -1,5 +1,6 @@
 from .header import process_header
 from logzero import logger
+from toposort import toposort_flatten
 
 from path import Path
 
@@ -25,6 +26,8 @@ class ModuleInfo(object):
         
         self.classes = []
         self.class_dict = {}
+        self.typedefs = []
+        self.typedef_dict = {}
         self.enums = []
         self.functions = []
         self.operators = []
@@ -34,10 +37,12 @@ class ModuleInfo(object):
         
         for h in self.headers:
             self.classes.extend(h.classes.values())
+            self.typedefs.extend(h.typedefs)
             self.enums.extend(h.enums)
             self.functions.extend(h.functions)
             self.operators.extend(h.operators)
             self.class_dict.update(h.class_dict)
+            self.typedef_dict.update(h.typedef_dict)
             self.dependencies_headers.update(h.dependencies)
             
         #clean up dependencies
@@ -50,28 +55,13 @@ class ModuleInfo(object):
         self.dependencies_headers = dependencies_clean - {self.name}
         
         self.sort_classes()
-            
+        
     def sort_classes(self):
         
         class_dict = {c.name : c for c in self.classes}
-        classes_old = list(self.classes)
-        classes = []
+        dag = {c.name : set(s for s in c.superclass if s in class_dict) for c in self.classes}
         
-        # put all rootclasses at the top
-        for c in classes_old:
-            root = class_dict.get(c.rootclass,None)
-            if root in classes_old:
-                classes.append(root)
-                classes_old.remove(root)
-        
-        while classes_old:
-            for c in classes_old:
-                superclass = class_dict.get(c.superclass,None)
-                if superclass in classes or superclass not in self.classes:
-                    classes.append(c)
-                    classes_old.remove(c)
-                    
-        self.classes = classes
+        self.classes = [class_dict[el] for el in toposort_flatten(dag)]
             
 if __name__ == '__main__':
     
