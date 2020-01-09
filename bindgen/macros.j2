@@ -5,14 +5,15 @@
 {%- endmacro -%}
 
 {%- macro pointer(cls) -%}
-    {%- if cls.rootclass == "Standard_Transient" or cls.name == "Standard_Transient" -%} ,opencascade::handle<{{cls.name}}>
-    {%- elif cls.nonpublic_destructors|length>0 -%} ,std::unique_ptr<{{cls.name}}, py::nodelete>
-    {%- else -%} ,std::unique_ptr<{{cls.name}}>
+    {%- if "Standard_Transient" in cls.rootclass or cls.name == "Standard_Transient" -%} ,opencascade::handle<{{cls.name}}>
+    {%- elif cls.nonpublic_destructors|length>0 -%} , shared_ptr_nodelete<{{cls.name}}>
+    {%- elif parent_has_nonpublic_destructor(cls) -%} , shared_ptr<{{cls.name}}>
+    {%- else -%} , shared_ptr<{{cls.name}}>
     {%- endif -%}
 {%- endmacro -%}
 
-{%- macro super(cls,classes) -%}
-    {% if cls.superclass in classes %}, {{cls.superclass}} {% endif %}
+{%- macro super(cls,classes,typedefs) -%}
+    {% for super in cls.superclass if super in classes or super in typedefs %}, {{super}} {% endfor %}
 {%- endmacro -%}
 
 {%- macro prototype(f) -%}
@@ -84,9 +85,9 @@
 {%- endmacro -%}
 
 {%- macro template_pointer(cls) -%}
-    {%- if cls.rootclass == "Standard_Transient" or cls.name == "Standard_Transient" -%} ,opencascade::handle<{{cls.name}}{{template_args(cls)}}>
-    {%- elif cls.nonpublic_destructors|length>0 -%} ,std::unique_ptr<{{cls.name}}{{template_args(cls)}}, py::nodelete>
-    {%- else -%} ,std::unique_ptr<{{cls.name}}{{template_args(cls)}}>
+    {%- if "Standard_Transient" in cls.rootclass or cls.name == "Standard_Transient" -%} , opencascade::handle<{{cls.name}}{{template_args(cls)}}>
+    {%- elif cls.nonpublic_destructors|length>0 -%} , shared_ptr_nodelete<{{cls.name}}{{template_args(cls)}}>
+    {%- else -%} , shared_ptr<{{cls.name}}{{template_args(cls)}}>
     {%- endif -%}
 {%- endmacro -%}
 
