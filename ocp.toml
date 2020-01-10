@@ -208,15 +208,15 @@ modules = ["Standard",
 "MeshVS",
 "NIS",
 "Voxel",
-"CDF",
 "CDM",
+"CDF",
 "LDOM",
 "PCDM",
 "UTL",
-"AppStdL",
 "TDF",
 "TDataStd",
 "TDocStd",
+"AppStdL",
 "TFunction",
 "BinLDrivers",
 "BinMDF",
@@ -235,8 +235,8 @@ modules = ["Standard",
 "XmlMFunction",
 "XmlObjMgt",
 "StdLDrivers",
-"StdLPersistent",
 "StdObjMgt",
+"StdLPersistent",
 "BinDrivers",
 "BinMDataXtd",
 "BinMNaming",
@@ -246,10 +246,10 @@ modules = ["Standard",
 "XmlMDataXtd",
 "XmlMNaming",
 "XmlTObjDrivers",
-"ShapePersistent",
 "StdDrivers",
 "StdObject",
 "StdPersistent",
+"ShapePersistent",
 "StdStorage",
 "RWStl",
 "StlAPI",
@@ -529,6 +529,18 @@ byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
 
         exclude_classes = ["Font_BRepFont"]
         include_header_pre = "struct FT_LibraryRec_ {};"
+        
+        [Modules.Font.Classes]
+        
+        [Modules.Font.Classes.Font_BRepTextBuilder]
+            
+        [Modules.Font.Classes.Font_BRepTextBuilder.additional_methods]
+            
+        [Modules.Font.Classes.Font_BRepTextBuilder.additional_methods.Perform]
+        
+            body = "[]( Font_BRepTextBuilder & self , const char* path, double size, const char* text){ auto font = Font_BRepFont(path,size); return self.Perform(font,text);}"
+            help = "Render text as BRep shape."
+            arguments  = ["Font path","Font size","Text"]                
 
     [Modules.Select3D]
 
