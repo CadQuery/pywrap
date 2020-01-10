@@ -422,8 +422,8 @@ def render(settings,module_settings,modules,class_dict):
                                              'include_pre' : pre,
                                              'include_post' : post,
                                              'references_inner' : lambda name,method: name+"::" in method.return_type or any([name+"::" in a for _,a in method.args]),
-                                             'proper_new_operator' : lambda cls: [op for op in cls.static_operators if op.name =='operator new' and len(op.args) == 1],
-                                             'proper_delete_operator' : lambda cls: [op for op in cls.static_operators if op.name =='operator delete' and len(op.args) == 1],
+                                             'proper_new_operator' : proper_new_operator,
+                                             'proper_delete_operator' : proper_delete_operator,
                                              'module_settings' : module_settings.get(m.name,None)}))
     
             with open('{}.hxx'.format(m.name),'w') as f:
