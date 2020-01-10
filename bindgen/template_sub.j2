@@ -161,7 +161,16 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
              R"#({{op.comment}})#" {{argnames(op)}})
     {% endfor %}
     {% endif %}
-    {% endfor %};
+    {% endfor %}
+    // Additional methods
+    {% if c.name in module_settings['Classes']%}
+    {% for name,m in module_settings['Classes'][c.name]['additional_methods'].items() %}
+        .def("{{ name}}",
+             {{ m['body']}},
+             R"#({{ m['help'] }})#"
+             {% for arg in m['arguments'] %}, py::arg("{{ arg }}"){% endfor %})
+    {% endfor %}
+    {% endif %};
 {% endif %}{% endfor %}
 
 // functions
