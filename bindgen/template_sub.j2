@@ -110,14 +110,21 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
 {% for c in module.classes %}{% if (proper_new_operator(c) and proper_delete_operator(c)) or 'Standard_Transient' in  c.rootclass %}
 
     {% if not c.constructors_unfiltered and not c.nonpublic_constructors and not c.abstract %}
+    // default constructor
     register_default_constructor<{{c.name}} {{pointer(c)}}>(m,"{{c.name}}");
     {% endif %}
 
     static_cast<py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,class_dict,module.typedef_dict)}}>>(m.attr("{{cls_name(c)}}"))
-    {% for con in c.constructors %}
-    {% if not con.pointer_by_ref %}
+    // constructors
+    {% for i,con in enumerate(c.constructors) %}
+    {% if not con.pointer_by_ref or 
+       not i in module_settings['Classes'].get(c.name,{}).get('exclude_constructors',[])  %}
         .def(py::init< {{ argtypes(con) }} >() {{argnames(con)}} )
     {% endif %}
+    {% endfor %}
+    // custom constructors
+    {% for con in module_settings['Classes'].get(c.name,{}).get('custom_constructors',[]) %}
+        .def(py::init( {{con.body}} ))
     {% endfor %}
     // methods
     {% for m in c.methods %}
@@ -162,13 +169,19 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
     {% endfor %}
     {% endif %}
     {% endfor %}
-    // Additional methods
-    {% if c.name in module_settings['Classes']%}
+    // additional methods and static methods
+    {% if c.name in module_settings['Classes'] %}
     {% for name,m in module_settings['Classes'][c.name]['additional_methods'].items() %}
         .def("{{ name}}",
              {{ m['body']}},
              R"#({{ m['help'] }})#"
              {% for arg in m['arguments'] %}, py::arg("{{ arg }}"){% endfor %})
+    {% endfor %}
+    {% for name,m in module_settings['Classes'][c.name]['additional_static_methods'].items() %}
+        .def_static("{{ name}}",
+                    {{ m['body']}},
+                    R"#({{ m['help'] }})#"
+                    {% for arg in m['arguments'] %}, py::arg("{{ arg }}"){% endfor %})
     {% endfor %}
     {% endif %};
 {% endif %}{% endfor %}

@@ -27,10 +27,10 @@ method_schema = Schema({
 function_schema = method_schema
 
 class_schema = Schema({
-        Optional('exclude_constructors',default=None) : [int],
-        Optional('additional_constructors',default=None) : {str : method_schema},
-        Optional('additional_methods',default=None) : {str : method_schema},
-        Optional('additional_static_methods',default=None) : {str : method_schema}
+        Optional('exclude_constructors',default=[]) : [int],
+        Optional('additional_constructors',default=[]) : [method_schema],
+        Optional('additional_methods',default={}) : {str : method_schema},
+        Optional('additional_static_methods',default={}) : {str : method_schema}
         })
 
 module_schema = Schema({
@@ -370,9 +370,10 @@ def render(settings,module_settings,modules,class_dict):
     all_classes = {c.name : c for m in modules for c in m.classes}
     jinja_env.globals['parent_has_nonpublic_destructor'] = lambda c: any(all_classes[p].nonpublic_destructors for p in c.superclasses if p in all_classes)
     jinja_env.globals['is_byref'] = lambda t: is_byref_arg(t,settings['byref_types'])
+    jinja_env.globals['enumerate'] = enumerate
     
     template_sub = jinja_env.get_template('template_sub.j2')
-    template_sub_enums = jinja_env.get_template('template_sub_enums.j2')
+    template_sub_pre = jinja_env.get_template('template_sub_pre.j2')
     template_tmpl = jinja_env.get_template('template_templates.j2')
     template_main = jinja_env.get_template('template_main.j2')
     template_make = jinja_env.get_template('makefile.j2')
@@ -403,8 +404,8 @@ def render(settings,module_settings,modules,class_dict):
     with  output_path:
         for m in tqdm(modules):
             tqdm.write('Processing module {}'.format(m.name))
-            with open('{}_enums.cpp'.format(m.name),'w') as f:
-                f.write(template_sub_enums.render({'module' : m,
+            with open('{}_pre.cpp'.format(m.name),'w') as f:
+                f.write(template_sub_pre.render({'module' : m,
                                                    'class_dict' : class_dict,
                                                    'project_name' : name,
                                                    'operator_dict' : operator_dict,
@@ -413,7 +414,7 @@ def render(settings,module_settings,modules,class_dict):
                                                    'references_inner' : lambda name,method: name+"::" in method.return_type or any([name+"::" in a for _,a in method.args]),
                                                    'proper_new_operator' : proper_new_operator,
                                                    'proper_delete_operator' : proper_delete_operator,
-                                                   'module_settings' : module_settings.get(m.name,None)}))
+                                                   'module_settings' : module_settings.get(m.name,module_schema.validate({}))}))
             with open('{}.cpp'.format(m.name),'w') as f:
                 f.write(template_sub.render({'module' : m,
                                              'class_dict' : class_dict,
@@ -424,7 +425,7 @@ def render(settings,module_settings,modules,class_dict):
                                              'references_inner' : lambda name,method: name+"::" in method.return_type or any([name+"::" in a for _,a in method.args]),
                                              'proper_new_operator' : proper_new_operator,
                                              'proper_delete_operator' : proper_delete_operator,
-                                             'module_settings' : module_settings.get(m.name,None)}))
+                                             'module_settings' : module_settings.get(m.name,module_schema.validate({}))}))
     
             with open('{}.hxx'.format(m.name),'w') as f:
                 f.write(template_tmpl.render({'module' : m,
