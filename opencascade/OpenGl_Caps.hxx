@@ -18,6 +18,7 @@
 
 #include <Standard_Type.hxx>
 #include <Standard_Transient.hxx>
+#include <OpenGl_ShaderProgramDumpLevel.hxx>
 
 //! Class to define graphic driver capabilities.
 //! Notice that these options will be ignored if particular functionality does not provided by GL driver
@@ -29,7 +30,8 @@ public: //! @name flags to disable particular functionality, should be used only
   Standard_Boolean vboDisable;        //!< flag permits VBO usage, will significantly affect performance (OFF by default)
   Standard_Boolean pntSpritesDisable; //!< flag permits Point Sprites usage, will significantly affect performance (OFF by default)
   Standard_Boolean keepArrayData;     //!< Disables freeing CPU memory after building VBOs (OFF by default)
-  Standard_Boolean ffpEnable;         //!< Enables FFP (fixed-function pipeline), do not use built-in GLSL programs (ON by default on desktop OpenGL and OFF on OpenGL ES)
+  Standard_Boolean ffpEnable;         //!< Enables FFP (fixed-function pipeline), do not use built-in GLSL programs (OFF by default)
+  Standard_Boolean usePolygonMode;    //!< Enables Polygon Mode instead of built-in GLSL programs (OFF by default; unsupported on OpenGL ES)
   Standard_Boolean useSystemBuffer;   //!< Enables usage of system backbuffer for blitting (OFF by default on desktop OpenGL and ON on OpenGL ES for testing)
   Standard_Integer swapInterval;      //!< controls swap interval - 0 for VSync off and 1 for VSync on, 1 by default
 
@@ -58,7 +60,7 @@ public: //! @name context creation parameters
    * (see OpenGl_Context - messages will be printed to standard output).
    * Affects performance - thus should not be turned on by products in released state.
    *
-   * OFF by default. Currently implemented only for Windows (WGL).
+   * OFF by default.
    */
   Standard_Boolean contextDebug;
 
@@ -105,6 +107,23 @@ public: //! @name context creation parameters
    */
   Standard_Boolean contextCompatible;
 
+  /**
+   * Disallow using OpenGL extensions.
+   * Should be used for debugging purposes only!
+   *
+   * OFF by default.
+   */
+  Standard_Boolean contextNoExtensions;
+
+  /**
+   * Synthetically restrict upper version of OpenGL functionality to be used.
+   * Should be used for debugging purposes only!
+   *
+   * (-1, -1) by default, which means no restriction.
+   */
+  Standard_Integer contextMajorVersionUpper;
+  Standard_Integer contextMinorVersionUpper;
+
 public: //! @name flags to activate verbose output
 
   //! Print GLSL program compilation/linkage warnings, if any. OFF by default.
@@ -112,6 +131,9 @@ public: //! @name flags to activate verbose output
 
   //! Suppress redundant messages from debug GL context. ON by default.
   Standard_Boolean suppressExtraMsg;
+
+  //! Print GLSL program source code. OFF by default.
+  OpenGl_ShaderProgramDumpLevel glslDumpLevel;
 
 public: //! @name class methods
 

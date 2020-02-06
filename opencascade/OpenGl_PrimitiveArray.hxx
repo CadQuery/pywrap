@@ -107,6 +107,10 @@ protected:
   Standard_EXPORT Standard_Boolean buildVBO (const Handle(OpenGl_Context)& theCtx,
                                              const Standard_Boolean        theToKeepData) const;
 
+  //! Patch VBO sub-date within invalidated range.
+  Standard_EXPORT void updateVBO (const Handle(OpenGl_Context)& theCtx) const;
+
+  //! Release GL memory.
   Standard_EXPORT void clearMemoryGL (const Handle(OpenGl_Context)& theGlCtx) const;
 
 private:
@@ -120,8 +124,7 @@ private:
                   const Standard_Boolean          theHasVertColor) const;
 
   //! Auxiliary procedures
-  void drawEdges (const OpenGl_Vec4&              theEdgeColour,
-                  const Handle(OpenGl_Workspace)& theWorkspace) const;
+  void drawEdges (const Handle(OpenGl_Workspace)& theWorkspace) const;
 
   void drawMarkers (const Handle(OpenGl_Workspace)& theWorkspace) const;
 

@@ -19,6 +19,7 @@
 #include <Graphic3d_Buffer.hxx>
 #include <Graphic3d_IndexBuffer.hxx>
 #include <Graphic3d_TypeOfPrimitiveArray.hxx>
+#include <NCollection_Shared.hxx>
 #include <Select3D_SensitiveSet.hxx>
 #include <Select3D_BVHIndexBuffer.hxx>
 #include <TColStd_HPackedMapOfInteger.hxx>
@@ -32,7 +33,7 @@ class Select3D_SensitivePrimitiveArray : public Select3D_SensitiveSet
 public:
 
   //! Constructs an empty sensitive object.
-  Standard_EXPORT Select3D_SensitivePrimitiveArray (const Handle(SelectBasics_EntityOwner)& theOwnerId);
+  Standard_EXPORT Select3D_SensitivePrimitiveArray (const Handle(SelectMgr_EntityOwner)& theOwnerId);
 
   //! Return patch size limit (1 by default).
   Standard_Integer PatchSizeMax() const { return myPatchSizeMax; }
@@ -250,7 +251,7 @@ public:
   }
 
   //! Sets the owner for all entities in group
-  Standard_EXPORT virtual void Set (const Handle(SelectBasics_EntityOwner)& theOwnerId) Standard_OVERRIDE;
+  Standard_EXPORT virtual void Set (const Handle(SelectMgr_EntityOwner)& theOwnerId) Standard_OVERRIDE;
 
   //! Builds BVH tree for sensitive set.
   Standard_EXPORT virtual void BVH() Standard_OVERRIDE;
@@ -267,26 +268,28 @@ protected:
   //! Auxiliary getter.
   const Graphic3d_Vec3& getPosVec3 (const Standard_Integer theIndex) const
   {
-    return *reinterpret_cast<const Graphic3d_Vec3* >(myVerts->value (theIndex) + myPosOffset);
+    return *reinterpret_cast<const Graphic3d_Vec3* >(myPosData + myPosStride * theIndex);
   }
 
   //! Auxiliary getter.
   const Graphic3d_Vec2& getPosVec2 (const Standard_Integer theIndex) const
   {
-    return *reinterpret_cast<const Graphic3d_Vec2* >(myVerts->value (theIndex) + myPosOffset);
+    return *reinterpret_cast<const Graphic3d_Vec2* >(myPosData + myPosStride * theIndex);
   }
 
   //! Checks whether the element with index theIdx overlaps the current selecting volume
-  Standard_EXPORT virtual Standard_Boolean overlapsElement (SelectBasics_SelectingVolumeManager& theMgr,
+  Standard_EXPORT virtual Standard_Boolean overlapsElement (SelectBasics_PickResult& thePickResult,
+                                                            SelectBasics_SelectingVolumeManager& theMgr,
                                                             Standard_Integer theElemIdx,
-                                                            Standard_Real& theMatchDepth) Standard_OVERRIDE;
+                                                            Standard_Boolean theIsFullInside) Standard_OVERRIDE;
 
   //! Calculates distance from the 3d projection of used-picked screen point to center of the geometry
   Standard_EXPORT virtual Standard_Real distanceToCOG (SelectBasics_SelectingVolumeManager& theMgr) Standard_OVERRIDE;
 
   //! Checks whether the entity with index theIdx is inside the current selecting volume
   Standard_EXPORT virtual Standard_Boolean elementIsInside (SelectBasics_SelectingVolumeManager& theMgr,
-                                                            const Standard_Integer               theElemIdx) Standard_OVERRIDE;
+                                                            Standard_Integer theElemIdx,
+                                                            Standard_Boolean theIsFullInside) Standard_OVERRIDE;
 
 private:
 
@@ -300,10 +303,11 @@ private:
 
   Handle(Graphic3d_Buffer)            myVerts;              //!< source data - nodes position
   Handle(Graphic3d_IndexBuffer)       myIndices;            //!< source data - primitive indexes
+  const Standard_Byte*                myPosData;            //!< position vertex attribute data
+  Standard_Size                       myPosStride;          //!< position vertex attribute stride in bytes
   Graphic3d_TypeOfPrimitiveArray      myPrimType;           //!< primitives type
   Standard_Integer                    myIndexLower;         //!< index range - first index in myIndices (inclusive)
   Standard_Integer                    myIndexUpper;         //!< index range - last  index in myIndices (inclusive)
-  Standard_Size                       myPosOffset;          //!< offset to the position vertex attribute
   Standard_Integer                    myPatchSizeMax;       //!< patch size limit (1 by default)
   float                               myPatchDistance;      //!< distance between elements in patch
   bool                                myIs3d;               //!< flag indicating that position attribute has 3 components

@@ -36,7 +36,7 @@ public:
   //! Constructs a sensitive triangulation object defined by
   //! the owner theOwnerId, the triangulation theTrg,
   //! the location theInitLoc, and the flag theIsInterior.
-  Standard_EXPORT Select3D_SensitiveTriangulation (const Handle(SelectBasics_EntityOwner)& theOwnerId,
+  Standard_EXPORT Select3D_SensitiveTriangulation (const Handle(SelectMgr_EntityOwner)& theOwnerId,
                                                    const Handle(Poly_Triangulation)& theTrg,
                                                    const TopLoc_Location& theInitLoc,
                                                    const Standard_Boolean theIsInterior = Standard_True);
@@ -47,7 +47,7 @@ public:
   //! theFreeEdges, the center of gravity theCOG, and the flag theIsInterior.
   //! As free edges and the center of gravity do not have
   //! to be computed later, this syntax reduces computation time.
-  Standard_EXPORT Select3D_SensitiveTriangulation (const Handle(SelectBasics_EntityOwner)& theOwnerId,
+  Standard_EXPORT Select3D_SensitiveTriangulation (const Handle(SelectMgr_EntityOwner)& theOwnerId,
                                                    const Handle(Poly_Triangulation)& theTrg,
                                                    const TopLoc_Location& theInitLoc,
                                                    const Handle(TColStd_HArray1OfInteger)& theFreeEdges,
@@ -102,16 +102,18 @@ protected:
 private:
 
   //! Checks whether the element with index theIdx overlaps the current selecting volume
-  virtual Standard_Boolean overlapsElement (SelectBasics_SelectingVolumeManager& theMgr,
-                                            Standard_Integer theElemIdx,
-                                            Standard_Real& theMatchDepth) Standard_OVERRIDE;
+  Standard_EXPORT virtual Standard_Boolean overlapsElement (SelectBasics_PickResult& thePickResult,
+                                                            SelectBasics_SelectingVolumeManager& theMgr,
+                                                            Standard_Integer theElemIdx,
+                                                            Standard_Boolean theIsFullInside) Standard_OVERRIDE;
 
   //! Calculates distance from the 3d projection of used-picked screen point to center of the geometry
-  virtual Standard_Real distanceToCOG (SelectBasics_SelectingVolumeManager& theMgr) Standard_OVERRIDE;
+  Standard_EXPORT virtual Standard_Real distanceToCOG (SelectBasics_SelectingVolumeManager& theMgr) Standard_OVERRIDE;
 
   //! Checks whether the entity with index theIdx is inside the current selecting volume
-  virtual Standard_Boolean elementIsInside (SelectBasics_SelectingVolumeManager& theMgr,
-                                            const Standard_Integer               theElemIdx) Standard_OVERRIDE;
+  Standard_EXPORT virtual Standard_Boolean elementIsInside (SelectBasics_SelectingVolumeManager& theMgr,
+                                                            Standard_Integer theElemIdx,
+                                                            Standard_Boolean theIsFullInside) Standard_OVERRIDE;
 
 private:
 

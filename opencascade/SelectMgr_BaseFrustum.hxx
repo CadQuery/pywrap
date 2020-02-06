@@ -17,21 +17,18 @@
 #define _SelectMgr_BaseFrustum_HeaderFile
 
 #include <gp_GTrsf.hxx>
-#include <gp_Pnt.hxx>
-#include <gp_Pln.hxx>
-
 #include <Graphic3d_Camera.hxx>
-#include <Graphic3d_ClipPlane.hxx>
-#include <Graphic3d_SequenceOfHClipPlane.hxx>
 #include <Graphic3d_WorldViewProjState.hxx>
-
-#include <TColgp_HArray1OfPnt.hxx>
+#include <Select3D_BndBox3d.hxx>
+#include <Select3D_TypeOfSensitivity.hxx>
+#include <SelectMgr_FrustumBuilder.hxx>
+#include <SelectMgr_VectorTypes.hxx>
+#include <SelectMgr_ViewClipRange.hxx>
+#include <SelectBasics_PickResult.hxx>
+#include <TColgp_Array1OfPnt.hxx>
 #include <TColgp_Array1OfPnt2d.hxx>
 
-#include <Select3D_BndBox3d.hxx>
-#include <SelectMgr_FrustumBuilder.hxx>
-#include <Select3D_TypeOfSensitivity.hxx>
-#include <SelectMgr_VectorTypes.hxx>
+#include <Standard_OStream.hxx>
 
 //! This class is an interface for different types of selecting frustums,
 //! defining different selection types, like point, box or polyline
@@ -118,35 +115,39 @@ public:
   //! SAT intersection test between defined volume and given axis-aligned box
   Standard_EXPORT virtual Standard_Boolean Overlaps (const SelectMgr_Vec3& theBoxMin,
                                                      const SelectMgr_Vec3& theBoxMax,
-                                                     Standard_Real& theDepth);
+                                                     const SelectMgr_ViewClipRange& theClipRange,
+                                                     SelectBasics_PickResult& thePickResult) const;
 
   //! Returns true if selecting volume is overlapped by axis-aligned bounding box
   //! with minimum corner at point theMinPt and maximum at point theMaxPt
   Standard_EXPORT virtual Standard_Boolean Overlaps (const SelectMgr_Vec3& theBoxMin,
                                                      const SelectMgr_Vec3& theBoxMax,
-                                                     Standard_Boolean*     theInside = NULL);
+                                                     Standard_Boolean*     theInside = NULL) const;
 
   //! Intersection test between defined volume and given point
   Standard_EXPORT virtual Standard_Boolean Overlaps (const gp_Pnt& thePnt,
-                                                     Standard_Real& theDepth);
+                                                     const SelectMgr_ViewClipRange& theClipRange,
+                                                     SelectBasics_PickResult& thePickResult) const;
 
   //! Intersection test between defined volume and given point
   //! Does not perform depth calculation, so this method is defined as
   //! helper function for inclusion test. Therefore, its implementation
   //! makes sense only for rectangular frustum with box selection mode activated.
-  Standard_EXPORT virtual Standard_Boolean Overlaps (const gp_Pnt& thePnt);
+  Standard_EXPORT virtual Standard_Boolean Overlaps (const gp_Pnt& thePnt) const;
 
   //! SAT intersection test between defined volume and given ordered set of points,
   //! representing line segments. The test may be considered of interior part or
   //! boundary line defined by segments depending on given sensitivity type
   Standard_EXPORT virtual Standard_Boolean Overlaps (const TColgp_Array1OfPnt& theArrayOfPnts,
                                                      Select3D_TypeOfSensitivity theSensType,
-                                                     Standard_Real& theDepth);
+                                                     const SelectMgr_ViewClipRange& theClipRange,
+                                                     SelectBasics_PickResult& thePickResult) const;
 
   //! Checks if line segment overlaps selecting frustum
   Standard_EXPORT virtual Standard_Boolean Overlaps (const gp_Pnt& thePnt1,
                                                      const gp_Pnt& thePnt2,
-                                                     Standard_Real& theDepth);
+                                                     const SelectMgr_ViewClipRange& theClipRange,
+                                                     SelectBasics_PickResult& thePickResult) const;
 
   //! SAT intersection test between defined volume and given triangle. The test may
   //! be considered of interior part or boundary line defined by triangle vertices
@@ -155,26 +156,14 @@ public:
                                                      const gp_Pnt& thePt2,
                                                      const gp_Pnt& thePt3,
                                                      Select3D_TypeOfSensitivity theSensType,
-                                                     Standard_Real& theDepth);
+                                                     const SelectMgr_ViewClipRange& theClipRange,
+                                                     SelectBasics_PickResult& thePickResult) const;
 
   //! Measures distance between 3d projection of user-picked
   //! screen point and given point theCOG
-  Standard_EXPORT virtual Standard_Real DistToGeometryCenter (const gp_Pnt& theCOG);
+  Standard_EXPORT virtual Standard_Real DistToGeometryCenter (const gp_Pnt& theCOG) const;
 
   Standard_EXPORT virtual gp_Pnt DetectedPoint (const Standard_Real theDepth) const;
-
-  //! Checks if the point of sensitive in which selection was detected belongs
-  //! to the region defined by clipping planes
-  Standard_EXPORT virtual Standard_Boolean IsClipped (const Graphic3d_SequenceOfHClipPlane& thePlanes,
-                                                      const Standard_Real theDepth);
-
-  //! Valid for point selection only!
-  //! Computes depth range for global (defined for the whole view) clipping planes.
-  virtual void SetViewClipping (const Handle(Graphic3d_SequenceOfHClipPlane)& /*thePlanes*/) {};
-
-  //! Set if view clipping plane is enabled or not.
-  //! @return previous value of the flag
-  virtual Standard_Boolean SetViewClippingEnabled (const Standard_Boolean /*theToEnable*/) { return Standard_False; }
 
   //! Stores plane equation coefficients (in the following form:
   //! Ax + By + Cz + D = 0) to the given vector
@@ -183,6 +172,9 @@ public:
     thePlaneEquations.Clear();
     return;
   }
+
+  //! Dumps the content of me into the stream
+  Standard_EXPORT virtual void DumpJson (Standard_OStream& theOStream, const Standard_Integer theDepth = -1) const;
 
   DEFINE_STANDARD_RTTIEXT(SelectMgr_BaseFrustum,Standard_Transient)
 

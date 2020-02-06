@@ -19,18 +19,17 @@
 #include <Aspect_Window.hxx>
 #include <Graphic3d_BufferType.hxx>
 #include <Graphic3d_Camera.hxx>
+#include <Graphic3d_CubeMap.hxx>
 #include <Graphic3d_CLight.hxx>
 #include <Graphic3d_CStructure.hxx>
 #include <Graphic3d_DataStructureManager.hxx>
 #include <Graphic3d_DiagnosticInfo.hxx>
-#include <Graphic3d_ExportFormat.hxx>
 #include <Graphic3d_GraduatedTrihedron.hxx>
 #include <Graphic3d_MapOfStructure.hxx>
 #include <Graphic3d_NMapOfTransient.hxx>
 #include <Graphic3d_RenderingParams.hxx>
 #include <Graphic3d_SequenceOfHClipPlane.hxx>
 #include <Graphic3d_SequenceOfStructure.hxx>
-#include <Graphic3d_SortType.hxx>
 #include <Graphic3d_Structure.hxx>
 #include <Graphic3d_TextureEnv.hxx>
 #include <Graphic3d_TypeOfAnswer.hxx>
@@ -48,6 +47,7 @@
 
 class Graphic3d_CView;
 class Graphic3d_GraphicDriver;
+class Graphic3d_Layer;
 class Graphic3d_StructureManager;
 
 DEFINE_STANDARD_HANDLE (Graphic3d_CView, Graphic3d_DataStructureManager)
@@ -88,6 +88,12 @@ public:
 
   //! Returns true if the view was removed.
   Standard_Boolean IsRemoved() const { return myIsRemoved; }
+
+  //! Returns camera object of the view.
+  virtual const Handle(Graphic3d_Camera)& Camera() const { return myCamera; }
+
+  //! Sets camera used by the view.
+  virtual void SetCamera (const Handle(Graphic3d_Camera)& theCamera) { myCamera = theCamera; }
 
 public:
 
@@ -165,15 +171,16 @@ private:
   Standard_EXPORT Graphic3d_TypeOfAnswer acceptDisplay (const Graphic3d_TypeOfStructure theStructType) const;
 
   //! Clears the structure in this view.
-  Standard_EXPORT void Clear (const Handle(Graphic3d_Structure)& theStructure, const Standard_Boolean theWithDestruction);
+  Standard_EXPORT void Clear (Graphic3d_Structure* theStructure,
+                              const Standard_Boolean theWithDestruction);
 
   //! Connects the structures.
-  Standard_EXPORT void Connect (const Handle(Graphic3d_Structure)& theMother,
-                                const Handle(Graphic3d_Structure)& theDaughter);
+  Standard_EXPORT void Connect (const Graphic3d_Structure* theMother,
+                                const Graphic3d_Structure* theDaughter);
 
   //! Disconnects the structures.
-  Standard_EXPORT void Disconnect (const Handle(Graphic3d_Structure)& theMother,
-                                   const Handle(Graphic3d_Structure)& theDaughter);
+  Standard_EXPORT void Disconnect (const Graphic3d_Structure* theMother,
+                                   const Graphic3d_Structure* theDaughter);
 
   //! Displays the structure in the view.
   Standard_EXPORT void Display (const Handle(Graphic3d_Structure)& theStructure);
@@ -193,7 +200,9 @@ private:
   Standard_EXPORT void UnHighlight (const Handle(Graphic3d_Structure)& theStructure);
 
   //! Returns an index != 0 if the structure have another structure computed for the view <me>.
-  Standard_EXPORT Standard_Integer IsComputed (const Handle(Graphic3d_Structure)& theStructure) const;
+  Standard_EXPORT Standard_Integer IsComputed (const Graphic3d_Structure* theStructure) const;
+
+  Standard_Integer IsComputed (const Handle(Graphic3d_Structure)& theStructure) const { return IsComputed (theStructure.get()); }
 
   //! Returns true if the structure is displayed in the view.
   Standard_EXPORT Standard_Boolean IsDisplayed (const Handle(Graphic3d_Structure)& theStructure) const;
@@ -254,60 +263,40 @@ public:
   //! Returns True if the window associated to the view is defined.
   virtual Standard_Boolean IsDefined() const = 0;
 
-  //! Returns data of a graduated trihedron
-  virtual const Graphic3d_GraduatedTrihedron& GetGraduatedTrihedron() = 0;
-
-  //! Displays Graduated Trihedron.
-  virtual void GraduatedTrihedronDisplay (const Graphic3d_GraduatedTrihedron& theTrihedronData) = 0;
-
-  //! Erases Graduated Trihedron.
-  virtual void GraduatedTrihedronErase() = 0;
-
-  //! Sets minimum and maximum points of scene bounding box for Graduated Trihedron stored in graphic view object.
-  //! @param theMin [in] the minimum point of scene.
-  //! @param theMax [in] the maximum point of scene.
-  virtual void GraduatedTrihedronMinMaxValues (const Graphic3d_Vec3 theMin, const Graphic3d_Vec3 theMax) = 0;
-
   //! Dump active rendering buffer into specified memory buffer.
   virtual Standard_Boolean BufferDump (Image_PixMap& theImage, const Graphic3d_BufferType& theBufferType) = 0;
-
-  //! Export scene into the one of the Vector graphics formats (SVG, PS, PDF...).
-  //! In contrast to Bitmaps, Vector graphics is scalable (so you may got quality benefits
-  //! on printing to laser printer). Notice however that results may differ a lot and
-  //! do not contain some elements.
-  virtual Standard_Boolean Export (const Standard_CString theFileName,
-                                   const Graphic3d_ExportFormat theFormat,
-                                   const Graphic3d_SortType theSortType = Graphic3d_ST_BSP_Tree) = 0;
 
   //! Marks BVH tree and the set of BVH primitives of correspondent priority list with id theLayerId as outdated.
   virtual void InvalidateBVHData (const Graphic3d_ZLayerId theLayerId) = 0;
 
-  //! Add a new top-level z layer with ID <theLayerId> for
-  //! the view. Z layers allow drawing structures in higher layers
-  //! in foreground of structures in lower layers. To add a structure
-  //! to desired layer on display it is necessary to set the layer
-  //! ID for the structure.
-  virtual void AddZLayer (const Graphic3d_ZLayerId theLayerId) = 0;
+  //! Add a layer to the view.
+  //! @param theNewLayerId [in] id of new layer, should be > 0 (negative values are reserved for default layers).
+  //! @param theSettings   [in] new layer settings
+  //! @param theLayerAfter [in] id of layer to append new layer before
+  virtual void InsertLayerBefore (const Graphic3d_ZLayerId theNewLayerId,
+                                  const Graphic3d_ZLayerSettings& theSettings,
+                                  const Graphic3d_ZLayerId theLayerAfter) = 0;
+
+  //! Add a layer to the view.
+  //! @param theNewLayerId  [in] id of new layer, should be > 0 (negative values are reserved for default layers).
+  //! @param theSettings    [in] new layer settings
+  //! @param theLayerBefore [in] id of layer to append new layer after
+  virtual void InsertLayerAfter (const Graphic3d_ZLayerId theNewLayerId,
+                                 const Graphic3d_ZLayerSettings& theSettings,
+                                 const Graphic3d_ZLayerId theLayerBefore) = 0;
 
   //! Returns the maximum Z layer ID.
   //! First layer ID is Graphic3d_ZLayerId_Default, last ID is ZLayerMax().
   virtual Standard_Integer ZLayerMax() const = 0;
 
-  //! Returns the bounding box of all structures displayed in the Z layer.
-  virtual void InvalidateZLayerBoundingBox (const Graphic3d_ZLayerId theLayerId) const = 0;
+  //! Returns the list of layers.
+  virtual const NCollection_List<Handle(Graphic3d_Layer)>& Layers() const = 0;
+
+  //! Returns layer with given ID or NULL if undefined.
+  virtual Handle(Graphic3d_Layer) Layer (const Graphic3d_ZLayerId theLayerId) const = 0;
 
   //! Returns the bounding box of all structures displayed in the Z layer.
-  //! @param theLayerId            layer identifier
-  //! @param theCamera             camera definition
-  //! @param theWindowWidth        viewport width  (for applying transformation-persistence)
-  //! @param theWindowHeight       viewport height (for applying transformation-persistence)
-  //! @param theToIncludeAuxiliary consider also auxiliary presentations (with infinite flag or with trihedron transformation persistence)
-  //! @return computed bounding box
-  virtual Bnd_Box ZLayerBoundingBox (const Graphic3d_ZLayerId        theLayerId,
-                                     const Handle(Graphic3d_Camera)& theCamera,
-                                     const Standard_Integer          theWindowWidth,
-                                     const Standard_Integer          theWindowHeight,
-                                     const Standard_Boolean          theToIncludeAuxiliary) const = 0;
+  Standard_EXPORT virtual void InvalidateZLayerBoundingBox (const Graphic3d_ZLayerId theLayerId);
 
   //! Remove Z layer from the specified view. All structures
   //! displayed at the moment in layer will be displayed in default layer
@@ -362,10 +351,10 @@ public:
   Graphic3d_RenderingParams& ChangeRenderingParams() { return myRenderParams; }
 
   //! Returns background  fill color.
-  virtual Aspect_Background Background() const = 0;
+  virtual Aspect_Background Background() const { return Aspect_Background (myBgColor.GetRGB()); }
 
   //! Sets background fill color.
-  virtual void SetBackground (const Aspect_Background& theBackground) = 0;
+  virtual void SetBackground (const Aspect_Background& theBackground) { myBgColor.SetRGB (theBackground.Color()); }
 
   //! Returns gradient background fill colors.
   virtual Aspect_GradientBackground GradientBackground() const = 0;
@@ -385,29 +374,23 @@ public:
   //! Sets background image fill style.
   virtual void SetBackgroundImageStyle (const Aspect_FillMethod theFillStyle) = 0;
 
+  //! Returns cubemap being setted last time on background.
+  virtual Handle(Graphic3d_CubeMap) BackgroundCubeMap() const = 0;
+
+  //! Sets environment cubemap as background.
+  virtual void SetBackgroundCubeMap (const Handle(Graphic3d_CubeMap)& theCubeMap) = 0;
+
   //! Returns environment texture set for the view.
   virtual Handle(Graphic3d_TextureEnv) TextureEnv() const = 0; 
 
   //! Sets environment texture for the view.
   virtual void SetTextureEnv (const Handle(Graphic3d_TextureEnv)& theTextureEnv) = 0;
 
-  //! Returns the state of frustum culling optimization.
-  virtual Standard_Boolean IsCullingEnabled() const = 0;
-
-  //! Enables or disables frustum culling optimization.
-  virtual void SetCullingEnabled (const Standard_Boolean theIsEnabled) = 0;
-
   //! Return backfacing model used for the view.
   virtual Graphic3d_TypeOfBackfacingModel BackfacingModel() const = 0;
 
   //! Sets backfacing model for the view.
   virtual void SetBackfacingModel (const Graphic3d_TypeOfBackfacingModel theModel) = 0;
-
-  //! Returns camera object of the view.
-  virtual const Handle(Graphic3d_Camera)& Camera() const = 0;
-
-  //! Sets camera used by the view.
-  virtual void SetCamera (const Handle(Graphic3d_Camera)& theCamera) = 0;
 
   //! Returns list of lights of the view.
   virtual const Handle(Graphic3d_LightSet)& Lights() const = 0;
@@ -431,6 +414,32 @@ public:
   virtual void DiagnosticInformation (TColStd_IndexedDataMapOfStringString& theDict,
                                       Graphic3d_DiagnosticInfo theFlags) const = 0;
 
+  //! Returns string with statistic performance info.
+  virtual TCollection_AsciiString StatisticInformation() const = 0;
+
+  //! Fills in the dictionary with statistic performance info.
+  virtual void StatisticInformation (TColStd_IndexedDataMapOfStringString& theDict) const = 0;
+
+public: //! @name obsolete Graduated Trihedron functionality
+
+  //! Returns data of a graduated trihedron
+  virtual const Graphic3d_GraduatedTrihedron& GetGraduatedTrihedron() { return myGTrihedronData; }
+
+  //! Displays Graduated Trihedron.
+  virtual void GraduatedTrihedronDisplay (const Graphic3d_GraduatedTrihedron& theTrihedronData) { (void )theTrihedronData; }
+
+  //! Erases Graduated Trihedron.
+  virtual void GraduatedTrihedronErase() {}
+
+  //! Sets minimum and maximum points of scene bounding box for Graduated Trihedron stored in graphic view object.
+  //! @param theMin [in] the minimum point of scene.
+  //! @param theMax [in] the maximum point of scene.
+  virtual void GraduatedTrihedronMinMaxValues (const Graphic3d_Vec3 theMin, const Graphic3d_Vec3 theMax)
+  {
+    (void )theMin;
+    (void )theMax;
+  }
+
 private:
 
   //! Adds the structure to display lists of the view.
@@ -448,17 +457,13 @@ private:
   virtual void changePriority (const Handle(Graphic3d_CStructure)& theCStructure,
                                const Standard_Integer theNewPriority) = 0;
 
-  //! Returns zoom-scale factor.
-  virtual Standard_Real considerZoomPersistenceObjects (const Graphic3d_ZLayerId        theLayerId,
-                                                        const Handle(Graphic3d_Camera)& theCamera,
-                                                        const Standard_Integer          theWindowWidth,
-                                                        const Standard_Integer          theWindowHeight) const = 0;
-
 protected:
 
   Standard_Integer myId;
   Graphic3d_RenderingParams myRenderParams;
+  Quantity_ColorRGBA        myBgColor;
   Handle(Graphic3d_StructureManager) myStructureManager;
+  Handle(Graphic3d_Camera)  myCamera;
   Graphic3d_SequenceOfStructure myStructsToCompute;
   Graphic3d_SequenceOfStructure myStructsComputed;
   Graphic3d_MapOfStructure myStructsDisplayed;
@@ -468,6 +473,10 @@ protected:
   Standard_Boolean myIsRemoved;
   Graphic3d_TypeOfShadingModel  myShadingModel;
   Graphic3d_TypeOfVisualization myVisualization;
+
+protected:
+
+  Graphic3d_GraduatedTrihedron myGTrihedronData;
 
 };
 

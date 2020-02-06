@@ -21,6 +21,7 @@
 
 #include <XCAFDoc_DataMapOfShapeLabel.hxx>
 #include <Standard_Boolean.hxx>
+#include <TDataStd_NamedData.hxx>
 #include <TDF_Attribute.hxx>
 #include <TDF_LabelSequence.hxx>
 #include <Standard_Integer.hxx>
@@ -176,11 +177,11 @@ public:
   
   //! Returns the label corresponding to shape S
   //! (searches among top-level shapes, not including subcomponents
-  //! of assemblies)
-  //! If findInstance is False (default), searches for the
-  //! non-located shape (i.e. among original shapes)
-  //! If findInstance is True, searches for the shape with the same
-  //! location, including shape instances
+  //! of assemblies and subshapes)
+  //! If findInstance is False (default), seach for the
+  //! input shape without location
+  //! If findInstance is True, searches for the
+  //! input shape as is.
   //! Return True if <S> is found.
   Standard_EXPORT Standard_Boolean FindShape (const TopoDS_Shape& S, TDF_Label& L, const Standard_Boolean findInstance = Standard_False) const;
   
@@ -273,7 +274,7 @@ public:
   
   //! Adds a component given by its label and location to the assembly
   //! Note: assembly must be IsAssembly() or IsSimpleShape()
-  Standard_EXPORT TDF_Label AddComponent (const TDF_Label& assembly, const TDF_Label& comp, const TopLoc_Location& Loc) const;
+  Standard_EXPORT TDF_Label AddComponent (const TDF_Label& assembly, const TDF_Label& comp, const TopLoc_Location& Loc);
   
   //! Adds a shape (located) as a component to the assembly
   //! If necessary, creates an additional top-level shape for
@@ -298,6 +299,11 @@ public:
   //! label shapeL
   //! Returns Null label if it is not subshape
   Standard_EXPORT TDF_Label AddSubShape (const TDF_Label& shapeL, const TopoDS_Shape& sub) const;
+
+  //! Adds (of finds already existed) a label for subshape <sub> of shape stored on
+  //! label shapeL. Label addedSubShapeL returns added (found) label or empty in case of wrong subshape.
+  //! Returns True, if new shape was added, False in case of already existed subshape/wrong subshape
+  Standard_EXPORT Standard_Boolean AddSubShape(const TDF_Label& shapeL, const TopoDS_Shape& sub, TDF_Label& addedSubShapeL) const;
   
   Standard_EXPORT TDF_Label FindMainShapeUsingMap (const TopoDS_Shape& sub) const;
   
@@ -318,7 +324,7 @@ public:
 
   Standard_EXPORT virtual Standard_OStream& Dump (Standard_OStream& theDumpLog) const Standard_OVERRIDE;
 
-  //! Print to ostream <theDumpLog> type of shape found on <L> label
+  //! Print to std::ostream <theDumpLog> type of shape found on <L> label
   //! and the entry of <L>, with <level> tabs before.
   //! If <deep>, print also TShape and Location addresses
   Standard_EXPORT static void DumpShape (Standard_OStream& theDumpLog, const TDF_Label& L, const Standard_Integer level = 0, const Standard_Boolean deep = Standard_False);
@@ -405,12 +411,19 @@ public:
   Standard_EXPORT static Standard_Boolean FindSHUO (const TDF_LabelSequence& Labels, Handle(XCAFDoc_GraphNode)& theSHUOAttr);
   
   //! Convert Shape (compound/compsolid/shell/wire) to assembly
-  Standard_EXPORT Standard_Boolean Expand (const TDF_Label& Shape) ;
+  Standard_EXPORT Standard_Boolean Expand (const TDF_Label& Shape);
 
-    //! Make subshape for Part from Shape
-  Standard_EXPORT void makeSubShape (const TDF_Label& thePart, const TopoDS_Shape& theShape, const TopLoc_Location& theLoc) ;
+  //! Method to get NamedData attribute assigned to the given shape label.
+  //! @param theLabel    [in] the shape Label
+  //! @param theToCreate [in] create and assign attribute if it doesn't exist
+  //! @return Handle to the NamedData attribute or Null if there is none
+  Standard_EXPORT Handle(TDataStd_NamedData) GetNamedProperties (const TDF_Label& theLabel, const Standard_Boolean theToCreate = Standard_False) const;
 
-
+  //! Method to get NamedData attribute assigned to a label of the given shape.
+  //! @param theShape    [in] input shape
+  //! @param theToCreate [in] create and assign attribute if it doesn't exist
+  //! @return Handle to the NamedData attribute or Null if there is none
+  Standard_EXPORT Handle(TDataStd_NamedData) GetNamedProperties(const TopoDS_Shape& theShape, const Standard_Boolean theToCreate = Standard_False) const;
 
   DEFINE_STANDARD_RTTIEXT(XCAFDoc_ShapeTool,TDF_Attribute)
 
@@ -434,6 +447,11 @@ private:
   //! Makes a shape on label L to be a reference to shape refL
   //! with location loc
   Standard_EXPORT static void MakeReference (const TDF_Label& L, const TDF_Label& refL, const TopLoc_Location& loc);
+
+  //! Auxiliary method for Expand
+  //! Add declared under expanded theMainShapeL subshapes to new part label thePart
+  //! Recursively iterate all subshapes of shape from thePart, current shape to iterate its subshapes is theShape.
+  Standard_EXPORT void makeSubShape(const TDF_Label& theMainShapeL, const TDF_Label& thePart, const TopoDS_Shape& theShape, const TopLoc_Location& theLoc);
 
   XCAFDoc_DataMapOfShapeLabel myShapeLabels;
   XCAFDoc_DataMapOfShapeLabel mySubShapes;

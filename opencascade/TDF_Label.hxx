@@ -117,7 +117,7 @@ public:
   
   //! Adds an Attribute  to the current label. Raises if
   //! there is already one.
-  Standard_EXPORT void AddAttribute (const Handle(TDF_Attribute)& anAttribute, const Standard_Boolean append = Standard_False) const;
+  Standard_EXPORT void AddAttribute (const Handle(TDF_Attribute)& anAttribute, const Standard_Boolean append = Standard_True) const;
   
   //! Forgets an  Attribute   from the  current  label,
   //! setting its   forgotten status true and  its valid
@@ -154,7 +154,7 @@ public:
   template <class T> 
   Standard_Boolean FindAttribute (const Standard_GUID& theID, Handle(T)& theAttr) const
   { 
-    Handle(TDF_Attribute) anAttr = theAttr;
+    Handle(TDF_Attribute) anAttr;
     return FindAttribute (theID, anAttr) && ! (theAttr = Handle(T)::DownCast(anAttr)).IsNull();
   }
 

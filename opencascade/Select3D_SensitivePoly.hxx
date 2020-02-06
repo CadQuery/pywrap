@@ -36,7 +36,7 @@ public:
   //! owner OwnerId, the array of points ThePoints, and
   //! the sensitivity type Sensitivity.
   //! The array of points is the outer polygon of the geometric face.
-  Standard_EXPORT Select3D_SensitivePoly (const Handle(SelectBasics_EntityOwner)& theOwnerId,
+  Standard_EXPORT Select3D_SensitivePoly (const Handle(SelectMgr_EntityOwner)& theOwnerId,
                                           const TColgp_Array1OfPnt& thePoints,
                                           const Standard_Boolean theIsBVHEnabled);
 
@@ -44,14 +44,14 @@ public:
   //! owner OwnerId, the array of points ThePoints, and
   //! the sensitivity type Sensitivity.
   //! The array of points is the outer polygon of the geometric face.
-  Standard_EXPORT Select3D_SensitivePoly (const Handle(SelectBasics_EntityOwner)& theOwnerId,
+  Standard_EXPORT Select3D_SensitivePoly (const Handle(SelectMgr_EntityOwner)& theOwnerId,
                                           const Handle(TColgp_HArray1OfPnt)& thePoints,
                                           const Standard_Boolean theIsBVHEnabled);
 
   //! Constructs the sensitive circle object defined by the
   //! owner OwnerId, the circle Circle, the Boolean
   //! FilledCircle and the number of points NbOfPoints.
-  Standard_EXPORT Select3D_SensitivePoly (const Handle(SelectBasics_EntityOwner)& theOwnerId,
+  Standard_EXPORT Select3D_SensitivePoly (const Handle(SelectMgr_EntityOwner)& theOwnerId,
                                           const Standard_Boolean theIsBVHEnabled,
                                           const Standard_Integer theNbPnts = 6);
 
@@ -92,20 +92,22 @@ public:
   Standard_EXPORT virtual void Swap (const Standard_Integer theIdx1,
                                      const Standard_Integer theIdx2) Standard_OVERRIDE;
 
-private:
+protected:
 
   //! Checks whether the segment with index theIdx overlaps the current selecting volume
-  virtual Standard_Boolean overlapsElement (SelectBasics_SelectingVolumeManager& theMgr,
-                                            Standard_Integer theElemIdx,
-                                            Standard_Real& theMatchDepth) Standard_OVERRIDE;
+  Standard_EXPORT virtual Standard_Boolean overlapsElement (SelectBasics_PickResult& thePickResult,
+                                                            SelectBasics_SelectingVolumeManager& theMgr,
+                                                            Standard_Integer theElemIdx,
+                                                            Standard_Boolean theIsFullInside) Standard_OVERRIDE;
 
   //! Checks whether the entity with index theIdx is inside the current selecting volume
-  virtual Standard_Boolean elementIsInside (SelectBasics_SelectingVolumeManager& theMgr,
-                                            const Standard_Integer               theElemIdx) Standard_OVERRIDE;
+  Standard_EXPORT virtual Standard_Boolean elementIsInside (SelectBasics_SelectingVolumeManager& theMgr,
+                                                            Standard_Integer theElemIdx,
+                                                            Standard_Boolean theIsFullInside) Standard_OVERRIDE;
 
   //! Calculates distance from the 3d projection of used-picked screen point
   //! to center of the geometry
-  virtual Standard_Real distanceToCOG (SelectBasics_SelectingVolumeManager& theMgr) Standard_OVERRIDE;
+  Standard_EXPORT virtual Standard_Real distanceToCOG (SelectBasics_SelectingVolumeManager& theMgr) Standard_OVERRIDE;
 
 protected:
 

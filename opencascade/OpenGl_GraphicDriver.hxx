@@ -20,41 +20,15 @@
 
 #include <Aspect_Display.hxx>
 #include <Aspect_DisplayConnection.hxx>
-#include <Aspect_GradientFillMethod.hxx>
-#include <Aspect_FillMethod.hxx>
-#include <Aspect_TypeOfTriedronPosition.hxx>
-#include <Aspect_Handle.hxx>
 #include <Aspect_RenderingContext.hxx>
-#include <gp_Ax2.hxx>
 #include <Graphic3d_CView.hxx>
 #include <Graphic3d_CStructure.hxx>
-#include <Graphic3d_TextPath.hxx>
-#include <Graphic3d_HorizontalTextAlignment.hxx>
-#include <Graphic3d_VerticalTextAlignment.hxx>
-#include <Graphic3d_GraduatedTrihedron.hxx>
-#include <Graphic3d_TypeOfComposition.hxx>
-#include <Graphic3d_ExportFormat.hxx>
-#include <Graphic3d_SortType.hxx>
-#include <Graphic3d_BufferType.hxx>
 #include <NCollection_DataMap.hxx>
 #include <OpenGl_Context.hxx>
-#include <OpenGl_MapOfZLayerSettings.hxx>
-#include <Quantity_NameOfColor.hxx>
-#include <Standard_CString.hxx>
-#include <TColStd_Array1OfInteger.hxx>
-#include <TColStd_Array2OfReal.hxx>
-#include <TColStd_HArray1OfByte.hxx>
-#include <TColStd_HArray1OfReal.hxx>
-#include <TColStd_MapOfInteger.hxx>
 
 class Aspect_Window;
 class Quantity_Color;
-class Graphic3d_Vertex;
-class TCollection_ExtendedString;
-class Image_PixMap;
-class OpenGl_Element;
 class OpenGl_Structure;
-class OpenGl_Text;
 class OpenGl_View;
 class OpenGl_Window;
 
@@ -134,10 +108,21 @@ public:
 
 public:
 
-  //! Adds a new top-level z layer with ID theLayerId for all views. Z layers allow drawing structures in higher layers
-  //! in foreground of structures in lower layers. To add a structure to desired layer on display it is necessary to
-  //! set the layer index for the structure. The passed theLayerId should be not less than 0 (reserved for default layers).
-  Standard_EXPORT void AddZLayer (const Graphic3d_ZLayerId theLayerId) Standard_OVERRIDE;
+  //! Adds a layer to all views.
+  //! @param theLayerId    [in] id of new layer, should be > 0 (negative values are reserved for default layers).
+  //! @param theSettings   [in] new layer settings
+  //! @param theLayerAfter [in] id of layer to append new layer before
+  Standard_EXPORT virtual void InsertLayerBefore (const Graphic3d_ZLayerId theNewLayerId,
+                                                  const Graphic3d_ZLayerSettings& theSettings,
+                                                  const Graphic3d_ZLayerId theLayerAfter) Standard_OVERRIDE;
+
+  //! Adds a layer to all views.
+  //! @param theLayerId     [in] id of created layer
+  //! @param theSettings    [in] new layer settings
+  //! @param theLayerBefore [in] id of layer to append new layer after
+  Standard_EXPORT virtual void InsertLayerAfter (const Graphic3d_ZLayerId theNewLayerId,
+                                                 const Graphic3d_ZLayerSettings& theSettings,
+                                                 const Graphic3d_ZLayerId theLayerBefore) Standard_OVERRIDE;
 
   //! Removes Z layer. All structures displayed at the moment in layer will be displayed in
   //! default layer (the bottom-level z layer). By default, there are always default
@@ -145,14 +130,8 @@ public:
   //! (reserved for default layers that can not be removed).
   Standard_EXPORT void RemoveZLayer (const Graphic3d_ZLayerId theLayerId) Standard_OVERRIDE;
 
-  //! Returns list of Z layers defined for the graphical driver.
-  Standard_EXPORT void ZLayers (TColStd_SequenceOfInteger& theLayerSeq) const Standard_OVERRIDE;
-
   //! Sets the settings for a single Z layer.
   Standard_EXPORT void SetZLayerSettings (const Graphic3d_ZLayerId theLayerId, const Graphic3d_ZLayerSettings& theSettings) Standard_OVERRIDE;
-
-  //! Returns the settings of a single Z layer.
-  Standard_EXPORT virtual const Graphic3d_ZLayerSettings& ZLayerSettings (const Graphic3d_ZLayerId theLayerId) const Standard_OVERRIDE;
 
 public:
 
@@ -185,16 +164,15 @@ public:
 
   //! Method to retrieve valid GL context.
   //! Could return NULL-handle if no window created by this driver.
-  Standard_EXPORT const Handle(OpenGl_Context)& GetSharedContext() const;
+  //! @param theBound if TRUE then currently bound context will be returned,
+  //!                 any context will be returned otherwise
+  Standard_EXPORT const Handle(OpenGl_Context)& GetSharedContext (bool theBound = false) const;
 
 #if defined(HAVE_EGL) || defined(HAVE_GLES2) || defined(OCCT_UWP) || defined(__ANDROID__) || defined(__QNX__)
   Aspect_Display          getRawGlDisplay() const { return myEglDisplay; }
   Aspect_RenderingContext getRawGlContext() const { return myEglContext;  }
   void*                   getRawGlConfig()  const { return myEglConfig; }
 #endif
-
-  //! Insert index layer at proper position.
-  Standard_EXPORT void addZLayerIndex (const Graphic3d_ZLayerId theLayerId);
 
   //! Set device lost flag for redrawn views.
   Standard_EXPORT void setDeviceLost();
@@ -219,10 +197,6 @@ protected:
   Handle(OpenGl_Caps)                                      myCaps;
   NCollection_Map<Handle(OpenGl_View)>                     myMapOfView;
   NCollection_DataMap<Standard_Integer, OpenGl_Structure*> myMapOfStructure;
-
-  TColStd_MapOfInteger       myLayerIds;
-  TColStd_SequenceOfInteger  myLayerSeq;
-  OpenGl_MapOfZLayerSettings myMapOfZLayerSettings;
 
   mutable OpenGl_StateCounter myStateCounter; //!< State counter for OpenGl structures.
   mutable OpenGl_StateCounter myUIDGenerator; //!< Unique ID counter for primitive arrays.

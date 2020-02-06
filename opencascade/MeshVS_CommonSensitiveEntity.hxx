@@ -28,9 +28,9 @@ class MeshVS_CommonSensitiveEntity : public Select3D_SensitiveSet
 public:
 
   //! Default constructor.
-  Standard_EXPORT MeshVS_CommonSensitiveEntity (const Handle(SelectBasics_EntityOwner)& theOwner,
-                                                const Handle(MeshVS_Mesh)&              theParentMesh,
-                                                const MeshVS_MeshSelectionMethod        theSelMethod);
+  Standard_EXPORT MeshVS_CommonSensitiveEntity (const Handle(SelectMgr_EntityOwner)& theOwner,
+                                                const Handle(MeshVS_Mesh)& theParentMesh,
+                                                const MeshVS_MeshSelectionMethod theSelMethod);
 
   //! Destructor.
   Standard_EXPORT virtual ~MeshVS_CommonSensitiveEntity();
@@ -65,13 +65,15 @@ public:
 protected:
 
   //! Checks whether the entity with index theIdx overlaps the current selecting volume
-  Standard_EXPORT virtual Standard_Boolean overlapsElement (SelectBasics_SelectingVolumeManager& theMgr,
+  Standard_EXPORT virtual Standard_Boolean overlapsElement (SelectBasics_PickResult& thePickResult,
+                                                            SelectBasics_SelectingVolumeManager& theMgr,
                                                             Standard_Integer theElemIdx,
-                                                            Standard_Real& theMatchDepth) Standard_OVERRIDE;
+                                                            Standard_Boolean theIsFullInside) Standard_OVERRIDE;
 
   //! Checks whether the entity with index theIdx is inside the current selecting volume
   Standard_EXPORT virtual Standard_Boolean elementIsInside (SelectBasics_SelectingVolumeManager& theMgr,
-                                                            const Standard_Integer theElemIdx) Standard_OVERRIDE;
+                                                            Standard_Integer theElemIdx,
+                                                            Standard_Boolean theIsFullInside) Standard_OVERRIDE;
 
   //! Calculates distance from the 3d projection of used-picked screen point to center of the geometry
   Standard_EXPORT virtual Standard_Real distanceToCOG (SelectBasics_SelectingVolumeManager& theMgr) Standard_OVERRIDE;

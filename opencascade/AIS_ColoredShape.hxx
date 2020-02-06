@@ -56,6 +56,10 @@ public: //! @name sub-shape aspects
   Standard_EXPORT void SetCustomColor (const TopoDS_Shape&   theShape,
                                        const Quantity_Color& theColor);
 
+  //! Customize transparency of specified sub-shape
+  Standard_EXPORT void SetCustomTransparency (const TopoDS_Shape& theShape,
+                                              Standard_Real theTransparency);
+
   //! Customize line width of specified sub-shape
   Standard_EXPORT void SetCustomWidth (const TopoDS_Shape& theShape,
                                        const Standard_Real theLineWidth);
@@ -77,11 +81,16 @@ public: //! @name global aspects
   //! Sets transparency value.
   Standard_EXPORT virtual void SetTransparency (const Standard_Real theValue) Standard_OVERRIDE;
 
+  //! Sets the material aspect.
+  Standard_EXPORT virtual void SetMaterial (const Graphic3d_MaterialAspect& theAspect) Standard_OVERRIDE;
+
+public:
+
   //! Removes the setting for transparency in the reconstructed compound shape.
   Standard_EXPORT virtual void UnsetTransparency() Standard_OVERRIDE;
 
-  //! Sets the material aspect.
-  Standard_EXPORT virtual void SetMaterial (const Graphic3d_MaterialAspect& theAspect) Standard_OVERRIDE;
+  //! Setup line width of entire shape.
+  Standard_EXPORT virtual void UnsetWidth() Standard_OVERRIDE;
 
 protected: //! @name override presentation computation
 

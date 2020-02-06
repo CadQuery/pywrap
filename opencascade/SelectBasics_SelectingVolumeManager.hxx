@@ -19,6 +19,7 @@
 #include <BVH_Box.hxx>
 #include <gp_Pnt.hxx>
 #include <TColgp_HArray1OfPnt.hxx>
+#include <SelectBasics_PickResult.hxx>
 
 class Bnd_Box;
 class gp_Pnt;
@@ -45,40 +46,40 @@ public:
   //! Returns true if selecting volume is overlapped by box theBox
   virtual Standard_Boolean Overlaps (const NCollection_Vec3<Standard_Real>& theBoxMin,
                                      const NCollection_Vec3<Standard_Real>& theBoxMax,
-                                     Standard_Real& theDepth) = 0;
+                                     SelectBasics_PickResult& thePickResult) const = 0;
 
   //! Returns true if selecting volume is overlapped by axis-aligned bounding box with minimum
   //! corner at point theMinPt and maximum at point theMaxPt
   virtual Standard_Boolean Overlaps (const NCollection_Vec3<Standard_Real>& theBoxMin,
                                      const NCollection_Vec3<Standard_Real>& theBoxMax,
-                                     Standard_Boolean*                      theInside = NULL) = 0;
+                                     Standard_Boolean*                      theInside = NULL) const = 0;
 
   //! Returns true if selecting volume is overlapped by point thePnt
   virtual Standard_Boolean Overlaps (const gp_Pnt& thePnt,
-                                     Standard_Real& theDepth) = 0;
+                                     SelectBasics_PickResult& thePickResult) const = 0;
 
   //! Returns true if selecting volume is overlapped by point thePnt.
   //! Does not perform depth calculation, so this method is defined as
   //! helper function for inclusion test.
-  virtual Standard_Boolean Overlaps (const gp_Pnt& thePnt) = 0;
+  virtual Standard_Boolean Overlaps (const gp_Pnt& thePnt) const = 0;
 
   //! Returns true if selecting volume is overlapped by planar convex polygon, which points
   //! are stored in theArrayOfPts, taking into account sensitivity type theSensType
   virtual Standard_Boolean Overlaps (const Handle(TColgp_HArray1OfPnt)& theArrayOfPts,
                                      Standard_Integer theSensType,
-                                     Standard_Real& theDepth) = 0;
+                                     SelectBasics_PickResult& thePickResult) const = 0;
 
   //! Returns true if selecting volume is overlapped by planar convex polygon, which points
   //! are stored in theArrayOfPts, taking into account sensitivity type theSensType
   virtual Standard_Boolean Overlaps (const TColgp_Array1OfPnt& theArrayOfPts,
                                      Standard_Integer theSensType,
-                                     Standard_Real& theDepth) = 0;
+                                     SelectBasics_PickResult& thePickResult) const = 0;
 
   //! Returns true if selecting volume is overlapped by line segment with start point at thePt1
   //! and end point at thePt2
   virtual Standard_Boolean Overlaps (const gp_Pnt& thePt1,
                                      const gp_Pnt& thePt2,
-                                     Standard_Real& theDepth) = 0;
+                                     SelectBasics_PickResult& thePickResult) const = 0;
 
   //! Returns true if selecting volume is overlapped by triangle with vertices thePt1,
   //! thePt2 and thePt3, taking into account sensitivity type theSensType
@@ -86,11 +87,11 @@ public:
                                      const gp_Pnt& thePt2,
                                      const gp_Pnt& thePt3,
                                      Standard_Integer theSensType,
-                                     Standard_Real& theDepth) = 0;
+                                     SelectBasics_PickResult& thePickResult) const = 0;
 
   //! Calculates distance from 3d projection of user-defined selection point
   //! to the given point theCOG
-  virtual Standard_Real DistToGeometryCenter (const gp_Pnt& theCOG) = 0;
+  virtual Standard_Real DistToGeometryCenter (const gp_Pnt& theCOG) const = 0;
 
   virtual gp_Pnt DetectedPoint (const Standard_Real theDepth) const = 0;
 
@@ -107,6 +108,9 @@ public:
   //! of center of 2d rectangle (for point and rectangular selection
   //! correspondingly) onto far view frustum plane
   virtual gp_Pnt GetFarPickedPnt() const = 0;
+
+  //! Return mouse coordinates for Point selection mode.
+  virtual gp_Pnt2d GetMousePosition() const = 0;
 
   //! Stores plane equation coefficients (in the following form:
   //! Ax + By + Cz + D = 0) to the given vector

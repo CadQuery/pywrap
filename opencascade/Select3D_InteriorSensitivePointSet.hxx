@@ -25,7 +25,7 @@
 #include <Select3D_SensitiveSet.hxx>
 
 class gp_Pnt;
-class SelectBasics_EntityOwner;
+class SelectMgr_EntityOwner;
 
 typedef NCollection_Vector<Handle(Select3D_SensitivePoly)> Select3D_VectorOfHPoly;
 
@@ -37,7 +37,7 @@ class Select3D_InteriorSensitivePointSet : public Select3D_SensitiveSet
 public:
 
   //! Splits the given point set thePoints onto planar convex polygons
-  Standard_EXPORT Select3D_InteriorSensitivePointSet (const Handle(SelectBasics_EntityOwner)& theOwnerId,
+  Standard_EXPORT Select3D_InteriorSensitivePointSet (const Handle(SelectMgr_EntityOwner)& theOwnerId,
                                                       const TColgp_Array1OfPnt& thePoints);
 
   //! Initializes the given array theHArrayOfPnt by 3d coordinates of vertices of the
@@ -76,13 +76,15 @@ protected:
 
   //! Checks whether the planar convex polygon with index theIdx
   //! in myPlanarPolygons overlaps the current selecting volume
-  Standard_EXPORT virtual Standard_Boolean overlapsElement (SelectBasics_SelectingVolumeManager& theMgr,
+  Standard_EXPORT virtual Standard_Boolean overlapsElement (SelectBasics_PickResult& thePickResult,
+                                                            SelectBasics_SelectingVolumeManager& theMgr,
                                                             Standard_Integer theElemIdx,
-                                                            Standard_Real& theMatchDepth) Standard_OVERRIDE;
+                                                            Standard_Boolean theIsFullInside) Standard_OVERRIDE;
 
   //! Checks whether the entity with index theIdx is inside the current selecting volume
   Standard_EXPORT virtual Standard_Boolean elementIsInside (SelectBasics_SelectingVolumeManager& theMgr,
-                                                            const Standard_Integer               theElemIdx) Standard_OVERRIDE;
+                                                            Standard_Integer theElemIdx,
+                                                            Standard_Boolean theIsFullInside) Standard_OVERRIDE;
 
   //! Calculates distance from the 3d projection of used-picked
   //! screen point to center of the geometry

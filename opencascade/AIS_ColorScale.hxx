@@ -133,7 +133,7 @@ public:
                    Quantity_Color& theMaxColor) const
   {
     theMinColor.SetValues (hueToValidRange (myColorHlsMin[0]), myColorHlsMin[1], myColorHlsMin[2], Quantity_TOC_HLS);
-    theMaxColor.SetValues (hueToValidRange (myColorHlsMin[0]), myColorHlsMin[1], myColorHlsMin[2], Quantity_TOC_HLS);
+    theMaxColor.SetValues (hueToValidRange (myColorHlsMax[0]), myColorHlsMax[1], myColorHlsMax[2], Quantity_TOC_HLS);
   }
 
   //! Sets color range corresponding to minimum and maximum values.
@@ -406,7 +406,7 @@ private:
   Standard_Integer computeMaxLabelWidth (const TColStd_SequenceOfExtendedString& theLabels) const;
 
   //! Draw labels.
-  void drawLabels (const Handle(Prs3d_Presentation)& thePrs,
+  void drawLabels (const Handle(Graphic3d_Group)& theGroup,
                    const TColStd_SequenceOfExtendedString& theLabels,
                    const Standard_Integer theBarBottom,
                    const Standard_Integer theBarHeight,

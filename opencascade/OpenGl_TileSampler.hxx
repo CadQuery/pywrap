@@ -19,7 +19,11 @@
 #include <OpenGl_Texture.hxx>
 #include <OpenGl_HaltonSampler.hxx>
 
+#include <Image_PixMapTypedData.hxx>
+
 #include <vector>
+
+class Graphic3d_RenderingParams;
 
 //! Tool object used for sampling screen tiles according to estimated pixel variance (used in path tracing engine).
 //! To improve GPU thread coherency, rendering window is split into pixel blocks or tiles. The important feature of
@@ -32,85 +36,124 @@ class OpenGl_TileSampler
 {
 public:
 
-  //! Size of individual tile in pixels.
-  static int TileSize() { return 32; }
-
-public:
-
   //! Creates new tile sampler.
   Standard_EXPORT OpenGl_TileSampler();
 
-  //! Returns width of ray-tracing viewport.
-  int SizeX() const { return mySizeX; }
+  //! Size of individual tile in pixels.
+  Graphic3d_Vec2i TileSize() const { return Graphic3d_Vec2i (myTileSize, myTileSize); }
 
-  //! Returns height of ray-tracing viewport.
-  int SizeY() const { return mySizeY; }
+  //! Scale factor for quantization of visual error (float) into signed integer.
+  float VarianceScaleFactor() const { return myScaleFactor; }
 
   //! Returns number of tiles in X dimension.
-  int NbTilesX() const { return myTilesX; }
+  int NbTilesX() const { return (int)myTiles.SizeX; }
 
   //! Returns number of tiles in Y dimension.
-  int NbTilesY() const { return myTilesY; }
+  int NbTilesY() const { return (int)myTiles.SizeY; }
 
   //! Returns total number of tiles in viewport.
-  int NbTiles() const { return myTilesX * myTilesY; }
+  int NbTiles() const { return int(myTiles.SizeX * myTiles.SizeY); }
 
-  //! Specifies size of ray-tracing viewport.
-  Standard_EXPORT void SetSize (const int theSizeX,
-                                const int theSizeY);
+  //! Returns ray-tracing viewport.
+  const Graphic3d_Vec2i& ViewSize() const { return myViewSize; }
 
-  //! Returns number of pixels in the given tile.
-  int TileArea (const int theX,
-                const int theY) const
+  //! Number of tiles within offsets texture.
+  Graphic3d_Vec2i NbOffsetTiles (bool theAdaptive) const
   {
-    return Min (TileSize(), mySizeX - theX * TileSize())
-         * Min (TileSize(), mySizeY - theY * TileSize());
+    return theAdaptive
+         ? Graphic3d_Vec2i ((int )myOffsetsShrunk.SizeX, (int )myOffsetsShrunk.SizeY)
+         : Graphic3d_Vec2i ((int )myOffsets.SizeX,       (int )myOffsets.SizeY);
   }
+
+  //! Maximum number of tiles within offsets texture.
+  Graphic3d_Vec2i NbOffsetTilesMax() const { return NbOffsetTiles (true).cwiseMax (NbOffsetTiles (false)); }
+
+  //! Viewport for rendering using offsets texture.
+  Graphic3d_Vec2i OffsetTilesViewport (bool theAdaptive) const { return NbOffsetTiles (theAdaptive) * myTileSize; }
+
+  //! Maximum viewport for rendering using offsets texture.
+  Graphic3d_Vec2i OffsetTilesViewportMax() const { return NbOffsetTilesMax() * myTileSize; }
+
+  //! Return maximum number of samples per tile.
+  int MaxTileSamples() const
+  {
+    int aNbSamples = 0;
+    for (Standard_Size aRowIter = 0; aRowIter < myTiles.SizeY; ++aRowIter)
+    {
+      for (Standard_Size aColIter = 0; aColIter < myTiles.SizeX; ++aColIter)
+      {
+        aNbSamples = Max (aNbSamples, myTiles.Value (aRowIter, aColIter));
+      }
+    }
+    return aNbSamples;
+  }
+
+  //! Specifies size of ray-tracing viewport and recomputes tile size.
+  Standard_EXPORT void SetSize (const Graphic3d_RenderingParams& theParams,
+                                const Graphic3d_Vec2i& theSize);
 
   //! Fetches current error estimation from the GPU and
   //! builds 2D discrete distribution for tile sampling.
-  Standard_EXPORT void GrabVarianceMap (const Handle(OpenGl_Context)& theContext);
+  Standard_EXPORT void GrabVarianceMap (const Handle(OpenGl_Context)& theContext,
+                                        const Handle(OpenGl_Texture)& theTexture);
 
-  //! Samples tile location according to estimated error.
-  Standard_EXPORT void Sample (int& theOffsetX,
-                               int& theOffsetY);
+  //! Resets (restart) tile sampler to initial state.
+  void Reset() { myLastSample = 0; }
 
-  //! Resets tile sampler to initial state.
-  void Reset() { mySample = 0; }
+  //! Uploads tile samples to the given OpenGL texture.
+  bool UploadSamples (const Handle(OpenGl_Context)& theContext,
+                      const Handle(OpenGl_Texture)& theSamplesTexture,
+                      const bool theAdaptive)
+  {
+    return upload (theContext, theSamplesTexture, Handle(OpenGl_Texture)(), theAdaptive);
+  }
 
   //! Uploads offsets of sampled tiles to the given OpenGL texture.
-  Standard_EXPORT void Upload (const Handle(OpenGl_Context)& theContext,
-                               const Handle(OpenGl_Texture)& theTexture,
-                               const int                     theNbTilesX,
-                               const int                     theNbTilesY,
-                               const bool                    theAdaptive);
-
-protected:
-
-  //! Returns tile value (estimated error).
-  float Tile (const int theX,
-              const int theY) const
+  bool UploadOffsets (const Handle(OpenGl_Context)& theContext,
+                      const Handle(OpenGl_Texture)& theOffsetsTexture,
+                      const bool theAdaptive)
   {
-    return myVarianceMap[theY * myTilesX + theX];
-  }
-
-  //! Returns tile value (estimated error).
-  float& ChangeTile (const int theX,
-                     const int theY)
-  {
-    return myVarianceMap[theY * myTilesX + theX];
+    return upload (theContext, Handle(OpenGl_Texture)(), theOffsetsTexture, theAdaptive);
   }
 
 protected:
 
-  std::vector<float>   myVarianceMap; //!< Estimation of visual error per tile
-  std::vector<float>   myMarginalMap; //!< Marginal distribution of 2D error map
-  OpenGl_HaltonSampler mySampler;     //!< Halton sequence generator
-  int                  mySample;      //!< Index of generated sample
-  int                  mySizeX;       //!< Width of ray-tracing viewport
-  int                  mySizeY;       //!< Height of ray-tracing viewport
-  int                  myTilesX;      //!< Number of tiles in X dimension
-  int                  myTilesY;      //!< Number of tiles in Y dimension
+  //! Returns number of pixels in the given tile.
+  int tileArea (int theX, int theY) const
+  {
+    const int aSizeX = Min (myTileSize, myViewSize.x() - theX * myTileSize);
+    const int aSizeY = Min (myTileSize, myViewSize.y() - theY * myTileSize);
+    return aSizeX * aSizeY;
+  }
+
+  //! Samples tile location according to estimated error.
+  Standard_EXPORT Graphic3d_Vec2i nextTileToSample();
+
+  //! Uploads offsets of sampled tiles to the given OpenGL texture.
+  Standard_EXPORT bool upload (const Handle(OpenGl_Context)& theContext,
+                               const Handle(OpenGl_Texture)& theSamplesTexture,
+                               const Handle(OpenGl_Texture)& theOffsetsTexture,
+                               const bool theAdaptive);
+
+  //! Auxiliary method for dumping 2D image map into stream (e.g. for debugging).
+  Standard_EXPORT void dumpMap (std::ostream& theStream,
+                                const Image_PixMapTypedData<int>& theMap,
+                                const char* theTitle) const;
+
+protected:
+
+  Image_PixMapTypedData<unsigned int>    myTiles;         //!< number of samples per tile (initially all 1)
+  Image_PixMapTypedData<unsigned int>    myTileSamples;   //!< number of samples for all pixels within the tile (initially equals to Tile area)
+  Image_PixMapTypedData<float>           myVarianceMap;   //!< Estimation of visual error per tile
+  Image_PixMapTypedData<int>             myVarianceRaw;   //!< Estimation of visual error per tile (raw data)
+  Image_PixMapTypedData<Graphic3d_Vec2i> myOffsets;       //!< 2D array of tiles redirecting to another tile
+  Image_PixMapTypedData<Graphic3d_Vec2i> myOffsetsShrunk; //!< 2D array of tiles redirecting to another tile (shrunk)
+  std::vector<float>                     myMarginalMap;   //!< Marginal distribution of 2D error map
+  OpenGl_HaltonSampler                   mySampler;       //!< Halton sequence generator
+  unsigned int                           myLastSample;    //!< Index of generated sample
+  float                                  myScaleFactor;   //!< scale factor for quantization of visual error (float) into signed integer
+  int                                    myTileSize;      //!< tile size
+  Graphic3d_Vec2i                        myViewSize;      //!< ray-tracing viewport
 
 };
 

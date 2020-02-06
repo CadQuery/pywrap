@@ -22,7 +22,8 @@ enum Graphic3d_TypeOfTexture
 {
 Graphic3d_TOT_1D,
 Graphic3d_TOT_2D,
-Graphic3d_TOT_2D_MIPMAP
+Graphic3d_TOT_2D_MIPMAP,
+Graphic3d_TOT_CUBEMAP
 };
 
 #endif // _Graphic3d_TypeOfTexture_HeaderFile

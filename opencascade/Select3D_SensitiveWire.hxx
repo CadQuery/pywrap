@@ -27,7 +27,7 @@ public:
 
   //! Constructs a sensitive wire object defined by the
   //! owner theOwnerId
-  Standard_EXPORT Select3D_SensitiveWire (const Handle(SelectBasics_EntityOwner)& theOwnerId);
+  Standard_EXPORT Select3D_SensitiveWire (const Handle(SelectMgr_EntityOwner)& theOwnerId);
 
   //! Adds the sensitive entity theSensitive to this framework.
   Standard_EXPORT void Add (const Handle(Select3D_SensitiveEntity)& theSensitive);
@@ -41,7 +41,7 @@ public:
   Standard_EXPORT const NCollection_Vector<Handle(Select3D_SensitiveEntity)>& GetEdges();
 
   //! Sets the owner for all entities in wire
-  Standard_EXPORT void Set (const Handle(SelectBasics_EntityOwner)& theOwnerId) Standard_OVERRIDE;
+  Standard_EXPORT virtual void Set (const Handle(SelectMgr_EntityOwner)& theOwnerId) Standard_OVERRIDE;
 
   Standard_EXPORT Handle(Select3D_SensitiveEntity) GetLastDetected() const;
 
@@ -73,13 +73,15 @@ public:
 protected:
 
   //! Checks whether the entity with index theIdx overlaps the current selecting volume
-  Standard_EXPORT virtual Standard_Boolean overlapsElement (SelectBasics_SelectingVolumeManager& theMgr,
+  Standard_EXPORT virtual Standard_Boolean overlapsElement (SelectBasics_PickResult& thePickResult,
+                                                            SelectBasics_SelectingVolumeManager& theMgr,
                                                             Standard_Integer theElemIdx,
-                                                            Standard_Real& theMatchDepth) Standard_OVERRIDE;
+                                                            Standard_Boolean theIsFullInside) Standard_OVERRIDE;
 
   //! Checks whether the entity with index theIdx is inside the current selecting volume
   Standard_EXPORT virtual Standard_Boolean elementIsInside (SelectBasics_SelectingVolumeManager& theMgr,
-                                                            const Standard_Integer               theElemIdx) Standard_OVERRIDE;
+                                                            Standard_Integer theElemIdx,
+                                                            Standard_Boolean theIsFullInside) Standard_OVERRIDE;
 
   //! Calculates distance from the 3d projection of used-picked screen point to center of the geometry
   Standard_EXPORT virtual Standard_Real distanceToCOG (SelectBasics_SelectingVolumeManager& theMgr) Standard_OVERRIDE;

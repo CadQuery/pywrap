@@ -29,6 +29,7 @@
 #include <Prs3d_DimensionUnits.hxx>
 #include <Prs3d_TypeOfHLR.hxx>
 #include <Standard_Transient.hxx>
+#include <GeomAbs_Shape.hxx>
 
 class Prs3d_IsoAspect;
 class Prs3d_LineAspect;
@@ -439,6 +440,10 @@ public:
   //! point aspect that overrides the one in the link.
   Standard_Boolean HasOwnPointAspect() const { return myHasOwnPointAspect; }
 
+  //! Sets own point aspect.
+  //! Returns FALSE if the drawer already has its own attribute for point aspect.
+  Standard_EXPORT Standard_Boolean SetupOwnPointAspect (const Handle(Prs3d_Drawer)& theDefaults = Handle(Prs3d_Drawer)());
+
   //! Returns settings for line aspects.
   //! These settings can be edited. The default values are:
   //!   Color: Quantity_NOC_YELLOW
@@ -456,6 +461,14 @@ public:
   //! Returns true if the drawer has its own attribute for
   //! line aspect that overrides the one in the link.
   Standard_Boolean HasOwnLineAspect() const { return myHasOwnLineAspect; }
+
+  //! Sets own line aspects.
+  //! Returns FALSE if own line aspect are already set.
+  Standard_EXPORT Standard_Boolean SetOwnLineAspects (const Handle(Prs3d_Drawer)& theDefaults = Handle(Prs3d_Drawer)());
+
+  //! Sets own line aspects for datums.
+  //! Returns FALSE if own line for datums are already set.
+  Standard_EXPORT Standard_Boolean SetOwnDatumAspects (const Handle(Prs3d_Drawer)& theDefaults = Handle(Prs3d_Drawer)());
 
   //! Returns settings for text aspect.
   //! These settings can be edited. The default value is:
@@ -486,6 +499,10 @@ public:
   //! Returns true if the drawer has its own attribute for
   //! shading aspect that overrides the one in the link.
   Standard_Boolean HasOwnShadingAspect() const { return myHasOwnShadingAspect; }
+
+  //! Sets own shading aspect.
+  //! Returns FALSE if the drawer already has its own attribute for shading aspect.
+  Standard_EXPORT Standard_Boolean SetupOwnShadingAspect (const Handle(Prs3d_Drawer)& theDefaults = Handle(Prs3d_Drawer)());
 
   //! Returns settings for seen line aspects.
   //! These settings can be edited. The default values are:
@@ -722,6 +739,10 @@ public:
   //! face boundaries aspect that overrides the one in the link.
   Standard_Boolean HasOwnFaceBoundaryAspect() const { return myHasOwnFaceBoundaryAspect; }
 
+  //! Sets own face boundary aspect.
+  //! Returns FALSE if the drawer already has its own attribute for face boundary aspect.
+  Standard_EXPORT Standard_Boolean SetupOwnFaceBoundaryAspect (const Handle(Prs3d_Drawer)& theDefaults = Handle(Prs3d_Drawer)());
+
   //! Enables or disables face boundary drawing for shading presentations. 
   //! The method sets drawing flag owned by the drawer that will be used during
   //! visualization instead of the one set in link.
@@ -739,6 +760,25 @@ public:
   //! Returns true if the drawer has its own attribute for
   //! "draw face boundaries" flag that overrides the one in the link.
   Standard_Boolean HasOwnFaceBoundaryDraw() const { return myHasOwnFaceBoundaryDraw; }
+
+  //! Returns true if the drawer has its own attribute for face boundaries upper edge continuity class that overrides the one in the link.
+  Standard_Boolean HasOwnFaceBoundaryUpperContinuity() const { return myFaceBoundaryUpperContinuity != -1; }
+
+  //! Get the most edge continuity class; GeomAbs_CN by default (all edges).
+  GeomAbs_Shape FaceBoundaryUpperContinuity() const
+  {
+    return HasOwnFaceBoundaryUpperContinuity()
+         ? (GeomAbs_Shape )myFaceBoundaryUpperContinuity
+         : (!myLink.IsNull()
+           ? myLink->FaceBoundaryUpperContinuity()
+           : GeomAbs_CN);
+  }
+
+  //! Set the most edge continuity class for face boundaries.
+  void SetFaceBoundaryUpperContinuity (GeomAbs_Shape theMostAllowedEdgeClass) { myFaceBoundaryUpperContinuity = theMostAllowedEdgeClass; }
+
+  //! Unset the most edge continuity class for face boundaries.
+  void UnsetFaceBoundaryUpperContinuity() { myFaceBoundaryUpperContinuity = -1; }
 
   //! Returns settings for the appearance of dimensions. 
   Standard_EXPORT const Handle(Prs3d_DimensionAspect)& DimensionAspect();
@@ -851,6 +891,9 @@ public:
   Standard_EXPORT bool SetShadingModel (Graphic3d_TypeOfShadingModel theModel,
                                         bool theToOverrideDefaults = false);
 
+  //! Dumps the content of me into the stream
+  Standard_EXPORT void DumpJson (Standard_OStream& theOStream, const Standard_Integer theDepth = -1) const;
+
 protected:
 
   Handle(Prs3d_Drawer)          myLink;
@@ -928,6 +971,7 @@ protected:
   Standard_Boolean              myUnFreeBoundaryDraw;
   Standard_Boolean              myHasOwnUnFreeBoundaryDraw;
   Handle(Prs3d_LineAspect)      myFaceBoundaryAspect;
+  Standard_Integer              myFaceBoundaryUpperContinuity; //!< the most edge continuity class (GeomAbs_Shape) to be included to face boundaries presentation, or -1 if undefined
   Standard_Boolean              myHasOwnFaceBoundaryAspect;
   Standard_Boolean              myFaceBoundaryDraw;
   Standard_Boolean              myHasOwnFaceBoundaryDraw;
@@ -940,7 +984,6 @@ protected:
   Prs3d_DimensionUnits          myDimensionDisplayUnits;
   Standard_Boolean              myHasOwnDimLengthDisplayUnits;
   Standard_Boolean              myHasOwnDimAngleDisplayUnits;
-
 };
 
 Standard_DEPRECATED("Class name is deprecated - use Prs3d_Drawer instead")

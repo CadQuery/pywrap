@@ -70,10 +70,7 @@ public:
   //! returns False if no shape was set
   Standard_Boolean HasShape() const { return !myShape.IsNull(); }
 
-  //! <FromDecomposition> indicates whether <aShape>
-  //! comes from decomposition of a bigger shape.
-  Standard_EXPORT void Set (const TopoDS_Shape& aShape, const Standard_Boolean FromDecomposition = Standard_False);
-
+  //! Returns the shape.
   const TopoDS_Shape& Shape() const { return myShape; }
 
   //! Returns true if this framework has a highlight mode defined for it.
@@ -114,8 +111,6 @@ public:
   Standard_EXPORT virtual void Clear (const Handle(PrsMgr_PresentationManager)& aPM, const Standard_Integer aMode = 0) Standard_OVERRIDE;
   
   Standard_EXPORT virtual void SetLocation (const TopLoc_Location& aLoc) Standard_OVERRIDE;
-  
-  Standard_EXPORT virtual void ResetLocation() Standard_OVERRIDE;
 
   //! Implements immediate application of location transformation of parent object to dynamic highlight structure
   Standard_EXPORT virtual void UpdateHighlightTrsf (const Handle(V3d_Viewer)& theViewer,

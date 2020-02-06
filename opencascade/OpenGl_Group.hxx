@@ -20,10 +20,7 @@
 #include <Graphic3d_Structure.hxx>
 
 #include <NCollection_List.hxx>
-#include <OpenGl_AspectLine.hxx>
-#include <OpenGl_AspectFace.hxx>
-#include <OpenGl_AspectMarker.hxx>
-#include <OpenGl_AspectText.hxx>
+#include <OpenGl_Aspects.hxx>
 #include <OpenGl_Element.hxx>
 
 class OpenGl_Group;
@@ -48,60 +45,24 @@ public:
   Standard_EXPORT virtual void Clear (const Standard_Boolean theToUpdateStructureMgr) Standard_OVERRIDE;
 
   //! Return line aspect.
-  virtual Handle(Graphic3d_AspectLine3d) LineAspect() const Standard_OVERRIDE
+  virtual Handle(Graphic3d_Aspects) Aspects() const Standard_OVERRIDE
   {
-    return myAspectLine != NULL
-         ? myAspectLine->Aspect()
-         : Handle(Graphic3d_AspectLine3d)();
+    return myAspects != NULL
+         ? myAspects->Aspect()
+         : Handle(Graphic3d_Aspects)();
   }
 
-  //! Update line aspect.
-  Standard_EXPORT virtual void SetGroupPrimitivesAspect (const Handle(Graphic3d_AspectLine3d)& theAspect) Standard_OVERRIDE;
+  //! Update aspect.
+  Standard_EXPORT virtual void SetGroupPrimitivesAspect (const Handle(Graphic3d_Aspects)& theAspect) Standard_OVERRIDE;
 
-  //! Append line aspect as an element.
-  Standard_EXPORT virtual void SetPrimitivesAspect (const Handle(Graphic3d_AspectLine3d)& theAspect) Standard_OVERRIDE;
+  //! Append aspect as an element.
+  Standard_EXPORT virtual void SetPrimitivesAspect (const Handle(Graphic3d_Aspects)& theAspect) Standard_OVERRIDE;
 
-  //! Return marker aspect.
-  virtual Handle(Graphic3d_AspectMarker3d) MarkerAspect() const Standard_OVERRIDE
-  {
-    return myAspectMarker != NULL
-         ? myAspectMarker->Aspect()
-         : Handle(Graphic3d_AspectMarker3d)();
-  }
+  //! Update presentation aspects after their modification.
+  Standard_EXPORT virtual void SynchronizeAspects() Standard_OVERRIDE;
 
-  //! Update marker aspect.
-  Standard_EXPORT virtual void SetGroupPrimitivesAspect (const Handle(Graphic3d_AspectMarker3d)& theAspect) Standard_OVERRIDE;
-
-  //! Append marker aspect as an element.
-  Standard_EXPORT virtual void SetPrimitivesAspect (const Handle(Graphic3d_AspectMarker3d)& theAspect) Standard_OVERRIDE;
-
-  //! Return fill area aspect.
-  virtual Handle(Graphic3d_AspectFillArea3d) FillAreaAspect() const Standard_OVERRIDE
-  {
-    return myAspectFace != NULL
-         ? myAspectFace->Aspect()
-         : Handle(Graphic3d_AspectFillArea3d)();
-  }
-
-  //! Update face aspect.
-  Standard_EXPORT virtual void SetGroupPrimitivesAspect (const Handle(Graphic3d_AspectFillArea3d)& theAspect) Standard_OVERRIDE;
-
-  //! Append face aspect as an element.
-  Standard_EXPORT virtual void SetPrimitivesAspect (const Handle(Graphic3d_AspectFillArea3d)& theAspect) Standard_OVERRIDE;
-
-  //! Return marker aspect.
-  virtual Handle(Graphic3d_AspectText3d) TextAspect() const Standard_OVERRIDE
-  {
-    return myAspectText != NULL
-         ? myAspectText->Aspect()
-         : Handle(Graphic3d_AspectText3d)();
-  }
-
-  //! Update text aspect.
-  Standard_EXPORT virtual void SetGroupPrimitivesAspect (const Handle(Graphic3d_AspectText3d)& theAspect) Standard_OVERRIDE;
-
-  //! Append text aspect as an element.
-  Standard_EXPORT virtual void SetPrimitivesAspect (const Handle(Graphic3d_AspectText3d)& theAspect) Standard_OVERRIDE;
+  //! Replace aspects specified in the replacement map.
+  Standard_EXPORT virtual void ReplaceAspects (const Graphic3d_MapOfAspectsToAspects& theMap) Standard_OVERRIDE;
 
   //! Add primitive array element
   Standard_EXPORT virtual void AddPrimitiveArray (const Graphic3d_TypeOfPrimitiveArray theType,
@@ -110,27 +71,9 @@ public:
                                                   const Handle(Graphic3d_BoundBuffer)& theBounds,
                                                   const Standard_Boolean               theToEvalMinMax) Standard_OVERRIDE;
 
-  //! Add text element
-  Standard_EXPORT virtual void Text (const Standard_CString                  theTextUtf,
-                                     const Graphic3d_Vertex&                 thePoint,
-                                     const Standard_Real                     theHeight,
-                                     const Standard_Real                     theAngle,
-                                     const Graphic3d_TextPath                theTp,
-                                     const Graphic3d_HorizontalTextAlignment theHta,
-                                     const Graphic3d_VerticalTextAlignment   theVta,
-                                     const Standard_Boolean                  theToEvalMinMax) Standard_OVERRIDE;
-
-  //! Add text element in 3D space.
-  Standard_EXPORT virtual void Text (const Standard_CString                  theTextUtf,
-                                     const gp_Ax2&                           theOrientation,
-                                     const Standard_Real                     theHeight,
-                                     const Standard_Real                     theAngle,
-                                     const Graphic3d_TextPath                theTp,
-                                     const Graphic3d_HorizontalTextAlignment theHTA,
-                                     const Graphic3d_VerticalTextAlignment   theVTA,
-                                     const Standard_Boolean                  theToEvalMinMax,
-                                     const Standard_Boolean                  theHasOwnAnchor = Standard_True) Standard_OVERRIDE;
-
+  //! Adds a text for display
+  Standard_EXPORT virtual void AddText (const Handle(Graphic3d_Text)& theTextParams,
+                                        const Standard_Boolean theToEvalMinMax) Standard_OVERRIDE;
   //! Add flipping element
   Standard_EXPORT virtual void SetFlippingOptions (const Standard_Boolean theIsEnabled,
                                                    const gp_Ax2&          theRefPlane) Standard_OVERRIDE;
@@ -150,11 +93,14 @@ public:
   //! Returns first OpenGL element node of the group.
   const OpenGl_ElementNode* FirstNode() const { return myFirst; }
 
-  //! Returns OpenGL face aspect.
-  const OpenGl_AspectFace* AspectFace() const { return myAspectFace; }
+  //! Returns OpenGL aspect.
+  const OpenGl_Aspects* GlAspects() const { return myAspects; }
 
   //! Is the group ray-tracable (contains ray-tracable elements)?
   Standard_Boolean IsRaytracable() const { return myIsRaytracable; }
+
+  //! Dumps the content of me into the stream
+  Standard_EXPORT virtual void DumpJson (Standard_OStream& theOStream, const Standard_Integer theDepth = -1) const Standard_OVERRIDE;
 
 protected:
 
@@ -162,15 +108,10 @@ protected:
 
 protected:
 
-  OpenGl_AspectLine*     myAspectLine;
-  OpenGl_AspectFace*     myAspectFace;
-  OpenGl_AspectMarker*   myAspectMarker;
-  OpenGl_AspectText*     myAspectText;
-
-  OpenGl_ElementNode*    myFirst;
-  OpenGl_ElementNode*    myLast;
-
-  Standard_Boolean       myIsRaytracable;
+  OpenGl_Aspects*     myAspects;
+  OpenGl_ElementNode* myFirst;
+  OpenGl_ElementNode* myLast;
+  Standard_Boolean    myIsRaytracable;
 
 public:
 

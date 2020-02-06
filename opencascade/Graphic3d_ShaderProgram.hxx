@@ -60,6 +60,11 @@ public:
   //! Returns unique ID used to manage resource in graphic driver.
   const TCollection_AsciiString& GetId() const { return myID; }
 
+  //! Sets unique ID used to manage resource in graphic driver.
+  //! WARNING! Graphic3d_ShaderProgram constructor generates a unique id for proper resource management;
+  //! however if application overrides it, it is responsibility of application to avoid name collisions.
+  void SetId (const TCollection_AsciiString& theId) { myID = theId; }
+
   //! Returns GLSL header (version code and extensions).
   const TCollection_AsciiString& Header() const { return myHeader; }
 
@@ -133,6 +138,12 @@ public:
   //! Note that this flag is designed for usage with - custom shader program may discard fragment regardless this flag.
   void SetAlphaTest (Standard_Boolean theAlphaTest) { myHasAlphaTest = theAlphaTest; }
 
+  //! Return TRUE if standard program header should define default texture sampler occSampler0; TRUE by default for compatibility.
+  Standard_Boolean HasDefaultSampler() const { return myHasDefSampler; }
+
+  //! Set if standard program header should define default texture sampler occSampler0.
+  void SetDefaultSampler (Standard_Boolean theHasDefSampler) { myHasDefSampler = theHasDefSampler; }
+
   //! Return true if Fragment Shader color should output the weighted OIT coverage; FALSE by default.
   Standard_Boolean HasWeightOitOutput() const { return myHasWeightOitOutput; }
 
@@ -190,6 +201,7 @@ private:
   Standard_Integer              myNbLightsMax;   //!< length of array of light sources (THE_MAX_LIGHTS)
   Standard_Integer              myNbClipPlanesMax; //!< length of array of clipping planes (THE_MAX_CLIP_PLANES)
   Standard_Integer              myNbFragOutputs; //!< length of array of Fragment Shader outputs (THE_NB_FRAG_OUTPUTS)
+  Standard_Boolean              myHasDefSampler; //!< flag indicating that program defines default texture sampler occSampler0
   Standard_Boolean              myHasAlphaTest;       //!< flag indicating that Fragment Shader performs alpha test
   Standard_Boolean              myHasWeightOitOutput; //!< flag indicating that Fragment Shader includes weighted OIT coverage
 

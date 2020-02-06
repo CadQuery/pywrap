@@ -51,7 +51,7 @@
 //! To generate texture coordinates, appropriate shading attribute should be set before computing presentation in AIS_Shaded display mode:
 //! @code
 //!   Handle(AIS_Shape) aPrs = new AIS_Shape();
-//!   aPrs->Attributes()->SetShadingAspect (new Prs3d_ShadingAspect());
+//!   aPrs->Attributes()->SetupOwnShadingAspect();
 //!   aPrs->Attributes()->ShadingAspect()->Aspect()->SetTextureMapOn();
 //!   aPrs->Attributes()->ShadingAspect()->Aspect()->SetTextureMap (new Graphic3d_Texture2Dmanual (Graphic3d_NOT_2D_ALUMINUM));
 //! @endcode
@@ -174,8 +174,7 @@ public:
   Standard_EXPORT virtual void UnsetColor() Standard_OVERRIDE;
   
   //! Sets the value aValue for line width in the reconstructed compound shape.
-  //! Changes line aspects for lines-only presentation modes like Wireframe and Bounding Box.
-  //! Doesn't change face boundary line aspect.
+  //! Changes line aspects for lines presentation.
   Standard_EXPORT virtual void SetWidth (const Standard_Real aValue) Standard_OVERRIDE;
   
   //! Removes the setting for line width in the reconstructed compound shape.
@@ -303,15 +302,20 @@ protected:
   Standard_EXPORT virtual void ComputeSelection (const Handle(SelectMgr_Selection)& theSelection,
                                                  const Standard_Integer theMode) Standard_OVERRIDE;
   
-  Standard_EXPORT void LoadRecomputable (const Standard_Integer TheMode);
+  //! Create own aspects (if they do not exist) and set color to them.
+  //! @return TRUE if new aspects have been created
+  Standard_EXPORT bool setColor (const Handle(Prs3d_Drawer)& theDrawer, const Quantity_Color& theColor) const;
   
-  Standard_EXPORT void setColor (const Handle(Prs3d_Drawer)& theDrawer, const Quantity_Color& theColor) const;
-  
-  Standard_EXPORT void setWidth (const Handle(Prs3d_Drawer)& theDrawer, const Standard_Real theWidth) const;
+  //! Create own aspects (if they do not exist) and set width to them.
+  //! @return TRUE if new aspects have been created
+  Standard_EXPORT bool setWidth (const Handle(Prs3d_Drawer)& theDrawer, const Standard_Real theWidth) const;
   
   Standard_EXPORT void setTransparency (const Handle(Prs3d_Drawer)& theDrawer, const Standard_Real theValue) const;
   
   Standard_EXPORT void setMaterial (const Handle(Prs3d_Drawer)& theDrawer, const Graphic3d_MaterialAspect& theMaterial, const Standard_Boolean theToKeepColor, const Standard_Boolean theToKeepTransp) const;
+
+  //! Replace aspects of already computed groups from drawer link by the new own value.
+  Standard_EXPORT void replaceWithNewOwnAspects();
 
 public:
 

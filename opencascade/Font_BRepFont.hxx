@@ -27,10 +27,12 @@
 #include <NCollection_DataMap.hxx>
 #include <NCollection_String.hxx>
 #include <Standard_Mutex.hxx>
-#include <ShapeFix_Face.hxx>
 #include <TColgp_Array1OfPnt2d.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Face.hxx>
+#include <TopTools_SequenceOfShape.hxx>
+
+DEFINE_STANDARD_HANDLE(Font_BRepFont, Font_FTFont)
 
 //! This tool provides basic services for rendering of vectorized text glyphs as BRep shapes.
 //! Single instance initialize single font for sequential glyphs rendering with implicit caching of already rendered glyphs.
@@ -41,6 +43,7 @@
 //! Although caching should eliminate this issue after rendering of sufficient number of glyphs.
 class Font_BRepFont : protected Font_FTFont
 {
+  DEFINE_STANDARD_RTTIEXT(Font_BRepFont, Font_FTFont)
 public:
 
   //! Empty constructor
@@ -53,12 +56,14 @@ public:
                                  const Standard_Real       theSize);
 
   //! Constructor with initialization.
-  //! @param theFontName   the font name
-  //! @param theFontAspect the font style
-  //! @param theSize       the face size in model units
+  //! @param theFontName    the font name
+  //! @param theFontAspect  the font style
+  //! @param theSize        the face size in model units
+  //! @param theStrictLevel search strict level for using aliases and fallback
   Standard_EXPORT Font_BRepFont (const NCollection_String& theFontName,
                                  const Font_FontAspect     theFontAspect,
-                                 const Standard_Real       theSize);
+                                 const Standard_Real       theSize,
+                                 const Font_StrictLevel    theStrictLevel = Font_StrictLevel_Any);
 
   //! Release currently loaded font.
   Standard_EXPORT virtual void Release() Standard_OVERRIDE;
@@ -70,7 +75,7 @@ public:
   Standard_EXPORT bool Init (const NCollection_String& theFontPath,
                              const Standard_Real       theSize);
 
-  //! Initialize the font.
+  //! Find (using Font_FontMgr) and initialize the font from the given name.
   //! Please take into account that size is specified NOT in typography points (pt.).
   //! If you need to specify size in points, value should be converted.
   //! Formula for pt. -> m conversion:
@@ -78,10 +83,12 @@ public:
   //! @param theFontName   the font name
   //! @param theFontAspect the font style
   //! @param theSize       the face size in model units
+  //! @param theStrictLevel search strict level for using aliases and fallback
   //! @return true on success
-  Standard_EXPORT bool Init (const NCollection_String& theFontName,
-                             const Font_FontAspect     theFontAspect,
-                             const Standard_Real       theSize);
+  Standard_EXPORT bool FindAndInit (const TCollection_AsciiString& theFontName,
+                                    const Font_FontAspect  theFontAspect,
+                                    const Standard_Real    theSize,
+                                    const Font_StrictLevel theStrictLevel = Font_StrictLevel_Any);
 
   //! Render single glyph as TopoDS_Shape.
   //! @param theChar glyph identifier
@@ -171,6 +178,17 @@ public:
     return myMutex;
   }
 
+public:
+
+  //! Find (using Font_FontMgr) and initialize the font from the given name.
+  //! Alias for FindAndInit() for backward compatibility.
+  bool Init (const NCollection_String& theFontName,
+             const Font_FontAspect     theFontAspect,
+             const Standard_Real       theSize)
+  {
+    return FindAndInit (theFontName.ToCString(), theFontAspect, theSize, Font_StrictLevel_Any);
+  }
+
 protected:
 
   //! Render single glyph as TopoDS_Shape. This method does not lock the mutex.
@@ -190,6 +208,14 @@ private:
              const GeomAbs_Shape        theContinuity,
              Handle(Geom_Curve)&        theCurve3d);
 
+  //! Auxiliary method for creation faces from sequence of wires.
+  //! Splits to few faces (if it is needed) and updates orientation of wires.
+  Standard_Boolean buildFaces (const NCollection_Sequence<TopoDS_Wire>& theWires,
+                               TopoDS_Shape& theRes);
+
+  //! Hide visibility.
+  using Font_FTFont::FindAndCreate;
+
 protected: //! @name Protected fields
 
   NCollection_DataMap<Standard_Utf32Char, TopoDS_Shape>
@@ -208,15 +234,7 @@ protected: //! @name Shared temporary variables for glyph construction
   TColgp_Array1OfPnt2d     my3Poles;
   TColgp_Array1OfPnt2d     my4Poles;
   BRep_Builder             myBuilder;
-  ShapeFix_Face            myFixer;
-
-public:
-
-  DEFINE_STANDARD_RTTIEXT(Font_BRepFont,Font_FTFont)
 
 };
-
-// Definition of HANDLE object using Standard_DefineHandle.hxx
-DEFINE_STANDARD_HANDLE(Font_BRepFont, Font_FTFont)
 
 #endif // _Font_BRepFont_H__

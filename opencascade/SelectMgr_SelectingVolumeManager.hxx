@@ -105,40 +105,40 @@ public:
 
   //! SAT intersection test between defined volume and given axis-aligned box
   Standard_EXPORT virtual Standard_Boolean Overlaps (const SelectMgr_Vec3& theBoxMin,
-                                                      const SelectMgr_Vec3& theBoxMax,
-                                                     Standard_Real& theDepth) Standard_OVERRIDE;
+                                                     const SelectMgr_Vec3& theBoxMax,
+                                                     SelectBasics_PickResult& thePickResult) const Standard_OVERRIDE;
 
   //! Returns true if selecting volume is overlapped by axis-aligned bounding box
   //! with minimum corner at point theMinPt and maximum at point theMaxPt
   Standard_EXPORT  virtual Standard_Boolean Overlaps (const SelectMgr_Vec3& theBoxMin,
                                                       const SelectMgr_Vec3& theBoxMax,
-                                                      Standard_Boolean*     theInside = NULL) Standard_OVERRIDE;
+                                                      Standard_Boolean*     theInside = NULL) const Standard_OVERRIDE;
 
   //! Intersection test between defined volume and given point
   Standard_EXPORT virtual Standard_Boolean Overlaps (const gp_Pnt& thePnt,
-                                                     Standard_Real& theDepth) Standard_OVERRIDE;
+                                                     SelectBasics_PickResult& thePickResult) const Standard_OVERRIDE;
 
   //! Intersection test between defined volume and given point
-  Standard_EXPORT virtual Standard_Boolean Overlaps (const gp_Pnt& thePnt) Standard_OVERRIDE;
+  Standard_EXPORT virtual Standard_Boolean Overlaps (const gp_Pnt& thePnt) const Standard_OVERRIDE;
 
   //! SAT intersection test between defined volume and given ordered set of points,
   //! representing line segments. The test may be considered of interior part or
   //! boundary line defined by segments depending on given sensitivity type
   Standard_EXPORT virtual Standard_Boolean Overlaps (const Handle(TColgp_HArray1OfPnt)& theArrayOfPts,
                                                      Standard_Integer theSensType,
-                                                     Standard_Real& theDepth) Standard_OVERRIDE;
+                                                     SelectBasics_PickResult& thePickResult) const Standard_OVERRIDE;
 
   //! SAT intersection test between defined volume and given ordered set of points,
   //! representing line segments. The test may be considered of interior part or
   //! boundary line defined by segments depending on given sensitivity type
   Standard_EXPORT virtual Standard_Boolean Overlaps (const TColgp_Array1OfPnt& theArrayOfPts,
                                                      Standard_Integer theSensType,
-                                                     Standard_Real& theDepth) Standard_OVERRIDE;
+                                                     SelectBasics_PickResult& thePickResult) const Standard_OVERRIDE;
 
   //! Checks if line segment overlaps selecting frustum
   Standard_EXPORT virtual Standard_Boolean Overlaps (const gp_Pnt& thePnt1,
                                                      const gp_Pnt& thePnt2,
-                                                     Standard_Real& theDepth) Standard_OVERRIDE;
+                                                     SelectBasics_PickResult& thePickResult) const Standard_OVERRIDE;
 
   //! SAT intersection test between defined volume and given triangle. The test may
   //! be considered of interior part or boundary line defined by triangle vertices
@@ -147,21 +147,16 @@ public:
                                                       const gp_Pnt& thePnt2,
                                                       const gp_Pnt& thePnt3,
                                                       Standard_Integer theSensType,
-                                                      Standard_Real& theDepth) Standard_OVERRIDE;
+                                                      SelectBasics_PickResult& thePickResult) const Standard_OVERRIDE;
 
 
   //! Measures distance between 3d projection of user-picked
   //! screen point and given point theCOG
-  Standard_EXPORT virtual Standard_Real DistToGeometryCenter (const gp_Pnt& theCOG) Standard_OVERRIDE;
+  Standard_EXPORT virtual Standard_Real DistToGeometryCenter (const gp_Pnt& theCOG) const Standard_OVERRIDE;
 
   //! Calculates the point on a view ray that was detected during the run of selection algo by given depth.
   //! Throws exception if active selection type is not Point.
   Standard_EXPORT virtual gp_Pnt DetectedPoint (const Standard_Real theDepth) const Standard_OVERRIDE;
-
-  //! Checks if the point of sensitive in which selection was detected belongs
-  //! to the region defined by clipping planes
-  Standard_EXPORT virtual Standard_Boolean IsClipped (const Graphic3d_SequenceOfHClipPlane& thePlanes,
-                                                      const Standard_Real& theDepth);
 
   //! Is used for rectangular selection only
   //! If theIsToAllow is false, only fully included sensitives will be detected, otherwise the algorithm will
@@ -173,13 +168,24 @@ public:
   //! Return view clipping planes.
   const Handle(Graphic3d_SequenceOfHClipPlane)& ViewClipping() const { return myViewClipPlanes; }
 
-  //! Valid for point selection only!
-  //! Computes depth range for global (defined for the whole view) clipping planes.
-  Standard_EXPORT void SetViewClipping (const Handle(Graphic3d_SequenceOfHClipPlane)& thePlanes);
+  //! Return object clipping planes.
+  const Handle(Graphic3d_SequenceOfHClipPlane)& ObjectClipping() const { return myObjectClipPlanes; }
 
-  //! Set if view clipping plane is enabled or not.
-  //! @return previous flag value
-  Standard_EXPORT Standard_Boolean SetViewClippingEnabled (const Standard_Boolean theToEnable);
+  //! Valid for point selection only!
+  //! Computes depth range for clipping planes.
+  //! @param theViewPlanes global view planes
+  //! @param theObjPlanes  object planes
+  Standard_EXPORT void SetViewClipping (const Handle(Graphic3d_SequenceOfHClipPlane)& theViewPlanes,
+                                        const Handle(Graphic3d_SequenceOfHClipPlane)& theObjPlanes);
+
+  //! Copy clipping planes from another volume manager.
+  Standard_EXPORT void SetViewClipping (const SelectMgr_SelectingVolumeManager& theOther);
+
+  //! Return clipping range.
+  const SelectMgr_ViewClipRange& ViewClipRanges() const { return myViewClipRange; }
+
+  //! Set clipping range.
+  void SetViewClipRanges (const SelectMgr_ViewClipRange& theRange) { myViewClipRange = theRange; }
 
   //! A set of helper functions that return rectangular selecting frustum data
   Standard_EXPORT const gp_Pnt* GetVertices() const;
@@ -195,6 +201,17 @@ public:
   //! of center of 2d rectangle (for point and rectangular selection
   //! correspondingly) onto far view frustum plane
   Standard_EXPORT virtual gp_Pnt GetFarPickedPnt() const Standard_OVERRIDE;
+
+  //! Return mouse coordinates for Point selection mode.
+  virtual gp_Pnt2d GetMousePosition() const Standard_OVERRIDE
+  {
+    if (myActiveSelectionType != Point)
+    {
+      return gp_Pnt2d (RealLast(), RealLast());
+    }
+    const SelectMgr_RectangularFrustum* aFr = reinterpret_cast<const SelectMgr_RectangularFrustum*> (mySelectingVolumes[myActiveSelectionType / 2].get());
+    return aFr->GetMousePosition();
+  }
 
   //! Returns active selecting volume that was built during last
   //! run of OCCT selection mechanism
@@ -224,6 +241,8 @@ private:
 
   Handle(SelectMgr_BaseFrustum)          mySelectingVolumes[VolumeTypesNb]; //!< Array of selecting volumes
   Handle(Graphic3d_SequenceOfHClipPlane) myViewClipPlanes;                  //!< view clipping planes
+  Handle(Graphic3d_SequenceOfHClipPlane) myObjectClipPlanes;                //!< object clipping planes
+  SelectMgr_ViewClipRange                myViewClipRange;
   Standard_Boolean                       myToAllowOverlap;                  //!< Defines if partially overlapped entities will me detected or not
 };
 
