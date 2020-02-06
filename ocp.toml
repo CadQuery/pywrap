@@ -301,7 +301,7 @@ modules = ["Standard",
 "IGESGraph",
 "IGESSelect",
 "IGESSolid",
-"IGESToBRep",
+"IGESToBRep",AIS
 #Missed modules
 "Interface",
 "Transfer",
@@ -314,7 +314,9 @@ modules = ["Standard",
 exclude = ["Standard_Handle.hxx","Standard",
            "math_GaussPoints.hxx","NCollection_Shared.hxx","OSD_WNT.hxx",
            "Geom2dToIGES","BRepGProp_Gauss.hxx","BRepLib_CheckCurveOnSurface.hxx",
-           "BVH_Types.hxx","BVH_RadixSorter.hxx"]
+           "BVH_Types.hxx","BVH_RadixSorter.hxx","BVH_IndexedBoxSet.hxx",
+           "Aspect_VKeySet.hxx","BOPTools_PairSelector.hxx","AIS_DataMapOfSelStat.hxx",
+           "AIS_DataMapIteratorOfDataMapOfSelStat.hxx"]
 
 exceptions = ["Standard_Failure"]
 
@@ -481,7 +483,7 @@ byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
     [Modules.BRepMesh]
 
         exclude_classes = ["BRepMesh_Triangle",] #constructor with int&[3]
-        exclude_methods = ["BRepMesh_GeomTool::IntLinLin","BRepMesh_DataStructureOfDelaun::ElementNodes"]
+        exclude_methods = ["BRepMesh_GeomTool::IntLinLin","BRepMesh_DataStructureOfDelaun::ElementNodes","BRepMesh_MeshTool::AddTriangle"]
 
     [Modules.TopOpeBRepTool]
 
@@ -489,7 +491,7 @@ byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
 
     [Modules.BOPTools]
 
-        exclude_typedefs = ["BOPTools_BoxBndTree"]
+        exclude_typedefs = ["BOPTools_BoxBndTree","BOPTools_PairSelector"]
 
     [Modules.Aspect]
 
@@ -508,6 +510,7 @@ byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
 
     [Modules.StdSelect]
 
+        include_header_pre = "#include <Prs3d_Projector.hxx>"
         exclude_typedefs = ["StdSelect_IndexedDataMapOfOwnerPrs"]
 
     [Modules.Xw]
@@ -521,7 +524,8 @@ byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
 
     [Modules.AIS]
 
-        include_header_pre = "auto OptionsForAttach = [](){return AIS_Manipulator::OptionsForAttach();};"
+        include_header_pre = """#include <Media_PlayerContext.hxx>
+auto OptionsForAttach = [](){return AIS_Manipulator::OptionsForAttach();};"""
         include_body_pre = "py::class_<AIS_Manipulator::OptionsForAttach>(m,\"AIS_Manipulator_OptionsForAttach\");"
         exclude_typedefs = ["AIS_DataMapOfShapeDrawer","AIS_DataMapOfIOStatus","AIS_DataMapOfILC","AIS_IndexedDataMapOfOwnerPrs"]
 
@@ -549,7 +553,8 @@ byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
 
     [Modules.Graphic3d]
 
-        exclude_typedefs = ["Graphic3d_IndexedMapOfView","Graphic3d_IndexedMapOfAddress","Graphic3d_MapOfStructure","Graphic3d_NMapOfTransient","Graphic3d_MapOfObject","Graphic3d_Vec4u","Graphic3d_Vec2u","Graphic3d_Vec3u","Graphic3d_Vec3d"]
+        include_header_pre = """#include <Media_PlayerContext.hxx>"""
+        exclude_typedefs = ["Graphic3d_IndexedMapOfView","Graphic3d_IndexedMapOfAddress","Graphic3d_MapOfStructure","Graphic3d_NMapOfTransient","Graphic3d_MapOfObject","Graphic3d_Vec4u","Graphic3d_Vec2u","Graphic3d_Vec3u","Graphic3d_Vec3d","Graphic3d_MapOfAspectsToAspects"]
 
     [Modules.AdvApprox]
 
@@ -575,7 +580,7 @@ byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
 
     [Modules.BinMDF]
 
-        exclude_typedefs = ["BinMDF_TypeADriverMap"]
+        exclude_typedefs = ["BinMDF_TypeADriverMap","BinMDF_TypeIdMap"]
 
     [Modules.CDM]
 
@@ -610,7 +615,7 @@ byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
 
     [Modules.TDF]
 
-        exclude_typedefs = ["TDF_AttributeDataMap"]
+        exclude_typedefs = ["TDF_AttributeDataMap","TDF_AttributeDoubleMap"]
         exclude_classes = ["TDF_LabelNode"]
 
     [Modules.XmlTObjDrivers]
@@ -696,3 +701,7 @@ using PolygonOnTriangulation = ShapePersistent_BRep::PolygonOnTriangulation;
 #include <Geom2d_Vector.hxx>
 #include <Geom2d_VectorWithMagnitude.hxx>
 """
+
+    [Modules.IntAna]
+    
+        exclude_methods = ["IntAna_Quadric::SpecialPoints"]
