@@ -301,7 +301,7 @@ modules = ["Standard",
 "IGESGraph",
 "IGESSelect",
 "IGESSolid",
-"IGESToBRep",AIS
+"IGESToBRep",
 #Missed modules
 "Interface",
 "Transfer",
