@@ -1,8 +1,9 @@
 import sys
-
 import logzero
 
-from clang.cindex import CursorKind, TypeKind, AccessSpecifier, Type, TranslationUnit as TU
+from itertools import chain
+
+from clang.cindex import CursorKind, TypeKind, AccessSpecifier, TranslationUnit as TU
 from path import Path
 
 from .utils import get_index
@@ -141,7 +142,8 @@ def get_classes(tu):
     '''Classes defined locally (i.e. without includes)
     '''
 
-    return  get_symbols(tu,CursorKind.CLASS_DECL)
+    return  chain(get_symbols(tu,CursorKind.CLASS_DECL),
+                  get_symbols(tu,CursorKind.STRUCT_DECL))
 
 def get_class_templates(tu):
     '''Class templates defined locally (i.e. without includes)
