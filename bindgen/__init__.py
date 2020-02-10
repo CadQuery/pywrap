@@ -365,7 +365,8 @@ def render(settings,module_settings,modules,class_dict):
     
     jinja_env = Environment(loader=FileSystemLoader(Path(__file__).dirname()),
                             trim_blocks=True,
-                            lstrip_blocks = True)
+                            lstrip_blocks = True,
+                            extensions=['jinja2.ext.do'])
     
     all_classes = {c.name : c for m in modules for c in m.classes}
     jinja_env.globals['parent_has_nonpublic_destructor'] = lambda c: any(all_classes[p].nonpublic_destructors for p in c.superclasses if p in all_classes)
@@ -407,6 +408,7 @@ def render(settings,module_settings,modules,class_dict):
             with open('{}_pre.cpp'.format(m.name),'w') as f:
                 f.write(template_sub_pre.render({'module' : m,
                                                    'class_dict' : class_dict,
+                                                   'all_classes' : all_classes,
                                                    'project_name' : name,
                                                    'operator_dict' : operator_dict,
                                                    'include_pre' : pre,
@@ -418,6 +420,7 @@ def render(settings,module_settings,modules,class_dict):
             with open('{}.cpp'.format(m.name),'w') as f:
                 f.write(template_sub.render({'module' : m,
                                              'class_dict' : class_dict,
+                                             'all_classes' : all_classes,
                                              'project_name' : name,
                                              'operator_dict' : operator_dict,
                                              'include_pre' : pre,

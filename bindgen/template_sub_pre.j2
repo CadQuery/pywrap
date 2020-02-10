@@ -80,30 +80,36 @@ py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#
     public:
         using {{c.name}}::{{c.name}};
         
+        {% set methods = [] %}
+        
         // public pure virtual
         {% for m in c.methods+c.methods_byref %}{% if m.pure_virtual %}
         {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
+        {% do methods.append(m.full_name) %}
         {% endif %}{% endfor %}
         
         {% for super in c.superclasses %}
-        {% for p in module.classes %}{% if super == p.name %}
-        {% for m in p.methods %}{% if m.pure_virtual and m.name not in c.methods_dict%}
+        {% set p = all_classes.get(super,None) %}{% if p %}
+        {% for m in p.methods %}{% if m.pure_virtual and m.name not in c.methods_dict and not m.full_name in methods %}
         {{ prototype(m) }} override { {{pybind_overload(p,m)}} };
+        {% do methods.append(m.full_name) %}
         {% endif %}{% endfor %}
-        {% endif %}{% endfor %}
+        {% endif %}
         {% endfor %}
         
         // protected pure virtual
         {% for m in c.protected_virtual_methods %}
         {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
+        {% do methods.append(m.full_name) %}
         {% endfor %}
         
         {% for super in c.superclasses %}
-        {% for p in module.classes %}{% if super == p.name %}
-        {% for m in p.protected_virtual_methods %}{% if m.name not in c.protected_virtual_methods_dict%}
+        {% set p = all_classes.get(super,None) %}{% if p %}
+        {% for m in p.protected_virtual_methods %}{% if m.name not in c.protected_virtual_methods_dict and not m.full_name in methods %}
         {{ prototype(m) }} override { {{pybind_overload(p,m)}} };
+        {% do methods.append(m.full_name) %}
         {% endif %}{% endfor %}
-        {% endif %}{% endfor %}
+        {% endif %}
         {% endfor %}
         
         // private pure virtual
@@ -112,11 +118,12 @@ py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#
         {% endfor %}
         
         {% for super in c.superclasses %}
-        {% for p in module.classes %}{% if super == p.name %}
-        {% for m in p.private_virtual_methods %}{% if m.name not in c.private_virtual_methods_dict%}
+        {% set p = all_classes.get(super,None) %}{% if p %}
+        {% for m in p.private_virtual_methods %}{% if m.name not in c.private_virtual_methods_dict and not m.full_name in methods %}
         {{ prototype(m) }} override { {{pybind_overload(p,m)}} };
+        {% do methods.append(m.full_name) %}
         {% endif %}{% endfor %}
-        {% endif %}{% endfor %}
+        {% endif %}
         {% endfor %}
     };
 {% endif %}{% endfor %}
