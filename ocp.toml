@@ -356,6 +356,7 @@ byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
     [Modules.Standard]
 
         exclude_functions = ["HashCode"]
+        exclude_methods = ["Standard_Dump::DumpCharacterValues","Standard_Dump::DumpRealValues"]
 
     [Modules.Resource]
 
@@ -471,8 +472,8 @@ byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
 
         exclude_typedefs = ["BRepFill_DataMapOfShapeHArray2OfShape"]
 
-     [Modules.ChFi3d]
-     #error: invalid use of incomplete type ‘class Geom_BSplineCurve’
+    [Modules.ChFi3d]
+    #error: invalid use of incomplete type ‘class Geom_BSplineCurve’
         exclude_functions = ["ChFi3d_ApproxByC2","ChFi3d_SearchPivot","ChFi3d_EnlargeFace"]
 
 
@@ -483,7 +484,7 @@ byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
     [Modules.BRepMesh]
 
         exclude_classes = ["BRepMesh_Triangle",] #constructor with int&[3]
-        exclude_methods = ["BRepMesh_GeomTool::IntLinLin","BRepMesh_DataStructureOfDelaun::ElementNodes","BRepMesh_MeshTool::AddTriangle"]
+        exclude_methods = ["BRepMesh_GeomTool::IntLinLin","BRepMesh_DataStructureOfDelaun::ElementNodes","BRepMesh_MeshTool::AddTriangle","BRepMesh_ConeRangeSplitter::GetSplitSteps"]
 
     [Modules.TopOpeBRepTool]
 
@@ -491,12 +492,12 @@ byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
 
     [Modules.BOPTools]
 
-        exclude_typedefs = ["BOPTools_BoxBndTree","BOPTools_PairSelector"]
+        exclude_typedefs = ["BOPTools_BoxBndTree","BOPTools_PairSelector","BOPTools_Box2dTree"]
 
     [Modules.Aspect]
 
         include_header_pre = "struct __GLXFBConfigRec {};"
-        exclude_methods = ["Aspect_NeutralWindow::NativeFBConfig","Aspect_Window::NativeFBConfig","Aspect_NeutralWindow::SetNativeHandles","Aspect_DisplayConnection::GetDisplay"]
+        exclude_methods = ["Aspect_NeutralWindow::NativeFBConfig","Aspect_Window::NativeFBConfig","Aspect_NeutralWindow::SetNativeHandles","Aspect_DisplayConnection::GetDisplay","Aspect_DisplayConnection::Init"]
 
 
     [Modules.SelectMgr]
@@ -705,3 +706,16 @@ using PolygonOnTriangulation = ShapePersistent_BRep::PolygonOnTriangulation;
     [Modules.IntAna]
     
         exclude_methods = ["IntAna_Quadric::SpecialPoints"]
+        
+    [Modules.CDF]
+    
+        include_header_pre = "#include <Resource_Manager.hxx>"
+        
+    [Modules.Image]
+    
+        exclude_methods = ["Image_AlienPixMap::Load"]
+
+
+    [Modules.Prs3d]
+    
+        include_header_pre = "#include <Graphic3d_StructureManager.hxx>"
