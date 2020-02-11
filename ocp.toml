@@ -492,7 +492,7 @@ byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
 
     [Modules.BOPTools]
 
-        exclude_typedefs = ["BOPTools_BoxBndTree","BOPTools_PairSelector","BOPTools_Box2dTree"]
+        exclude_typedefs = ["BOPTools_BoxBndTree","BOPTools_PairSelector","BOPTools_Box2dTree","BOPTools_PairSelector","BOPTools_Box2dPairSelector"]
 
     [Modules.Aspect]
 
