@@ -498,7 +498,10 @@ byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
 
         include_header_pre = "struct __GLXFBConfigRec {};"
         exclude_methods = ["Aspect_NeutralWindow::NativeFBConfig","Aspect_Window::NativeFBConfig","Aspect_NeutralWindow::SetNativeHandles","Aspect_DisplayConnection::GetDisplay","Aspect_DisplayConnection::Init"]
-
+        
+        [Modules.Aspect.Classes.Aspect_DisplayConnection]
+        
+            exclude_constructors = [2]
 
     [Modules.SelectMgr]
 
