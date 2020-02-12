@@ -316,7 +316,7 @@ exclude = ["Standard_Handle.hxx","Standard",
            "Geom2dToIGES","BRepGProp_Gauss.hxx","BRepLib_CheckCurveOnSurface.hxx",
            "BVH_Types.hxx","BVH_RadixSorter.hxx","BVH_IndexedBoxSet.hxx",
            "Aspect_VKeySet.hxx","BOPTools_PairSelector.hxx","AIS_DataMapOfSelStat.hxx",
-           "AIS_DataMapIteratorOfDataMapOfSelStat.hxx","BOPDS_Iterator.hxx"]
+           "AIS_DataMapIteratorOfDataMapOfSelStat.hxx","BOPDS_Iterator.hxx","BOPDS_IteratorSI.hxx"]
 
 exceptions = ["Standard_Failure"]
 
