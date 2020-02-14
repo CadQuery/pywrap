@@ -118,7 +118,7 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
 
     {% if not c.constructors_unfiltered and not c.nonpublic_constructors and not c.abstract %}
     // default constructor
-    register_default_constructor<{{c.name}} {{pointer(c)}}>(m,"{{c.name}}");
+    register_default_constructor<{{c.name}} {{pointer(c)}}>(m,"{{cls_name(c)}}");
     {% endif %}
 
     static_cast<py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,class_dict,module.typedef_dict)}}>>(m.attr("{{cls_name(c)}}"))
