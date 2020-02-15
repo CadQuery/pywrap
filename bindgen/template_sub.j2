@@ -203,6 +203,14 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
 {% endfor %}
 {% endfor %}
 
+// Additional functions
+{% for name,m in module_settings['additional_functions'].items() %}
+    m.def("{{name}}",
+          {{ m['body']}},
+          R"#({{ m['help'] }})#"
+          {% for arg in m['arguments'] %}, py::arg("{{ arg }}"){% endfor %})
+{% endfor %}
+
 // operators
 {% for op in module.operators %}
 {% if op.name in operator_dict %}

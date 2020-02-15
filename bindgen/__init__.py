@@ -21,7 +21,7 @@ from .header import parse_tu
 method_schema = Schema({
         'body' : str,
         Optional('help',default=None) : str,
-        Optional('arguments',default=None) : [str]
+        Optional('arguments',default=[]) : [str]
         })
 
 function_schema = method_schema
@@ -45,7 +45,7 @@ module_schema = Schema({
         Optional('include_header_post',default=None) : str,
         Optional('template_specializations',default=[]) : [str],
         Optional('Classes',default={}) : {str : class_schema},
-        Optional('additional_functions',default=None) : {str : function_schema}
+        Optional('additional_functions',default={}) : {str : function_schema}
         })
 
 global_schema = Schema({'name' : str,
