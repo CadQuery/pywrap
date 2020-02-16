@@ -1,3 +1,5 @@
+import sys
+
 from functools import reduce
 from operator import add
 from re import match
@@ -53,8 +55,12 @@ global_schema = Schema({'name' : str,
                         'output_folder' : str,
                         'pats' : [str],
                         'modules' : [str],
+                        Optional('linux_modules',default=[]) : [str],
+                        Optional('windows_modules',default=[]) : [str],
+                        Optional('osx_modules',default=[]) : [str],
                         Optional('exclude',default=[]) : [str],
                         Optional('exceptions',default=[]) : [str],
+                        Optional('additional_files',default=[]) : [str],
                         'module_mapping' : str,
                         'Operators' : {str:[str]},
                         'Extras' : {Optional('include_pre',default=None) : str,
@@ -258,6 +264,15 @@ def parse_modules(verbose,
     file_pats = settings['pats']
     file_exc = settings['exclude']
     module_names = settings['modules']
+    
+    if sys.platform == 'linux':
+        module_names += settings['linux_modules']
+    elif sys.platform == "win32":
+        module_names += settings['windows_modules']
+    elif sys.platform == "darwin":
+        module_names += settings['osx_modules']
+    
+    
     file_pats = [p.format(m) for m in module_names for p in settings['pats']]
     
     all_files = reduce(add,(path.files(pat) for pat in file_pats))    

@@ -186,14 +186,11 @@ modules = ["Standard",
 "BiTgte",
 "Draft",
 "Aspect",
-#"Cocoa",
 "Font",
 "Image",
 "InterfaceGraphic",
 "SelectBasics",
 #"TColQuantity",
-#"WNT",
-"Xw",
 "Graphic3d",
 "Prs3d",
 "PrsMgr",
@@ -310,6 +307,10 @@ modules = ["Standard",
 "IFSelect",
 "IFGraph"
 ]
+
+linux_modules = ["Xw"]
+windows_modules = ["WNT"]
+osx_modules = ["Cocoa"]
 
 exclude = ["Standard_Handle.hxx","Standard",
            "math_GaussPoints.hxx","NCollection_Shared.hxx","OSD_WNT.hxx",
