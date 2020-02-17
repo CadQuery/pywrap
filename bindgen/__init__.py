@@ -393,6 +393,7 @@ def render(settings,module_settings,modules,class_dict):
     template_tmpl = jinja_env.get_template('template_templates.j2')
     template_main = jinja_env.get_template('template_main.j2')
     template_make = jinja_env.get_template('makefile.j2')
+    template_cmake = jinja_env.get_template('CMakeLists.j2')
     
     def proper_new_operator(cls):
     
@@ -461,6 +462,12 @@ def render(settings,module_settings,modules,class_dict):
     
         with open('makefile','w') as f:
                 f.write(template_make.render({'name' : name}))
+                
+        with open('CMakeLists.txt','w') as f:
+                f.write(template_cmake.render({'name' : name}))
+                
+    for p in settings['additional_files']:
+        Path(p).copy(output_path)
     
 def validate_result(verbose,n_jobs,folder):
     

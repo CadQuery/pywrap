@@ -1,0 +1,14 @@
+cmake_minimum_required( VERSION 3.16 )
+project( {{ name }} )
+
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
+
+find_package( pybind11 REQUIRED )                   
+find_package(OpenCascade REQUIRED COMPONENTS OPENCASCADE)
+
+include_directories(${PROJECT_SOURCE_DIR})
+file(GLOB CPP_FILES ${PROJECT_SOURCE_DIR}/*.cpp)
+
+pybind11_add_module( {{ name }} SHARED ${CPP_FILES} )
+
+target_link_libraries( {{ name }} PRIVATE OPENCASCADE )
