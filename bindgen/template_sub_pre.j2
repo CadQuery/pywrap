@@ -33,7 +33,7 @@ namespace py = pybind11;
 {% if not td.pod and not "_H" in td.name and td.template_base.__len__()>0 and not td.type.startswith("opencascade::handle") %}
 // {{h.name}}
 {% set dep_module = td.type.split("_") %}
-#include "{{dep_module[0]}}.hxx"
+#include "{{dep_module[0]}}_tmpl.hxx"
 {% endif %}
 {% endfor %}
 {% endfor %}

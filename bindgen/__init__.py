@@ -446,7 +446,7 @@ def render(settings,module_settings,modules,class_dict):
                                              'proper_delete_operator' : proper_delete_operator,
                                              'module_settings' : module_settings.get(m.name,module_schema.validate({}))}))
     
-            with open('{}.hxx'.format(m.name),'w') as f:
+            with open('{}_tmpl.hxx'.format(m.name),'w') as f:
                 f.write(template_tmpl.render({'module' : m,
                                              'class_dict' : class_dict,
                                              'project_name' : name,

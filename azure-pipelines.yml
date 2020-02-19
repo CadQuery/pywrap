@@ -20,6 +20,7 @@ jobs:
     vmImage: 'ubuntu-16.04'
   variables:
     n_cores: 2
+    CXX: g++-8
   steps:
   - template: conda-enable.yml@templates
 
@@ -27,7 +28,7 @@ jobs:
       conda env create -f env.yml
     displayName: 'Prepare conda environment'
 
-  - bash: sudo apt-get install g++-8 mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
+  - bash: sudo apt-get install $(CXX) mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
     displayName: 'Install g++8 and gl headers'
 
   - bash: |
@@ -64,12 +65,14 @@ jobs:
   - bash: |
       source activate cpp-py-bindgen && \
       cd OCP && \
-      make -j $(n_cores) -k
+      CXX=$(CXX) cmake -B build -S . -G Ninja && \
+      cmake --build build -j $(n_cores) && \
+      rm -rf build/CMakeFiles
     displayName: 'Compile'
 
   - task: PublishBuildArtifacts@1
     inputs:
-      pathtoPublish: './OCP'
+      pathtoPublish: './OCP/build'
       artifactName: OCP
     displayName: 'Publish compilation result'
 
