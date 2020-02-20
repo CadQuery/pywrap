@@ -4,6 +4,8 @@ project( {{ name }}
 
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
 
+set( PYTHON_EXECUTABLE $ENV{$CONDA_PREFIX}/python )
+
 find_package( pybind11 REQUIRED )                   
 find_package( OpenCascade REQUIRED COMPONENTS OPENCASCADE )
 
