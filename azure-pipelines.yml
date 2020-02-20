@@ -78,6 +78,6 @@ jobs:
 
   - bash: |
       source activate cpp-py-bindgen && \
-      cd OCP && \
+      cd OCP/build && \
       LD_DEBUG=libs python -c"import OCP"
     displayName: 'Test'
