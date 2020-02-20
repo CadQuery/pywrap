@@ -101,8 +101,6 @@ def read_symbols(p):
     sym = pd.read_csv(p,header=None,names=['adr','code','name'],delimiter=' ',
                       error_bad_lines=False).dropna()
     return sym
-    # return only defined symbols
-    #return sym.query('code == "T"')
 
 def remove_undefined(m,sym):
     
@@ -337,8 +335,6 @@ def transform_modules(verbose,
             #elif t in enum_dict and enum_dict[t] != m.name:
             #    m.dependencies.add(enum_dict[t])
     
-    #modules = sort_modules(modules)
-    
     #remove duplicate typedefs
     logzero.logger.info('removing duplicate typedefs')
     
@@ -392,7 +388,6 @@ def render(settings,module_settings,modules,class_dict):
     template_sub_pre = jinja_env.get_template('template_sub_pre.j2')
     template_tmpl = jinja_env.get_template('template_templates.j2')
     template_main = jinja_env.get_template('template_main.j2')
-    template_make = jinja_env.get_template('makefile.j2')
     template_cmake = jinja_env.get_template('CMakeLists.j2')
     
     def proper_new_operator(cls):
@@ -459,10 +454,7 @@ def render(settings,module_settings,modules,class_dict):
                 f.write(template_main.render({'name' : name,
                                               'sorted_modules' : toposort_modules(modules),
                                               'modules' : module_names}))
-    
-        with open('makefile','w') as f:
-                f.write(template_make.render({'name' : name}))
-                
+                        
         with open('CMakeLists.txt','w') as f:
                 f.write(template_cmake.render({'name' : name}))
                 
