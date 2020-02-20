@@ -310,10 +310,6 @@ modules = ["Standard",
 "IFGraph"
 ]
 
-linux_modules = ["Xw"]
-windows_modules = ["WNT"]
-osx_modules = ["Cocoa"]
-
 exclude = ["Standard_Handle.hxx","Standard",
            "math_GaussPoints.hxx","NCollection_Shared.hxx","OSD_WNT.hxx",
            "Geom2dToIGES","BRepGProp_Gauss.hxx","BRepLib_CheckCurveOnSurface.hxx",
@@ -328,6 +324,15 @@ exceptions = ["Standard_Failure"]
 module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 
 byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
+
+[Linux]
+    modules = ["Xw"]
+    
+[Windows]
+    modules = ["WNT"]
+
+[OSX]
+    modules = ["Cocoa"]
 
 [Operators]
 

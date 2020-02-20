@@ -1,5 +1,6 @@
 import sys
 import logzero
+import pybind11
 
 from itertools import chain
 
@@ -12,16 +13,21 @@ from .type_parser import parse_type
 
 
 def parse_tu(path,
+             input_folder,
+             platform_includes=[],
              args=['-x', 'c++', '-std=c++11', '-D__CODE_GENERATOR__',
-                   '-Iexternal/pybind11/include','-Wno-deprecated-declarations'],
-            pre_includes = '#include <Standard_Handle.hxx>'):
+                   '-Wno-deprecated-declarations'],
+             pre_includes = '#include <Standard_Handle.hxx>'):
     '''Run a translation unit thorugh clang
     '''
 
-    args.append('-I{}'.format(Path(sys.prefix) / 'include/python{}.{}m'.format(sys.version_info.major, sys.version_info.minor)))
+    args.append(f'-I{pybind11.get_include()}')
+    args.append(f'-I{input_folder}')
     args.append('-I{}'.format(Path(sys.prefix) / 'lib/clang/8.0.0/include/'))
     args.append('-I{}'.format(Path(sys.prefix) / 'lib/clang/6.0.1/include/'))
-    args.append('-I{}'.format(Path(sys.prefix) / 'include/opencascade'))
+    
+    for inc in platform_includes:
+        args.append(f'-I{inc}')
 
     ix = get_index()
 
@@ -580,10 +586,10 @@ class HeaderInfo(object):
         _resolve_inheritance(cls.superclass)
 
 
-    def parse(self, path,
+    def parse(self, path, input_folder,
               args=['-x', 'c++', '-std=c++11', '-D__CODE_GENERATOR__' ]):
 
-        tr_unit = parse_tu(path, args)
+        tr_unit = parse_tu(path, input_folder, args)
 
         self.name = path
         self.short_name = path.splitpath()[-1]
@@ -621,12 +627,12 @@ class HeaderInfo(object):
 
         return tr_unit
 
-def process_header(path):
+def process_header(path,input_folder,platform_includes):
     '''Main function from this module
     '''
 
     hi = HeaderInfo()
-    hi.parse(path)
+    hi.parse(path,input_folder,platform_includes)
 
     return hi
 

@@ -50,14 +50,16 @@ module_schema = Schema({
         Optional('additional_functions',default={}) : {str : function_schema}
         })
 
+platform_settings = Schema({
+       Optional('modules',default=[]) : [str],
+       Optional('platform_includes',default=[]) : [str],
+       })
+
 global_schema = Schema({'name' : str,
                         'input_folder' : str,
                         'output_folder' : str,
                         'pats' : [str],
                         'modules' : [str],
-                        Optional('linux_modules',default=[]) : [str],
-                        Optional('windows_modules',default=[]) : [str],
-                        Optional('osx_modules',default=[]) : [str],
                         Optional('exclude',default=[]) : [str],
                         Optional('exceptions',default=[]) : [str],
                         Optional('additional_files',default=[]) : [str],
@@ -68,6 +70,9 @@ global_schema = Schema({'name' : str,
                         'Symbols' : {'path' : str,
                                      'path_mangled' : str},
                         Optional('byref_types',default=[]) : [str],
+                        Optional('Linux',default=None) : platform_settings,
+                        Optional('Windows',default=None) : platform_settings,
+                        Optional('OSX',default=None) : platform_settings,
                         Optional('Modules',default=None) : {str : module_schema}
                         })
 
@@ -264,11 +269,11 @@ def parse_modules(verbose,
     module_names = settings['modules']
     
     if sys.platform == 'linux':
-        module_names += settings['linux_modules']
+        module_names += settings['Linux']['modules']
     elif sys.platform == "win32":
-        module_names += settings['windows_modules']
+        module_names += settings['Windows']['modules']
     elif sys.platform == "darwin":
-        module_names += settings['osx_modules']
+        module_names += settings['OSX']['modules']
     
     
     file_pats = [p.format(m) for m in module_names for p in settings['pats']]
