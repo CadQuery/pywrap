@@ -6,78 +6,10 @@ trigger:
 
 pr: none
 
-resources:
-  repositories:
-    - repository: templates
-      type: github
-      name: CadQuery/conda-packages
-      endpoint: CadQuery
-
 jobs:
-- job: Linux
-  timeoutInMinutes: 360
-  pool:
-    vmImage: 'ubuntu-16.04'
-  variables:
-    n_cores: 2
-    CXX: g++-8
-  steps:
-  - template: conda-enable.yml@templates
-
-  - bash: |
-      conda env create -f env.yml
-    displayName: 'Prepare conda environment'
-
-  - bash: sudo apt-get install $(CXX) mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
-    displayName: 'Install g++8 and gl headers'
-
-  - bash: |
-      source activate cpp-py-bindgen && \
-      conda info -a && \
-      which python && \
-      env
-    displayName: 'Conda env sanity checks'
-
-  - bash: |
-      source activate cpp-py-bindgen && \
-      nm -gDC $CONDA_PREFIX/lib/libTK*.so
-    displayName: 'List symbols'
-
-  - bash: |
-      source activate cpp-py-bindgen && \
-      python -m bindgen -n $(n_cores) parse ocp.toml out.pkl && \
-      python -m bindgen -n $(n_cores) transform ocp.toml out.pkl out_f.pkl && \
-      python -m bindgen -n $(n_cores) generate ocp.toml out_f.pkl
-    displayName: 'Generate'
-
-  - task: CopyFiles@2
-    inputs:
-      contents: 'out*.pkl'
-      targetFolder: OCP
-    displayName: 'Copy pkl outputs'
-
-  - task: PublishBuildArtifacts@1
-    inputs:
-      pathtoPublish: './OCP'
-      artifactName: OCP_src
-    displayName: 'Publish resulting code'
-
-  - bash: |
-      source activate cpp-py-bindgen && \
-      cd OCP && \
-      CXX=$(CXX) cmake -B build -S . -G Ninja && \
-      cmake --build build -j $(n_cores) && \
-      rm -rf build/CMakeFiles
-    displayName: 'Compile'
-
-  - task: PublishBuildArtifacts@1
-    inputs:
-      pathtoPublish: './OCP/build'
-      artifactName: OCP
-    displayName: 'Publish compilation result'
-
-  - bash: |
-      source activate cpp-py-bindgen && \
-      cd OCP/build && \
-      LD_DEBUG=libs python -c"import OCP"
-    displayName: 'Test'
+- template: conda-build.yml
+    name: Linux
+- template: conda-build.yml
+  parameters:
+    name: Windows
+    vmImage: 'vs2017-win2016'

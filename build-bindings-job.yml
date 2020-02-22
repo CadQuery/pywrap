@@ -1,0 +1,88 @@
+parameters:
+  name: 'Generate bindings'
+  vmImage: 'Ubuntu-16.04'
+  py_maj: '3'
+  py_min: '6'
+  config_file: 'ocp.toml'
+  conda_bld: '3.16.3'
+  conda_env_file: 'env.yml'
+
+resources:
+  repositories:
+    - repository: templates
+      type: github
+      name: CadQuery/conda-packages
+      endpoint: CadQuery
+
+jobs:
+- job: ${{ parameters.name }}_${{ parameters.vmImage }}_${{ parameters.py_maj }}_${{ parameters.py_min }}
+  timeoutInMinutes: 360
+  
+  pool:
+    vmImage: ${{ parameters.vmImage }}
+  
+  variables:
+    n_cores: 2
+    CXX: g++-8
+    
+  steps:
+  
+  - template: conda-enable.yml@templates
+
+  - bash: |
+      conda env create -f ${{ parameters.conda_env_file }}
+    displayName: 'Prepare conda environment'
+
+  - bash: sudo apt-get install $(CXX) mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
+    displayName: 'Install g++8 and gl headers'
+
+  - bash: |
+      source activate cpp-py-bindgen && \
+      conda info -a && \
+      which python && \
+      env
+    displayName: 'Conda env sanity checks'
+    
+  - bash: |
+      output=$(python -c'import toml; print(toml.load("${{ parameters.config_file }}")["output_folder"])')  && \
+      echo "##vso[task.setvariable variable=output]$output"
+    displayName: 'Read output dir from the config file'
+
+  - bash: |
+      source activate cpp-py-bindgen && \
+      python -m bindgen -n $(n_cores) parse ${{ parameters.config_file }} out.pkl && \
+      python -m bindgen -n $(n_cores) transform ${{ parameters.config_file }} out.pkl out_f.pkl && \
+      python -m bindgen -n $(n_cores) generate ${{ parameters.config_file }} out_f.pkl
+    displayName: 'Generate'
+
+  - task: CopyFiles@2
+    inputs:
+      contents: 'out*.pkl'
+      targetFolder: $(output)
+    displayName: 'Copy pkl outputs'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: $(output)
+      artifactName: OCP_src
+    displayName: 'Publish resulting code'
+
+  - bash: |
+      source activate cpp-py-bindgen && \
+      cd $output && \
+      CXX=$(CXX) cmake -B ../build -S . -G Ninja && \
+      cmake --build build -j $(n_cores) && \
+      rm -rf build/CMakeFiles
+    displayName: 'Compile'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: 'build'
+      artifactName: OCP
+    displayName: 'Publish compilation result'
+
+  - bash: |
+      source activate cpp-py-bindgen && \
+      cd build && \
+      LD_DEBUG=libs python -c"import OCP"
+    displayName: 'Test'
