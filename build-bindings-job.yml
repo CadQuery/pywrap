@@ -41,8 +41,9 @@ jobs:
     
   - bash: |
       source activate cpp-py-bindgen && \
-      output=$(python -c'import toml; print(toml.load("${{ parameters.config_file }}")["output_folder"])')  && \
-      echo "##vso[task.setvariable variable=output]$output"
+      OUTPUT=`python -c'import toml; print(toml.load("${{ parameters.config_file }}")["output_folder"])'`  && \
+      echo $OUTPUT && \
+      echo "##vso[task.setvariable variable=OUTPUT;isOutput=true]$OUTPUT"
     displayName: 'Read output dir from the config file'
 
   - bash: |
@@ -55,18 +56,18 @@ jobs:
   - task: CopyFiles@2
     inputs:
       contents: 'out*.pkl'
-      targetFolder: $(output)
+      targetFolder: $(OUTPUT)
     displayName: 'Copy pkl outputs'
 
   - task: PublishBuildArtifacts@1
     inputs:
-      pathtoPublish: $(output)
+      pathtoPublish: $(OUTPUT)
       artifactName: OCP_src
     displayName: 'Publish resulting code'
 
   - bash: |
       source activate cpp-py-bindgen && \
-      cd $output && \
+      cd $(OUTPUT) && \
       CXX=$(CXX) cmake -B ../build -S . -G Ninja && \
       cmake --build build -j $(n_cores) && \
       rm -rf build/CMakeFiles
@@ -80,6 +81,6 @@ jobs:
 
   - bash: |
       source activate cpp-py-bindgen && \
-      cd build && \
+      cd $(OUTPUT)/build && \
       LD_DEBUG=libs python -c"import OCP"
     displayName: 'Test'
