@@ -1,3 +1,10 @@
+resources:
+  repositories:
+    - repository: templates
+      type: github
+      name: CadQuery/conda-packages
+      endpoint: CadQuery
+
 parameters:
   name: 'Generate bindings'
   vmImage: 'Ubuntu-16.04'
@@ -6,13 +13,6 @@ parameters:
   config_file: 'ocp.toml'
   conda_bld: '3.16.3'
   conda_env_file: 'env.yml'
-
-resources:
-  repositories:
-    - repository: templates
-      type: github
-      name: CadQuery/conda-packages
-      endpoint: CadQuery
 
 jobs:
 - job: ${{ parameters.name }}_${{ parameters.vmImage }}_${{ parameters.py_maj }}_${{ parameters.py_min }}
