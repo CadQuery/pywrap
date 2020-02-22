@@ -8,7 +8,7 @@ parameters:
   conda_env_file: 'env.yml'
 
 jobs:
-- job: ${{ parameters.name }}_${{ parameters.vmImage }}_${{ parameters.py_maj }}_${{ parameters.py_min }}
+- job: ${{ parameters.name }}_${{ parameters.py_maj }}_${{ parameters.py_min }}
   timeoutInMinutes: 360
   
   pool:
