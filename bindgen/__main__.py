@@ -23,11 +23,12 @@ def main(ctx,clean,verbose,njobs):
 @main.command()
 @click.argument('configuration')
 @click.argument('output')
+@click.argument('platform', default=None,type=click.Choice(('Linux','Windows','OSX')))
 @click.pass_obj
-def parse(obj,configuration,output):
+def parse(obj,configuration,output,platform=None):
     
     settings,module_mapping,module_settings = read_settings(configuration)
-    result = parse_modules(obj.verbose,obj.njobs,settings,module_mapping,module_settings)
+    result = parse_modules(obj.verbose,obj.njobs,settings,module_mapping,module_settings,platform)
     
     with open(output,'wb') as f:
         pickle.dump(result,f)

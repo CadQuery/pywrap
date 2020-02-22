@@ -261,19 +261,23 @@ def parse_modules(verbose,
                   n_jobs,
                   settings,
                   module_mapping,
-                  settings_per_module):
+                  settings_per_module,
+                  platform):
 
     path = Path(settings['input_folder'])
     file_pats = settings['pats']
     file_exc = settings['exclude']
     module_names = settings['modules']
     
-    if sys.platform == 'linux':
-        module_names += settings['Linux']['modules']
-    elif sys.platform == "win32":
-        module_names += settings['Windows']['modules']
-    elif sys.platform == "darwin":
-        module_names += settings['OSX']['modules']
+    if platform is None:
+        if sys.platform == 'linux':
+            module_names += settings['Linux']['modules']
+        elif sys.platform == "win32":
+            module_names += settings['Windows']['modules']
+        elif sys.platform == "darwin":
+            module_names += settings['OSX']['modules']
+    else:
+        module_names += settings[platform]['modules']
     
     
     file_pats = [p.format(m) for m in module_names for p in settings['pats']]
