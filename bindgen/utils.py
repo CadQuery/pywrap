@@ -3,6 +3,7 @@ from cymbal import monkeypatch_cursor
 from ctypes import c_uint
 from path import Path
 from os import getenv
+from sys import platform
 
 initialized = False
 ix = None
@@ -13,7 +14,11 @@ def init_clang():
     
     if not initialized:
         conda_prefix = Path(getenv('CONDA_PREFIX'))
-        Config.set_library_file(conda_prefix / 'lib' / 'libclang.so')
+        
+        if platform.startswith('win'):
+            Config.set_library_file(conda_prefix / 'Library' / 'bin' / 'libclang.dll')
+        else:
+            Config.set_library_file(conda_prefix / 'lib' / 'libclang.so')
         
         # Monkeypatch clang
         monkeypatch_cursor('is_virtual',
