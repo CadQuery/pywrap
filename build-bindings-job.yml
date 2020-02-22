@@ -21,13 +21,16 @@ jobs:
   steps:
   
   - template: conda-enable.yml@templates
+    parameters:
+      vmImage: ${{ parameters.vmImage }}
 
   - bash: |
       conda env create -f ${{ parameters.conda_env_file }}
     displayName: 'Prepare conda environment'
 
-  - bash: sudo apt-get install $(CXX) mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
-    displayName: 'Install g++8 and gl headers'
+  - ${{ if contains(parameters.vmImage, 'Ubuntu') }}:  
+    - bash: sudo apt-get install $(CXX) mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
+      displayName: 'Install g++8 and gl headers'
 
   - bash: |
       source activate cpp-py-bindgen && \
@@ -37,6 +40,7 @@ jobs:
     displayName: 'Conda env sanity checks'
     
   - bash: |
+      source activate cpp-py-bindgen && \
       output=$(python -c'import toml; print(toml.load("${{ parameters.config_file }}")["output_folder"])')  && \
       echo "##vso[task.setvariable variable=output]$output"
     displayName: 'Read output dir from the config file'
