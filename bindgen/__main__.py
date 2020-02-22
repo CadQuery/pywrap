@@ -23,7 +23,7 @@ def main(ctx,clean,verbose,njobs):
 @main.command()
 @click.argument('configuration')
 @click.argument('output')
-@click.argument('platform', default=None,type=click.Choice(('Linux','Windows','OSX')))
+@click.argument('platform', default=None,required=False,type=click.Choice(('Linux','Windows','OSX')))
 @click.pass_obj
 def parse(obj,configuration,output,platform=None):
     
