@@ -7,9 +7,10 @@ trigger:
 pr: none
 
 jobs:
-- template: conda-build.yml
+- template: build-bindings-job.yml
+  parameters:
     name: Linux
-- template: conda-build.yml
+- template: build-bindings-job.yml
   parameters:
     name: Windows
     vmImage: 'vs2017-win2016'
