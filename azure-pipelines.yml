@@ -20,7 +20,7 @@ jobs:
 - template: build-bindings-job.yml
   parameters:
     name: Windows
-    vmImage: 'windows-2019'
+    vmImage: 'vs2017-win2016'
 - template: build-bindings-job.yml
   parameters:
     name: OSX
