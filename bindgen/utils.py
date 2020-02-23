@@ -39,6 +39,7 @@ def get_includes():
         rv.append(Path(prefix) / 'Library/include/clang/')
     else:
         rv.append(Path(prefix) / 'lib/clang/8.0.0/include/')
+        rv.append(Path(prefix) / 'lib/clang/6.0.1/include/')
     
     return rv
 
