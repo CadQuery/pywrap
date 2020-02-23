@@ -69,10 +69,13 @@ jobs:
   - bash: |
       source activate cpp-py-bindgen && \
       cd "$(conf.OUTPUT)" && \
-      CXX=$(CXX) cmake -B ../build -S . -G Ninja && \
+      cmake -B ../build -S . -G Ninja && \
       cmake --build ../build -j $(n_cores) && \
       rm -rf build/CMakeFiles
     displayName: 'Compile'
+    - ${{ if not(contains(parameters.vmImage, 'Ubuntu')) }}:
+      env:
+        CXX: $(CXX)
 
   - task: PublishBuildArtifacts@1
     inputs:
@@ -82,6 +85,6 @@ jobs:
 
   - bash: |
       source activate cpp-py-bindgen && \
-      cd "$(conf.OUTPUT)"/build && \
+      cd build && \
       LD_DEBUG=libs python -c"import OCP"
     displayName: 'Test'
