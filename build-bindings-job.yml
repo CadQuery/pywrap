@@ -31,6 +31,10 @@ jobs:
   - ${{ if contains(parameters.vmImage, 'Ubuntu') }}:
     - bash: sudo apt-get install $(CXX) mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
       displayName: 'Install g++8 and gl headers'
+  
+  - ${{ if contains(parameters.vmImage, 'mac') }}:
+    - bash: sudo find /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/
+      displayName: 'Search for GL'    
 
   - bash: |
       source activate cpp-py-bindgen && \
