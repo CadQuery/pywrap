@@ -70,7 +70,7 @@ jobs:
       source activate cpp-py-bindgen && \
       cd "$(conf.OUTPUT)" && \
       CXX=$(CXX) cmake -B ../build -S . -G Ninja && \
-      cmake --build build -j $(n_cores) && \
+      cmake --build ../build -j $(n_cores) && \
       rm -rf build/CMakeFiles
     displayName: 'Compile'
 
