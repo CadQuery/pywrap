@@ -22,7 +22,7 @@ def parse_tu(path,
     args.append(f'-I{input_folder}')
     
     if prefix:
-        args.append(f'--prefix={prefix}')
+        args.append(f'--sysroot={prefix}')
     
     for inc in get_includes():
         args.append(f'-I{inc}')

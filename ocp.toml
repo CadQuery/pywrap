@@ -338,6 +338,7 @@ parsing_header = '''#include <Standard_Handle.hxx>
 
 [OSX]
     modules = ["Cocoa"]
+    prefix = "/usr/local/miniconda/envs/cpp-py-bindgen"
 
 [Operators]
 
