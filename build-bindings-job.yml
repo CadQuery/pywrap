@@ -45,6 +45,11 @@ jobs:
       echo $OUTPUT && \
       echo "##vso[task.setvariable variable=OUTPUT;isOutput=true]$OUTPUT"
     displayName: 'Read output dir from the config file'
+    
+    - bash: |
+      source activate cpp-py-bindgen && \      
+      echo $OUTPUT
+    displayName: 'Test previous step'
 
   - bash: |
       source activate cpp-py-bindgen && \
@@ -67,7 +72,7 @@ jobs:
 
   - bash: |
       source activate cpp-py-bindgen && \
-      cd $(OUTPUT) && \
+      cd $OUTPUT && \
       CXX=$(CXX) cmake -B ../build -S . -G Ninja && \
       cmake --build build -j $(n_cores) && \
       rm -rf build/CMakeFiles
