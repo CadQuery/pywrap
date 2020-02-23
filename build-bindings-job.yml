@@ -31,10 +31,6 @@ jobs:
   - ${{ if contains(parameters.vmImage, 'Ubuntu') }}:
     - bash: sudo apt-get install $(CXX) mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
       displayName: 'Install g++8 and gl headers'
-  
-  - ${{ if contains(parameters.vmImage, 'macOS') }}:    
-    - bash: $(gcc-8 -print-prog-name=cc1plus) -v
-      displayName: 'Print includes'
 
   - bash: |
       source activate cpp-py-bindgen && \

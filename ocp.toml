@@ -339,6 +339,13 @@ parsing_header = '''#include <Standard_Handle.hxx>
 [OSX]
     modules = ["Cocoa"]
     prefix = "/usr/local/miniconda/envs/cpp-py-bindgen"
+    includes = ['/usr/local/Cellar/gcc@8/8.3.0_2/lib/gcc/8/gcc/x86_64-apple-darwin19/8.3.0/../../../../../../include/c++/8.3.0',
+                '/usr/local/Cellar/gcc@8/8.3.0_2/lib/gcc/8/gcc/x86_64-apple-darwin19/8.3.0/../../../../../../include/c++/8.3.0/x86_64-apple-darwin19',
+                '/usr/local/Cellar/gcc@8/8.3.0_2/lib/gcc/8/gcc/x86_64-apple-darwin19/8.3.0/../../../../../../include/c++/8.3.0/backward',
+                '/usr/local/Cellar/gcc@8/8.3.0_2/lib/gcc/8/gcc/x86_64-apple-darwin19/8.3.0/include',
+                '/usr/local/Cellar/gcc@8/8.3.0_2/lib/gcc/8/gcc/x86_64-apple-darwin19/8.3.0/include-fixed',
+                '/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include',
+                '/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks']
 
 [Operators]
 
