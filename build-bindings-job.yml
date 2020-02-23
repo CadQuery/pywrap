@@ -71,7 +71,7 @@ jobs:
       cd "$(conf.OUTPUT)" && \
       cmake -B ../build -S . -G Ninja && \
       cmake --build ../build -j $(n_cores) && \
-      rm -rf build/CMakeFiles
+      rm -rf ../build/CMakeFiles
     displayName: 'Compile'
     - ${{ if not(contains(parameters.vmImage, 'Ubuntu')) }}:
       env:
