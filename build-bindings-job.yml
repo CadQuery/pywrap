@@ -45,10 +45,11 @@ jobs:
       echo $OUTPUT && \
       echo "##vso[task.setvariable variable=OUTPUT;isOutput=true]$OUTPUT"
     displayName: 'Read output dir from the config file'
+    name: 'conf'
     
   - bash: |
       source activate cpp-py-bindgen && \      
-      echo $OUTPUT
+      echo "$(conf.OUTPUT)"
     displayName: 'Test previous step'
 
   - bash: |
