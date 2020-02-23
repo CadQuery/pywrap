@@ -32,9 +32,6 @@ jobs:
     - bash: sudo apt-get install $(CXX) mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
       displayName: 'Install g++8 and gl headers'
 
-  - ${{ if contains(parameters.vmImage, 'macOS') }}:
-    - bash: sudo find / -name type_traits 
-
   - bash: |
       source activate cpp-py-bindgen && \
       conda info -a && \
