@@ -21,3 +21,7 @@ jobs:
   parameters:
     name: Windows
     vmImage: 'windows-2019'
+- template: build-bindings-job.yml
+  parameters:
+    name: OSX
+    vmImage: 'macOS-latest'
