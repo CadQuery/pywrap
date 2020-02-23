@@ -1,52 +1,11 @@
-import sys
-import logzero
-import pybind11
-
 from itertools import chain
 
-from clang.cindex import CursorKind, TypeKind, AccessSpecifier, TranslationUnit as TU
+from clang.cindex import CursorKind, TypeKind, AccessSpecifier
 from path import Path
 
-from .utils import get_index
 from .type_parser import parse_type
-
-
-
-def parse_tu(path,
-             input_folder,
-             platform_includes=[],
-             args=['-x', 'c++', '-std=c++11', '-D__CODE_GENERATOR__',
-                   '-Wno-deprecated-declarations'],
-             pre_includes = '#include <Standard_Handle.hxx>'):
-    '''Run a translation unit thorugh clang
-    '''
-
-    args.append(f'-I{pybind11.get_include()}')
-    args.append(f'-I{input_folder}')
-    args.append('-I{}'.format(Path(sys.prefix) / 'lib/clang/8.0.0/include/'))
-    args.append('-I{}'.format(Path(sys.prefix) / 'lib/clang/6.0.1/include/'))
-    
-    for inc in platform_includes:
-        args.append(f'-I{inc}')
-
-    ix = get_index()
-
-    with open(path) as f:
-        src = f.read()
-
-    tr_unit = ix.parse('dummy.cxx',
-                       args,
-                       unsaved_files=[('dummy.cxx',f'{pre_includes}\n{src}')],
-                       options=TU.PARSE_INCOMPLETE )
-
-    diag = list(tr_unit.diagnostics)
-    if diag:
-        logzero.logger.warning(path)
-        for d in diag: logzero.logger.warning(d)
-
-    tr_unit.path = ('dummy.cxx',path.name)
-
-    return tr_unit
+from .translation_unit import parse_tu
+from .utils import current_platform
 
 def paths_approximately_equal(p1,p2):
     '''Approximate path equality. This is due to
@@ -586,10 +545,14 @@ class HeaderInfo(object):
         _resolve_inheritance(cls.superclass)
 
 
-    def parse(self, path, input_folder,
-              args=['-x', 'c++', '-std=c++11', '-D__CODE_GENERATOR__' ]):
+    def parse(self, path,input_folder,settings):
 
-        tr_unit = parse_tu(path, input_folder, args)
+        tr_unit = parse_tu(path,
+                           input_folder,
+                           prefix=settings[current_platform()]['prefix'],
+                           platform_includes=settings[current_platform()]['includes'],
+                           parsing_header=settings['parsing_header'],
+                           platform_parsing_header=settings[current_platform()]['parsing_header'])
 
         self.name = path
         self.short_name = path.splitpath()[-1]
@@ -627,12 +590,12 @@ class HeaderInfo(object):
 
         return tr_unit
 
-def process_header(path,input_folder,platform_includes):
+def process_header(path,input_folder,settings):
     '''Main function from this module
     '''
 
     hi = HeaderInfo()
-    hi.parse(path,input_folder,platform_includes)
+    hi.parse(path,input_folder,settings)
 
     return hi
 

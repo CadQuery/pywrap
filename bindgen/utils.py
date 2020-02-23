@@ -3,10 +3,44 @@ from cymbal import monkeypatch_cursor
 from ctypes import c_uint
 from path import Path
 from os import getenv
-from sys import platform
+from sys import platform, prefix
 
 initialized = False
 ix = None
+
+
+def current_platform():
+    
+    rv=None
+    if platform.startswith('win'):
+        rv='Windows'
+    elif platform.startswith('linux'):
+        rv='Linux'
+    elif platform.startswith('darwin'):
+        rv='OSX'
+    else:
+        raise RuntimeError(f'Unsupported platform: {platform}')
+        
+    return rv
+
+def on_windows():
+    
+    rv = False
+    if platform.startswith('win'):
+        rv = True
+        
+    return rv
+
+def get_includes():
+    
+    rv = []
+    
+    if on_windows():
+        rv.append(Path(prefix) / 'Library/include/clang/')
+    else:
+        rv.append(Path(prefix) / 'lib/clang/8.0.0/include/')
+    
+    return rv
 
 def init_clang():
     
@@ -17,8 +51,10 @@ def init_clang():
         
         if platform.startswith('win'):
             Config.set_library_file(conda_prefix / 'Library' / 'bin' / 'libclang.dll')
-        else:
+        elif platform.startswith('linux'):
             Config.set_library_file(conda_prefix / 'lib' / 'libclang.so')
+        elif platform.startswith('darwin'):
+            Config.set_library_file(conda_prefix / 'lib' / 'libclang.dylib')
         
         # Monkeypatch clang
         monkeypatch_cursor('is_virtual',

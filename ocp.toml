@@ -325,6 +325,11 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 
 byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
 
+parsing_header = '''#include <Standard_Handle.hxx>
+#undef Standard_NODISCARD
+#define Standard_NODISCARD
+'''
+
 [Linux]
     modules = ["Xw"]
     

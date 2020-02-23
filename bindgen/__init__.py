@@ -18,6 +18,7 @@ from toposort import toposort_flatten
 
 from .module import ModuleInfo
 from .header import parse_tu
+from .utils import current_platform
 
 
 method_schema = Schema({
@@ -52,7 +53,9 @@ module_schema = Schema({
 
 platform_settings = Schema({
        Optional('modules',default=[]) : [str],
-       Optional('platform_includes',default=[]) : [str],
+       Optional('includes',default=[]) : [str],
+       Optional('prefix',default=None) : str,
+       Optional('parsing_header',default='') : str,
        })
 
 global_schema = Schema({'name' : str,
@@ -70,6 +73,7 @@ global_schema = Schema({'name' : str,
                         'Symbols' : {'path' : str,
                                      'path_mangled' : str},
                         Optional('byref_types',default=[]) : [str],
+                        Optional('parsing_header',default='') : str,
                         Optional('Linux',default=None) : platform_settings,
                         Optional('Windows',default=None) : platform_settings,
                         Optional('OSX',default=None) : platform_settings,
@@ -262,22 +266,17 @@ def parse_modules(verbose,
                   settings,
                   module_mapping,
                   settings_per_module,
-                  platform):
+                  target_platform):
 
     path = Path(settings['input_folder'])
     file_pats = settings['pats']
     file_exc = settings['exclude']
     module_names = settings['modules']
     
-    if platform is None:
-        if sys.platform == 'linux':
-            module_names += settings['Linux']['modules']
-        elif sys.platform == "win32":
-            module_names += settings['Windows']['modules']
-        elif sys.platform == "darwin":
-            module_names += settings['OSX']['modules']
+    if target_platform is None:
+        module_names += settings[current_platform()]['modules']
     else:
-        module_names += settings[platform]['modules']
+        module_names += settings[target_platform]['modules']
     
     
     file_pats = [p.format(m) for m in module_names for p in settings['pats']]
@@ -293,7 +292,7 @@ def parse_modules(verbose,
     def _process_module(name,files,module_names):
         if not verbose:
             logzero.logger.setLevel(logzero.logging.INFO)
-        return ModuleInfo(name,path,files,module_names)
+        return ModuleInfo(name,path,files,module_names,settings)
     
     modules = Parallel(prefer='processes',n_jobs=n_jobs)\
         (delayed(_process_module)(name,files,module_names) for name,files in tqdm(module_dict.items()))
