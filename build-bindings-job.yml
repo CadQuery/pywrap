@@ -85,6 +85,7 @@ jobs:
         
   - ${{ if contains(parameters.vmImage, 'win') }}:
     - bash: |
+        unset CXX && \
         source activate cpp-py-bindgen && \
         cd "$(conf.OUTPUT)" && \
         cmake -B ../build -S . -G Ninja && \
