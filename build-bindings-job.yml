@@ -33,7 +33,9 @@ jobs:
       displayName: 'Install g++8 and gl headers'
   
   - ${{ if contains(parameters.vmImage, 'mac') }}:
-    - bash: sudo find /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/
+    - bash: |
+        sudo find /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/ && \
+        ln -s "$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/OpenGL.framework/Headers" /usr/local/include/OpenGL  
       displayName: 'Search for GL'    
 
   - bash: |
