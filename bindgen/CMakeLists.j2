@@ -6,6 +6,7 @@ list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
 
 if(WIN32)
   set( PYTHON_EXECUTABLE "$ENV{CONDA_PREFIX}/python.exe" )
+  add_compile_definitions( _hypot=hypot )
 else()
   set( PYTHON_EXECUTABLE "$ENV{CONDA_PREFIX}/bin/python" )
 endif()
