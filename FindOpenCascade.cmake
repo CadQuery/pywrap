@@ -1,5 +1,6 @@
 find_path( OPENCASCADE_INCLUDE_DIR Standard.hxx PATHS
-           $ENV{CONDA_PREFIX}/include/opencascade )
+           $ENV{CONDA_PREFIX}/include/opencascade 
+           $ENV{CONDA_PREFIX}/Library/include/opencascade )
 
 set ( OCCT_MODULES 
     TKMath 
@@ -54,7 +55,8 @@ set ( OCCT_MODULES
     TKXSBase )
  
 foreach( MOD ${OCCT_MODULES})
-     find_library( OPENCASCADE_LIB_${MOD} NAMES ${MOD} PATHS $ENV{CONDA_PREFIX}/lib )
+     find_library( OPENCASCADE_LIB_${MOD} NAMES ${MOD} PATHS 
+                   $ENV{CONDA_PREFIX}/lib  $ENV{CONDA_PREFIX}/Library/bin )
      list( APPEND OPENCASCADE_LIBRARIES ${OPENCASCADE_LIB_${MOD}} )
      mark_as_advanced( OPENCASCADE_LIB_${MOD} )
 endforeach()
