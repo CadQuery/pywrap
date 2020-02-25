@@ -1,5 +1,3 @@
-import sys
-
 from functools import reduce
 from operator import add
 from re import match
@@ -13,72 +11,12 @@ from joblib import Parallel, delayed
 from path import Path
 from tqdm import tqdm
 from jinja2 import Environment, FileSystemLoader
-from schema import Schema, Optional
 from toposort import toposort_flatten
 
 from .module import ModuleInfo
 from .header import parse_tu
 from .utils import current_platform
-
-
-method_schema = Schema({
-        'body' : str,
-        Optional('help',default=None) : str,
-        Optional('arguments',default=[]) : [str]
-        })
-
-function_schema = method_schema
-
-class_schema = Schema({
-        Optional('exclude_constructors',default=[]) : [int],
-        Optional('additional_constructors',default=[]) : [method_schema],
-        Optional('additional_methods',default={}) : {str : method_schema},
-        Optional('additional_static_methods',default={}) : {str : method_schema}
-        })
-
-module_schema = Schema({
-        Optional('include_header_pre_top',default=None) : str,
-        Optional('include_header_pre',default=None) : str,
-        Optional('include_body_pre',default=None) : str,
-        Optional('exclude_functions',default=[]) : [str],
-        Optional('exclude_classes',default=[]) : [str], 
-        Optional('exclude_methods',default=[]) : [str],
-        Optional('exclude_typedefs',default=[]) : [str],
-        Optional('include_body_post',default=None) : str,
-        Optional('include_header_post',default=None) : str,
-        Optional('template_specializations',default=[]) : [str],
-        Optional('Classes',default={}) : {str : class_schema},
-        Optional('additional_functions',default={}) : {str : function_schema}
-        })
-
-platform_settings = Schema({
-       Optional('modules',default=[]) : [str],
-       Optional('includes',default=[]) : [str],
-       Optional('prefix',default=None) : str,
-       Optional('parsing_header',default='') : str,
-       })
-
-global_schema = Schema({'name' : str,
-                        'input_folder' : str,
-                        'output_folder' : str,
-                        'pats' : [str],
-                        'modules' : [str],
-                        Optional('exclude',default=[]) : [str],
-                        Optional('exceptions',default=[]) : [str],
-                        Optional('additional_files',default=[]) : [str],
-                        'module_mapping' : str,
-                        'Operators' : {str:[str]},
-                        'Extras' : {Optional('include_pre',default=None) : str,
-                                    Optional('include_post',default=None) : str},
-                        'Symbols' : {'path' : str,
-                                     'path_mangled' : str},
-                        Optional('byref_types',default=[]) : [str],
-                        Optional('parsing_header',default='') : str,
-                        Optional('Linux',default=None) : platform_settings,
-                        Optional('Windows',default=None) : platform_settings,
-                        Optional('OSX',default=None) : platform_settings,
-                        Optional('Modules',default=None) : {str : module_schema}
-                        })
+from .schemas import global_schema, module_schema
 
 def read_settings(p):
     
@@ -222,36 +160,6 @@ def transform_module(m,
     # remove undefined symbols
     remove_undefined_mangled(m,sym)
     
-def sort_modules(modules):
-    
-    mod_dict = {m.name:m for m in modules}
-    
-    #add modules withouth any dependanceis to the top
-    modules_sorted = [m.name for m in modules if not m.dependencies]
-        
-    #remove them form the
-    for m in modules_sorted: modules.remove(mod_dict[m])
-    
-    #handle the rest
-    last_len = len(modules)
-    while modules:
-        to_append = []
-        for m in modules:
-            deps = [d in modules_sorted for d in m.dependencies]
-            if all(deps):
-                to_append.append(m.name)
-        
-        for m in to_append: modules.remove(mod_dict[m])
-        modules_sorted.extend(to_append)        
-        logzero.logger.debug(len(modules))
-        
-        if len(modules)==last_len:
-            import pdb; pdb.set_trace()
-        
-        last_len = len(modules)
-        
-    return [mod_dict[m] for m in modules_sorted]
-
 def split_into_modules(names,files):
     
     rv = {}
