@@ -36,8 +36,14 @@ jobs:
     - bash: |
         sudo find /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/ && \
         ln -s "$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/OpenGL.framework/Headers" /usr/local/include/OpenGL  
-      displayName: 'Search for GL'    
-
+      displayName: 'Search for GL'
+      
+  - ${{ if contains(parameters.vmImage, 'win') }}:
+    - bash: |
+        gcc --version  && \
+        echo | g++ -E -Wp,-v -
+      displayName: 'GCC version check'
+      
   - bash: |
       source activate cpp-py-bindgen && \
       conda info -a && \
