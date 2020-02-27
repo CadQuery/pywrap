@@ -33,8 +33,8 @@ jobs:
   - ${{ if contains(parameters.vmImage, 'win') }}:
     - script: |
        choco install -y msys2
-       c:\tools\msys64\usr\bin\bash.exe -lc "c:\tools\msys64\usr\bin\pacman --noconfirm -Syyuu"
-       c:\tools\msys64\usr\bin\bash.exe -lc "c:\tools\msys64\usr\bin\pacman --noconfirm -Syuu"
+       c:\tools\msys64\usr\bin\bash.exe -lc "c:/tools/msys64/usr/bin/pacman --noconfirm -Syyuu"
+       c:\tools\msys64\usr\bin\bash.exe -lc "c:/tools/msys64/usr/bin/pacman --noconfirm -Syuu"
        rem refreshenv
       displayName: 'Install MSYS2'
     
@@ -46,7 +46,7 @@ jobs:
        exit
       displayName: 'Install MinGW64'
     
-    - powershell: Write-Host "##vso[task.prependpath]c:\tools\msys64\usr\bin"
+    - powershell: Write-Host "##vso[task.prependpath]c:/tools/msys64/usr/bin"
       displayName: 'Add MinGW64 to PATH'
     
     - bash: |
