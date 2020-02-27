@@ -19,14 +19,6 @@ jobs:
     CXX: g++-8
     
   steps:
-  
-  - template: conda-enable.yml@templates
-    parameters:
-      vmImage: ${{ parameters.vmImage }}
-
-  - bash: |
-      conda env create -f ${{ parameters.conda_env_file }}
-    displayName: 'Prepare conda environment'
 
   - ${{ if contains(parameters.vmImage, 'Ubuntu') }}:
     - bash: sudo apt-get install $(CXX) mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
@@ -61,6 +53,14 @@ jobs:
         gcc --version  && \
         echo | g++ -E -Wp,-v -
       displayName: 'GCC version check'
+  
+  - template: conda-enable.yml@templates
+    parameters:
+      vmImage: ${{ parameters.vmImage }}
+
+  - bash: |
+      conda env create -f ${{ parameters.conda_env_file }}
+    displayName: 'Prepare conda environment'
 
       
   - bash: |
