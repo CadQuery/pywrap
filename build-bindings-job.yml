@@ -42,7 +42,6 @@ jobs:
        c:\tools\msys64\usr\bin\bash.exe -lc "echo 'Hello World' && uname -a"
        c:\tools\msys64\usr\bin\bash.exe -lc "pacman --noconfirm -S mingw-w64-x86_64-toolchain"
        c:\tools\msys64\usr\bin\bash.exe -lc "pacman --noconfirm -S make"
-       c:\tools\msys64\usr\bin\bash.exe -lc "mingw-w64-ninja"
        exit
       displayName: 'Install MinGW64'
     
