@@ -9,6 +9,12 @@ prototype, pybind_overload %}
 
 namespace py = pybind11;
 
+{% if platform.startswith('win') %}
+// Windows specific
+#define D_USE_MATH_DEFINES
+#include <windef.h>
+{% endif %}
+
 // Standard Handle
 #include <Standard_Handle.hxx>
 
@@ -79,15 +85,15 @@ py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#
     class Py_{{c.name}} : public {{c.name}}{
     public:
         using {{c.name}}::{{c.name}};
-        
+
         {% set methods = [] %}
-        
+
         // public pure virtual
         {% for m in c.methods+c.methods_byref %}{% if m.pure_virtual %}
         {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
         {% do methods.append(m.full_name) %}
         {% endif %}{% endfor %}
-        
+
         {% for super in c.superclasses %}
         {% set p = all_classes.get(super,None) %}{% if p %}
         {% for m in p.methods %}{% if m.pure_virtual and m.name not in c.methods_dict and not m.full_name in methods %}
@@ -96,13 +102,13 @@ py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#
         {% endif %}{% endfor %}
         {% endif %}
         {% endfor %}
-        
+
         // protected pure virtual
         {% for m in c.protected_virtual_methods %}
         {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
         {% do methods.append(m.full_name) %}
         {% endfor %}
-        
+
         {% for super in c.superclasses %}
         {% set p = all_classes.get(super,None) %}{% if p %}
         {% for m in p.protected_virtual_methods %}{% if m.name not in c.protected_virtual_methods_dict and not m.full_name in methods %}
@@ -111,12 +117,12 @@ py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#
         {% endif %}{% endfor %}
         {% endif %}
         {% endfor %}
-        
+
         // private pure virtual
         {% for m in c.private_virtual_methods %}
         {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
         {% endfor %}
-        
+
         {% for super in c.superclasses %}
         {% set p = all_classes.get(super,None) %}{% if p %}
         {% for m in p.private_virtual_methods %}{% if m.name not in c.private_virtual_methods_dict and not m.full_name in methods %}
@@ -136,7 +142,7 @@ py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#
 {% set arg = td.type.split(td.template_base[0])[-1] %}
 {% set base =  td.template_base[0] %}
 {% if not arg.endswith("::Iterator") %}
-    preregister_template_{{ base }}{{ arg }}(m,"{{td.name}}");  
+    preregister_template_{{ base }}{{ arg }}(m,"{{td.name}}");
 {% endif %}
 {% endif %}
 {% endfor %}

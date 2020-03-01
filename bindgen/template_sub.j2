@@ -13,6 +13,12 @@ argtypes_names_not_byref, init_outputs_byref, argnames_not_byref %}
 
 namespace py = pybind11;
 
+{% if platform.startswith('win') %}
+// Windows specific
+#define D_USE_MATH_DEFINES
+#include <windef.h>
+{% endif %}
+
 // Standard Handle
 #include <Standard_Handle.hxx>
 
@@ -64,15 +70,15 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
     class Py_{{c.name}} : public {{c.name}}{
     public:
         using {{c.name}}::{{c.name}};
-        
+
         {% set methods = [] %}
-        
+
         // public pure virtual
         {% for m in c.methods+c.methods_byref %}{% if m.pure_virtual %}
         {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
         {% do methods.append(m.full_name) %}
         {% endif %}{% endfor %}
-        
+
         {% for super in c.superclasses %}
         {% set p = all_classes.get(super,None) %}{% if p %}
         {% for m in p.methods %}{% if m.pure_virtual and m.name not in c.methods_dict and not m.full_name in methods %}
@@ -81,13 +87,13 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
         {% endif %}{% endfor %}
         {% endif %}
         {% endfor %}
-        
+
         // protected pure virtual
         {% for m in c.protected_virtual_methods %}
         {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
         {% do methods.append(m.full_name) %}
         {% endfor %}
-        
+
         {% for super in c.superclasses %}
         {% set p = all_classes.get(super,None) %}{% if p %}
         {% for m in p.protected_virtual_methods %}{% if m.name not in c.protected_virtual_methods_dict and not m.full_name in methods %}
@@ -96,12 +102,12 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
         {% endif %}{% endfor %}
         {% endif %}
         {% endfor %}
-        
+
         // private pure virtual
         {% for m in c.private_virtual_methods %}
         {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
         {% endfor %}
-        
+
         {% for super in c.superclasses %}
         {% set p = all_classes.get(super,None) %}{% if p %}
         {% for m in p.private_virtual_methods %}{% if m.name not in c.private_virtual_methods_dict and not m.full_name in methods %}
@@ -124,7 +130,7 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
     static_cast<py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,class_dict,module.typedef_dict)}}>>(m.attr("{{cls_name(c)}}"))
     // constructors
     {% for i,con in enumerate(c.constructors) %}
-    {% if (not con.pointer_by_ref) and 
+    {% if (not con.pointer_by_ref) and
           (not i in module_settings['Classes'].get(c.name,{}).get('exclude_constructors',[]))  %}
         .def(py::init< {{ argtypes(con) }} >() {{argnames(con)}} )
     {% endif %}
@@ -197,7 +203,7 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
 {% for h in module.headers %}
 // {{h.name}}
 {% for f in h.functions %}
-    m.def("{{f.name}}", 
+    m.def("{{f.name}}",
           {{ function_pointer(f) }},
           R"#({{ f.comment }})#" {{argnames(f)}});
 {% endfor %}
@@ -215,7 +221,7 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
 {% for op in module.operators %}
 {% if op.name in operator_dict %}
 {% for py_op in operator_dict[op.name] %}
-    m.def("{{py_op}}", 
+    m.def("{{py_op}}",
           {{ function_pointer(op) }},
           py::is_operator(),
           R"#({{ op.comment }})#" {{argnames(op)}});
@@ -231,7 +237,7 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
 {% set arg = td.type.split(td.template_base[0])[-1] %}
 {% set base =  td.template_base[0] %}
 {% if not arg.endswith("::Iterator") %}
-    register_template_{{ base }}{{ arg }}(m,"{{td.name}}");  
+    register_template_{{ base }}{{ arg }}(m,"{{td.name}}");
 {% endif %}
 {% endif %}
 {% endfor %}
