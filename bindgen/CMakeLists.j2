@@ -1,5 +1,5 @@
 cmake_minimum_required( VERSION 3.16 )
-project( {{ name }} 
+project( {{ name }}
          LANGUAGES CXX )
 
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
@@ -11,7 +11,7 @@ else()
   set( PYTHON_EXECUTABLE "$ENV{CONDA_PREFIX}/bin/python" )
 endif()
 
-find_package( pybind11 REQUIRED )                   
+find_package( pybind11 REQUIRED )
 find_package( OpenCascade REQUIRED COMPONENTS OPENCASCADE )
 
 include_directories( ${PROJECT_SOURCE_DIR} )
@@ -20,11 +20,15 @@ file( GLOB CPP_FILES ${PROJECT_SOURCE_DIR}/*.cpp )
 add_library( {{ name }} MODULE ${CPP_FILES} )
 
 target_link_libraries( {{ name }} PRIVATE OPENCASCADE pybind11::module )
-set_target_properties( {{ name }} 
+set_target_properties( {{ name }}
                        PROPERTIES
-                       CXX_STANDARD 17 
+                       CXX_STANDARD 17
                        CMAKE_CXX_FLAGS_RELEASE "-O3 "
                        COMPILE_FLAGS "-fpermissive -fvisibility=hidden -fvisibility-inlines-hidden"
-                       INTERPROCEDURAL_OPTIMIZATION FALSE 
+                       INTERPROCEDURAL_OPTIMIZATION FALSE
                        PREFIX "${PYTHON_MODULE_PREFIX}"
                        SUFFIX "${PYTHON_MODULE_EXTENSION}" )
+
+if(WIN32)
+  target_compile_options( {{ name }} PRIVATE -Wa,-mbig-obj )
+endif()
