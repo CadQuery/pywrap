@@ -20,7 +20,7 @@ module_schema = Schema({
         Optional('include_header_pre',default=None) : str,
         Optional('include_body_pre',default=None) : str,
         Optional('exclude_functions',default=[]) : [str],
-        Optional('exclude_classes',default=[]) : [str], 
+        Optional('exclude_classes',default=[]) : [str],
         Optional('exclude_methods',default=[]) : [str],
         Optional('exclude_typedefs',default=[]) : [str],
         Optional('include_body_post',default=None) : str,
@@ -35,6 +35,7 @@ platform_settings = Schema({
        Optional('includes',default=[]) : [str],
        Optional('prefix',default=None) : str,
        Optional('parsing_header',default='') : str,
+       Optional('exclude_classes',default=[]) : [str]
        })
 
 global_schema = Schema({'name' : str,

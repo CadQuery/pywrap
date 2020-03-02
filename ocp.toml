@@ -332,9 +332,10 @@ parsing_header = '''#include <Standard_Handle.hxx>
 
 [Linux]
     modules = ["Xw"]
-    
+
 [Windows]
     modules = ["WNT"]
+    exclude_classes = ["Handle_*"]
 
 [OSX]
     modules = ["Cocoa"]
@@ -522,9 +523,9 @@ parsing_header = '''#include <Standard_Handle.hxx>
 
         include_header_pre = "struct __GLXFBConfigRec {};"
         exclude_methods = ["Aspect_NeutralWindow::NativeFBConfig","Aspect_Window::NativeFBConfig","Aspect_NeutralWindow::SetNativeHandles","Aspect_DisplayConnection::GetDisplay","Aspect_DisplayConnection::Init"]
-        
+
         [Modules.Aspect.Classes.Aspect_DisplayConnection]
-        
+
             exclude_constructors = [2]
 
     [Modules.SelectMgr]
@@ -562,18 +563,18 @@ auto OptionsForAttach = [](){return AIS_Manipulator::OptionsForAttach();};"""
 
         exclude_classes = ["Font_BRepFont"]
         include_header_pre = "struct FT_LibraryRec_ {};"
-        
+
         [Modules.Font.Classes]
-        
+
         [Modules.Font.Classes.Font_BRepTextBuilder]
-            
+
         [Modules.Font.Classes.Font_BRepTextBuilder.additional_methods]
-            
+
         [Modules.Font.Classes.Font_BRepTextBuilder.additional_methods.Perform]
-        
+
             body = "[]( Font_BRepTextBuilder & self , const char* path, double size, Font_FontAspect aspect, const char* text){ auto font = Font_BRepFont(path,aspect,size); return self.Perform(font,text);}"
             help = "Render text as BRep shape."
-            arguments  = ["Font path","Font size","Font style","Text"]                
+            arguments  = ["Font path","Font size","Font style","Text"]
 
     [Modules.Select3D]
 
@@ -679,18 +680,18 @@ auto OptionsForAttach = [](){return AIS_Manipulator::OptionsForAttach();};"""
     [Modules.BRepBlend]
 
         exclude_methods = ["BRepBlend_AppSurface::TolReached"]
-        
+
     [Modules.StdPersistent]
-    
+
         include_header_pre = """using ItemLocation = StdPersistent_TopLoc::ItemLocation;
 using Datum3D = StdPersistent_TopLoc::Datum3D;"""
 
     [Modules.AppCont]
-    
+
         exclude_methods = ["AppCont_Function::PeriodInformation"]
-        
+
     [Modules.ShapePersistent]
-        
+
         include_header_pre = """using Curve3D = ShapePersistent_BRep::Curve3D;
 using CurveOn2Surfaces = ShapePersistent_BRep::CurveOn2Surfaces;
 using CurveOnClosedSurface = ShapePersistent_BRep::CurveOnClosedSurface;
@@ -732,18 +733,18 @@ using PolygonOnTriangulation = ShapePersistent_BRep::PolygonOnTriangulation;
 """
 
     [Modules.IntAna]
-    
+
         exclude_methods = ["IntAna_Quadric::SpecialPoints"]
-        
+
     [Modules.CDF]
-    
+
         include_header_pre = "#include <Resource_Manager.hxx>"
-        
+
     [Modules.Image]
-    
+
         exclude_methods = ["Image_AlienPixMap::Load"]
 
 
     [Modules.Prs3d]
-    
+
         include_header_pre = "#include <Graphic3d_StructureManager.hxx>"
