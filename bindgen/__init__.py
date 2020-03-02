@@ -109,12 +109,14 @@ def transform_module(m,
     s = settings_per_module.get(m.name,None)
     global_excludes = settings[current_platform()]['exclude_classes']
 
+    #handle global excludes
+    m.classes = [c for c in m.classes if not any(match(pat,c.name) for pat in global_excludes)]
+    m.class_dict = {k:v for k,v, in m.class_dict.items() if not any(match(pat,k) for pat in global_excludes)}
+
     if s:
         #exclude classes
-        m.classes = [c for c in m.classes if c.name not in s['exclude_classes']
-                     and not any(match(pat,c.name) for pat in global_excludes)]
-        m.class_dict = {k:v for k,v, in m.class_dict.items() if k not in s['exclude_classes']
-                        and not any(match(pat,k) for pat in global_excludes)}
+        m.classes = [c for c in m.classes if c.name not in s['exclude_classes']]
+        m.class_dict = {k:v for k,v, in m.class_dict.items() if k not in s['exclude_classes']}
 
         #exclude methods (including static methods)
         for pat in s['exclude_methods']:
