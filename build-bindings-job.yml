@@ -10,26 +10,26 @@ parameters:
 jobs:
 - job: ${{ parameters.name }}_${{ parameters.py_maj }}_${{ parameters.py_min }}
   timeoutInMinutes: 360
-  
+
   pool:
     vmImage: ${{ parameters.vmImage }}
-  
+
   variables:
     n_cores: 2
     CXX: g++-8
-    
+
   steps:
 
   - ${{ if contains(parameters.vmImage, 'Ubuntu') }}:
     - bash: sudo apt-get install $(CXX) mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
       displayName: 'Install g++8 and gl headers'
-  
+
   - ${{ if contains(parameters.vmImage, 'mac') }}:
     - bash: |
         sudo find /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/ && \
-        ln -s "$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/OpenGL.framework/Headers" /usr/local/include/OpenGL  
+        ln -s "$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/OpenGL.framework/Headers" /usr/local/include/OpenGL
       displayName: 'Search for GL'
-      
+
   - ${{ if contains(parameters.vmImage, 'win') }}:
     - script: |
        choco install -y msys2
@@ -37,7 +37,7 @@ jobs:
        c:\tools\msys64\usr\bin\bash.exe -lc "c:/tools/msys64/usr/bin/pacman --noconfirm -Syuu"
        rem refreshenv
       displayName: 'Install MSYS2'
-    
+
     - script: |
        c:\tools\msys64\usr\bin\bash.exe -lc "echo 'Hello World' && uname -a"
        c:\tools\msys64\usr\bin\bash.exe -lc "pacman --noconfirm -S mingw-w64-x86_64-toolchain"
@@ -45,15 +45,15 @@ jobs:
        c:\tools\msys64\usr\bin\bash.exe -lc "find c:/tools/msys64/ -iname \*gcc\*"
        exit
       displayName: 'Install MinGW64'
-    
+
     - powershell: Write-Host "##vso[task.prependpath]c:/tools/msys64/usr/bin;c:/tools/msys64/mingw64/bin;c:/tools/msys64/mingw64/usr/bin"
       displayName: 'Add MinGW64 to PATH'
-    
+
     - bash: |
         gcc --version  && \
         echo | g++ -E -Wp,-v -
       displayName: 'GCC version check'
-  
+
   - template: conda-enable.yml@templates
     parameters:
       vmImage: ${{ parameters.vmImage }}
@@ -62,14 +62,14 @@ jobs:
       conda env create -f ${{ parameters.conda_env_file }}
     displayName: 'Prepare conda environment'
 
-      
+
   - bash: |
       source activate cpp-py-bindgen && \
       conda info -a && \
       which python && \
       env
     displayName: 'Conda env sanity checks'
-    
+
   - bash: |
       source activate cpp-py-bindgen && \
       OUTPUT=`python -c'import toml; print(toml.load("${{ parameters.config_file }}")["output_folder"])'`  && \
@@ -101,19 +101,19 @@ jobs:
     - bash: |
         source activate cpp-py-bindgen && \
         cd "$(conf.OUTPUT)" && \
-        cmake -B ../build -S . -G Ninja && \
+        cmake -B ../build -S . -G Ninja -DCMAKE_BUILD_TYPE=Release && \
         cmake --build ../build -j $(n_cores) && \
         rm -rf ../build/CMakeFiles
       displayName: 'Compile'
       env:
         CXX: $(CXX)
-        
+
   - ${{ if contains(parameters.vmImage, 'win') }}:
     - bash: |
         unset CXX && \
         source activate cpp-py-bindgen && \
         cd "$(conf.OUTPUT)" && \
-        cmake -B ../build -S . -G Ninja && \
+        cmake -B ../build -S . -G Ninja -DCMAKE_BUILD_TYPE=Release && \
         cmake --build ../build -j $(n_cores) && \
         rm -rf ../build/CMakeFiles
       displayName: 'Compile'
