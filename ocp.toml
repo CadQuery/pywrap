@@ -744,7 +744,10 @@ using PolygonOnTriangulation = ShapePersistent_BRep::PolygonOnTriangulation;
 
         exclude_methods = ["Image_AlienPixMap::Load"]
 
-
     [Modules.Prs3d]
 
         include_header_pre = "#include <Graphic3d_StructureManager.hxx>"
+
+    [Modules.WNT]
+
+        include_header_pre = "#include <Aspect_DisplayConnection.hxx>"
