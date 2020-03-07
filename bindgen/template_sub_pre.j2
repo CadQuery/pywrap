@@ -11,8 +11,8 @@ namespace py = pybind11;
 
 {% if platform.startswith('win') %}
 // Windows specific
-#define D_USE_MATH_DEFINES
-#include <windef.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 {% endif %}
 
 // Standard Handle
