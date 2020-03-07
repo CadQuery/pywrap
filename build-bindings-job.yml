@@ -30,30 +30,6 @@ jobs:
         ln -s "$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/OpenGL.framework/Headers" /usr/local/include/OpenGL
       displayName: 'Search for GL'
 
-  - ${{ if contains(parameters.vmImage, 'win') }}:
-    - script: |
-       choco install -y msys2
-       c:\tools\msys64\usr\bin\bash.exe -lc "c:/tools/msys64/usr/bin/pacman --noconfirm -Syyuu"
-       c:\tools\msys64\usr\bin\bash.exe -lc "c:/tools/msys64/usr/bin/pacman --noconfirm -Syuu"
-       rem refreshenv
-      displayName: 'Install MSYS2'
-
-    - script: |
-       c:\tools\msys64\usr\bin\bash.exe -lc "echo 'Hello World' && uname -a"
-       c:\tools\msys64\usr\bin\bash.exe -lc "pacman --noconfirm -S mingw-w64-x86_64-toolchain"
-       c:\tools\msys64\usr\bin\bash.exe -lc "pacman --noconfirm -S make"
-       c:\tools\msys64\usr\bin\bash.exe -lc "find c:/tools/msys64/ -iname \*gcc\*"
-       exit
-      displayName: 'Install MinGW64'
-
-    - powershell: Write-Host "##vso[task.prependpath]c:/tools/msys64/usr/bin;c:/tools/msys64/mingw64/bin;c:/tools/msys64/mingw64/usr/bin"
-      displayName: 'Add MinGW64 to PATH'
-
-    - bash: |
-        gcc --version  && \
-        echo | g++ -E -Wp,-v -
-      displayName: 'GCC version check'
-
   - template: conda-enable.yml@templates
     parameters:
       vmImage: ${{ parameters.vmImage }}
@@ -100,22 +76,20 @@ jobs:
   - ${{ if not(contains(parameters.vmImage, 'win')) }}:
     - bash: |
         source activate cpp-py-bindgen && \
-        cd "$(conf.OUTPUT)" && \
-        cmake -B ../build -S . -G Ninja -DCMAKE_BUILD_TYPE=Release && \
-        cmake --build ../build -j $(n_cores) && \
-        rm -rf ../build/CMakeFiles
+        cmake -B build -S "$(conf.OUTPUT)" -G Ninja -DCMAKE_BUILD_TYPE=Release && \
+        cmake --build build -j $(n_cores) && \
+        rm -rf build/CMakeFiles
       displayName: 'Compile'
       env:
         CXX: $(CXX)
 
   - ${{ if contains(parameters.vmImage, 'win') }}:
-    - bash: |
-        unset CXX && \
-        source activate cpp-py-bindgen && \
-        cd "$(conf.OUTPUT)" && \
-        cmake -B ../build -S . -G Ninja -DCMAKE_BUILD_TYPE=Release && \
-        cmake --build ../build -j $(n_cores) && \
-        rm -rf ../build/CMakeFiles
+    - script: |
+        call C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat
+        call activate cpp-py-bindgen
+        cmake -B build -S "$(conf.OUTPUT)" -G Ninja -DCMAKE_BUILD_TYPE=Release
+        cmake --build build -j $(n_cores)
+        rmdir /S /Q build/CMakeFiles
       displayName: 'Compile'
 
   - task: PublishBuildArtifacts@1
