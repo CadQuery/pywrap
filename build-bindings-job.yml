@@ -6,6 +6,7 @@ parameters:
   config_file: 'ocp.toml'
   conda_bld: '3.16.3'
   conda_env_file: 'env.yml'
+  CXX: g++-8
 
 jobs:
 - job: ${{ parameters.name }}_${{ parameters.py_maj }}_${{ parameters.py_min }}
@@ -16,12 +17,11 @@ jobs:
 
   variables:
     n_cores: 2
-    CXX: g++-8
 
   steps:
 
   - ${{ if contains(parameters.vmImage, 'Ubuntu') }}:
-    - bash: sudo apt-get install $(CXX) mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
+    - bash: sudo apt-get install ${{ parameters.CXX }} mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
       displayName: 'Install g++8 and gl headers'
 
   - ${{ if contains(parameters.vmImage, 'mac') }}:
@@ -81,7 +81,7 @@ jobs:
         rm -rf build/CMakeFiles
       displayName: 'Compile'
       env:
-        CXX: $(CXX)
+        CXX: ${{ parameters.CXX }}
 
   - ${{ if contains(parameters.vmImage, 'win') }}:
     - script: |
