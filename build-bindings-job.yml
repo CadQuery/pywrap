@@ -30,6 +30,10 @@ jobs:
         ln -s "$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/OpenGL.framework/Headers" /usr/local/include/OpenGL
       displayName: 'Search for GL'
 
+  - ${{ if contains(parameters.vmImage, 'win') }}:
+    - bash: ls "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build"
+      displayName: 'Find vcvars64'
+
   - template: conda-enable.yml@templates
     parameters:
       vmImage: ${{ parameters.vmImage }}
