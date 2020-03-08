@@ -95,6 +95,8 @@ jobs:
         cmake --build build -j $(n_cores)
         rmdir /S /Q build/CMakeFiles
       displayName: 'Compile'
+      env:
+        CXX: "cl.exe"
 
   - task: PublishBuildArtifacts@1
     inputs:
