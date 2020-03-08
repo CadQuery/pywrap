@@ -85,7 +85,7 @@ jobs:
 
   - ${{ if contains(parameters.vmImage, 'win') }}:
     - script: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+        call "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat"
         call activate cpp-py-bindgen
         cmake -B build -S "$(conf.OUTPUT)" -G Ninja -DCMAKE_BUILD_TYPE=Release
         cmake --build build -j $(n_cores)
