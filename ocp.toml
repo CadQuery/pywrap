@@ -371,6 +371,7 @@ parsing_header = '''#include <Standard_Handle.hxx>
 
     path = "symbols.dat"
     path_mangled = "symbols_mangled.dat"
+    path_mangled_msvc = "symbols_mangled_win.dat"
 
 [Modules]
 
@@ -466,6 +467,9 @@ parsing_header = '''#include <Standard_Handle.hxx>
     [Modules.BRepClass3d]
 
         exclude_typedefs = ["BRepClass3d_BndBoxTree"]
+        exclude_methods = ["BRepClass3d_BndBoxTreeSelectorPoint::Accept",
+                           "BRepClass3d_BndBoxTreeSelectorLine::Accept"]
+
 
     [Modules.BRepAlgo]
 
@@ -499,7 +503,8 @@ parsing_header = '''#include <Standard_Handle.hxx>
 
     [Modules.ChFi3d]
     #error: invalid use of incomplete type ‘class Geom_BSplineCurve’
-        exclude_functions = ["ChFi3d_ApproxByC2","ChFi3d_SearchPivot","ChFi3d_EnlargeFace"]
+        exclude_functions = ["ChFi3d_ApproxByC2","ChFi3d_SearchPivot","ChFi3d_EnlargeFace",
+            "ChFi3d_InPeriod","ChFi3d_Boite","ChFi3d_SetPointTolerance"]
 
 
     [Modules.BOPDS]
@@ -509,7 +514,11 @@ parsing_header = '''#include <Standard_Handle.hxx>
     [Modules.BRepMesh]
 
         exclude_classes = ["BRepMesh_Triangle",] #constructor with int&[3]
-        exclude_methods = ["BRepMesh_GeomTool::IntLinLin","BRepMesh_DataStructureOfDelaun::ElementNodes","BRepMesh_MeshTool::AddTriangle","BRepMesh_ConeRangeSplitter::GetSplitSteps"]
+        exclude_methods = ["BRepMesh_GeomTool::IntLinLin",
+        "BRepMesh_DataStructureOfDelaun::ElementNodes","BRepMesh_MeshTool::AddTriangle",
+        "BRepMesh_ConeRangeSplitter::GetSplitSteps",
+        "BRepMesh_Delaun::FreeEdges","BRepMesh_Delaun::ProcessConstraints",
+        "BRepMesh_DefaultRangeSplitter::computeTolerance","BRepMesh_DefaultRangeSplitter::computeDelta"]
 
     [Modules.TopOpeBRepTool]
 
@@ -689,6 +698,7 @@ using Datum3D = StdPersistent_TopLoc::Datum3D;"""
     [Modules.AppCont]
 
         exclude_methods = ["AppCont_Function::PeriodInformation"]
+        exclude_functions = ["InvMMatrix","MMatrix","IBPMatrix","IBTMatrix","VBernstein"]
 
     [Modules.ShapePersistent]
 
@@ -751,3 +761,7 @@ using PolygonOnTriangulation = ShapePersistent_BRep::PolygonOnTriangulation;
     [Modules.WNT]
 
         include_header_pre = "#include <Aspect_DisplayConnection.hxx>"
+
+    [Modules.StepData]
+
+        exclude_classes = ["StepData_EnumTool"]

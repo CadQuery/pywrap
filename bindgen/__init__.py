@@ -15,7 +15,7 @@ from toposort import toposort_flatten
 
 from .module import ModuleInfo
 from .header import parse_tu
-from .utils import current_platform
+from .utils import current_platform, on_windows
 from .schemas import global_schema, module_schema
 
 def read_settings(p):
@@ -45,7 +45,7 @@ def read_symbols(p):
     This information is used later for flagging undefined symbols
     '''
 
-    sym = pd.read_csv(p,header=None,names=['adr','code','name'],delimiter=' ',
+    sym = pd.read_csv(p,header=None,names=['adr','code','name'],delim_whitespace=True,
                       error_bad_lines=False).dropna()
     return sym
 
@@ -76,7 +76,13 @@ def remove_undefined_mangled(m,sym):
         c.constructors = [el for el in c.constructors if sym.name.str.endswith(el.mangled_name).any() or el.inline or el.pure_virtual or el.virtual]
 
     #exclude functions
-    m.functions = [f for f in m.functions if sym.name.str.startswith(f.name).any() or f.inline]
+    m.functions_unfiltered = m.functions
+    m.functions = [f for f in m.functions if sym.name.str.startswith(f.mangled_name).any() or f.inline]
+
+    #exclude functions per header
+    for h in m.headers:
+        h.functions_unfiltered = h.functions
+        h.functions = [f for f in h.functions if sym.name.str.startswith(f.mangled_name).any() or f.inline]
 
 def is_byref_arg(arg,byref_types):
 
@@ -220,7 +226,10 @@ def transform_modules(verbose,
                       settings_per_module,
                       modules):
 
-    sym = read_symbols(settings['Symbols']['path_mangled'])
+    if on_windows() and 'path_mangled_msvc' in settings['Symbols']:
+        sym = read_symbols(settings['Symbols']['path_mangled_msvc'])
+    else:
+        sym = read_symbols(settings['Symbols']['path_mangled'])
 
     #ignore functions and classes based on settings and update the global class_dict
     def _filter_module(m):
@@ -379,7 +388,8 @@ def render(settings,module_settings,modules,class_dict):
                                               'modules' : module_names}))
 
         with open('CMakeLists.txt','w') as f:
-                f.write(template_cmake.render({'name' : name}))
+                f.write(template_cmake.render({'name' : name,
+                                               'modules' : modules}))
 
     for p in settings['additional_files']:
         Path(p).copy(output_path)
