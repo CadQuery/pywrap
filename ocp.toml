@@ -401,7 +401,8 @@ parsing_header = '''#include <Standard_Handle.hxx>
 
     [Modules.Storage]
 
-        exclude_classes = ["Storage_StreamExtCharParityError","Storage_StreamTypeMismatchError","Storage_StreamUnknownTypeError"]
+        exclude_classes = ["Storage_StreamExtCharParityError","Storage_StreamTypeMismatchError",
+            "Storage_StreamUnknownTypeError","Storage_Bucket","Storage_BucketOfPersistent"]
         exclude_typedefs = ["Storage","Storage_MapOfCallBack","Storage_MapOfPers"]
 
     [Modules.TCollection]
@@ -518,7 +519,8 @@ parsing_header = '''#include <Standard_Handle.hxx>
         "BRepMesh_DataStructureOfDelaun::ElementNodes","BRepMesh_MeshTool::AddTriangle",
         "BRepMesh_ConeRangeSplitter::GetSplitSteps",
         "BRepMesh_Delaun::FreeEdges","BRepMesh_Delaun::ProcessConstraints",
-        "BRepMesh_DefaultRangeSplitter::computeTolerance","BRepMesh_DefaultRangeSplitter::computeDelta"]
+        "BRepMesh_DefaultRangeSplitter::computeTolerance","BRepMesh_DefaultRangeSplitter::computeDelta",
+        "BRepMesh_Delaun::Frontier"]
 
     [Modules.TopOpeBRepTool]
 
@@ -544,8 +546,9 @@ parsing_header = '''#include <Standard_Handle.hxx>
     [Modules.OpenGl]
 
         include_header_pre = "#include <Message_Messenger.hxx>"
-        exclude_methods = ["OpenGl_GlCore11::glGetPointerv"]
+        exclude_methods = ["OpenGl_GlCore11::glGetPointerv","OpenGl_RaytraceGeometry::Clear"]
         exclude_typedefs = ["OpenGl_SequenceOfLayers","OpenGl_SetterList","OpenGl_MapOfHatchStylesAndIds","OpenGl_MapOfZLayerSettings","OpenGl_IndexedMapOfStructure","OpenGl_MapOfShaderPrograms","OpenGl_IndexedMapOfStructure","OpenGl_LayerSeqIds"]
+        exclude_classes = ["OpenGl_GraduatedTrihedron","OpenGl_LayerList","OpenGl_VariableSetterSelector"]
 
     [Modules.StdSelect]
 
@@ -594,6 +597,10 @@ auto OptionsForAttach = [](){return AIS_Manipulator::OptionsForAttach();};"""
 
         include_header_pre = """#include <Media_PlayerContext.hxx>"""
         exclude_typedefs = ["Graphic3d_IndexedMapOfView","Graphic3d_IndexedMapOfAddress","Graphic3d_MapOfStructure","Graphic3d_NMapOfTransient","Graphic3d_MapOfObject","Graphic3d_Vec4u","Graphic3d_Vec2u","Graphic3d_Vec3u","Graphic3d_Vec3d","Graphic3d_MapOfAspectsToAspects"]
+        exclude_methods = ["Graphic3d_BvhCStructureSet::Size","Graphic3d_BvhCStructureSet::Box",
+            "Graphic3d_BvhCStructureSet::Center","Graphic3d_BvhCStructureSet::Swap",
+            "Graphic3d_BvhCStructureSetTrsfPers::Size","Graphic3d_BvhCStructureSetTrsfPers::Box",
+            "Graphic3d_BvhCStructureSetTrsfPers::Center","Graphic3d_BvhCStructureSetTrsfPers::Swap"]
 
     [Modules.AdvApprox]
 
@@ -616,6 +623,7 @@ auto OptionsForAttach = [](){return AIS_Manipulator::OptionsForAttach();};"""
     [Modules.StdStorage]
 
         exclude_typedefs = ["StdStorage_MapOfRoots"]
+        exclude_classes = ["StdStorage_Bucket","StdStorage_BucketOfPersistent"]
 
     [Modules.BinMDF]
 
@@ -765,3 +773,15 @@ using PolygonOnTriangulation = ShapePersistent_BRep::PolygonOnTriangulation;
     [Modules.StepData]
 
         exclude_classes = ["StepData_EnumTool"]
+
+    [Modules.LDOM]
+
+        exclude_classes = ["LDOMString","LDOM_MemManager"]
+
+    [Modules.PCDM]
+
+        exclude_methods = ["PCDM_DOMHeaderParser::startElement","PCDM_DOMHeaderParser::endElement"]
+
+    [Modules.ShapeAnalysis]
+
+        exclude_methods = ["ShapeAnalysis_BoxBndTreeSelector::Reject","ShapeAnalysis_BoxBndTreeSelector::Accept"]
