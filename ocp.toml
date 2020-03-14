@@ -468,8 +468,8 @@ parsing_header = '''#include <Standard_Handle.hxx>
     [Modules.BRepClass3d]
 
         exclude_typedefs = ["BRepClass3d_BndBoxTree"]
-        exclude_methods = ["BRepClass3d_BndBoxTreeSelectorPoint::Accept",
-                           "BRepClass3d_BndBoxTreeSelectorLine::Accept"]
+        exclude_classes = ["BRepClass3d_BndBoxTreeSelectorPoint",
+                           "BRepClass3d_BndBoxTreeSelectorLine"]
 
 
     [Modules.BRepAlgo]
@@ -514,7 +514,7 @@ parsing_header = '''#include <Standard_Handle.hxx>
 
     [Modules.BRepMesh]
 
-        exclude_classes = ["BRepMesh_Triangle",] #constructor with int&[3]
+        exclude_classes = ["BRepMesh_Triangle","BRepMesh_Delaun","BRepMesh_DefaultRangeSplitter"] #constructor with int&[3]
         exclude_methods = ["BRepMesh_GeomTool::IntLinLin",
         "BRepMesh_DataStructureOfDelaun::ElementNodes","BRepMesh_MeshTool::AddTriangle",
         "BRepMesh_ConeRangeSplitter::GetSplitSteps",
@@ -546,9 +546,10 @@ parsing_header = '''#include <Standard_Handle.hxx>
     [Modules.OpenGl]
 
         include_header_pre = "#include <Message_Messenger.hxx>"
-        exclude_methods = ["OpenGl_GlCore11::glGetPointerv","OpenGl_RaytraceGeometry::Clear"]
+        exclude_methods = ["OpenGl_GlCore11::glGetPointerv","OpenGl_RaytraceGeometry::Clear",
+                           "OpenGl_View::ChangeGraduatedTrihedron","OpenGl_View::LayerList"]
         exclude_typedefs = ["OpenGl_SequenceOfLayers","OpenGl_SetterList","OpenGl_MapOfHatchStylesAndIds","OpenGl_MapOfZLayerSettings","OpenGl_IndexedMapOfStructure","OpenGl_MapOfShaderPrograms","OpenGl_IndexedMapOfStructure","OpenGl_LayerSeqIds"]
-        exclude_classes = ["OpenGl_GraduatedTrihedron","OpenGl_LayerList","OpenGl_VariableSetterSelector"]
+        exclude_classes = ["OpenGl_GraduatedTrihedron","OpenGl_LayerList","OpenGl_VariableSetterSelector","OpenGl_RaytraceGeometry"]
 
     [Modules.StdSelect]
 
@@ -600,7 +601,9 @@ auto OptionsForAttach = [](){return AIS_Manipulator::OptionsForAttach();};"""
         exclude_methods = ["Graphic3d_BvhCStructureSet::Size","Graphic3d_BvhCStructureSet::Box",
             "Graphic3d_BvhCStructureSet::Center","Graphic3d_BvhCStructureSet::Swap",
             "Graphic3d_BvhCStructureSetTrsfPers::Size","Graphic3d_BvhCStructureSetTrsfPers::Box",
-            "Graphic3d_BvhCStructureSetTrsfPers::Center","Graphic3d_BvhCStructureSetTrsfPers::Swap"]
+            "Graphic3d_BvhCStructureSetTrsfPers::Center","Graphic3d_BvhCStructureSetTrsfPers::Swap",
+            "Graphic3d_Layer::CullableTrsfPersStructuresBVH","Graphic3d_Layer::CullableStructuresBVH"]
+        exclude_classes = ["Graphic3d_BvhCStructureSet","Graphic3d_BvhCStructureSetTrsfPers"]
 
     [Modules.AdvApprox]
 
@@ -776,12 +779,13 @@ using PolygonOnTriangulation = ShapePersistent_BRep::PolygonOnTriangulation;
 
     [Modules.LDOM]
 
-        exclude_classes = ["LDOMString","LDOM_MemManager"]
+        exclude_classes = ["LDOMString","LDOM_MemManager","LDOM_BasicText"]
+        exclude_methods = ["LDOM_BasicAttribute::SetValue"]
 
     [Modules.PCDM]
 
-        exclude_methods = ["PCDM_DOMHeaderParser::startElement","PCDM_DOMHeaderParser::endElement"]
+        exclude_classes = ["PCDM_DOMHeaderParser"]
 
     [Modules.ShapeAnalysis]
 
-        exclude_methods = ["ShapeAnalysis_BoxBndTreeSelector::Reject","ShapeAnalysis_BoxBndTreeSelector::Accept"]
+        exclude_classes = ["ShapeAnalysis_BoxBndTreeSelector"]
