@@ -316,7 +316,14 @@ exclude = ["Standard_Handle.hxx","Standard",
            "BVH_Types.hxx","BVH_RadixSorter.hxx","BVH_IndexedBoxSet.hxx",
            "Aspect_VKeySet.hxx","BOPTools_PairSelector.hxx","AIS_DataMapOfSelStat.hxx",
            "AIS_DataMapIteratorOfDataMapOfSelStat.hxx","BOPDS_Iterator.hxx","BOPDS_IteratorSI.hxx",
-           "BRepBlend_AppSurface.hxx"]
+           "BRepBlend_AppSurface.hxx","BRepMesh_BaseMeshAlgo.hxx","BRepMesh_ConstrainedBaseMeshAlgo.hxx",
+           "BRepMesh_CustomBaseMeshAlgo.hxx","BRepMesh_CustomDelaunayBaseMeshAlgo.hxx",
+           "BRepMesh_DefaultRangeSplitter.hxx","BRepMesh_DelaunayBaseMeshAlgo.hxx",
+           "BRepMesh_DelaunayDeflectionControlMeshAlgo.hxx","BRepMesh_DelaunayNodeInsertionMeshAlgo.hxx",
+           "BRepMesh_NodeInsertionMeshAlgo.hxx","BRepMesh_BoundaryParamsRangeSplitter.hxx",
+           "BRepMesh_ConeRangeSplitter.hxx","BRepMesh_CylinderRangeSplitter.hxx",
+           "BRepMesh_NURBSRangeSplitter.hxx","BRepMesh_SphereRangeSplitter.hxx",
+           "BRepMesh_TorusRangeSplitter.hxx","BRepMesh_UVParamRangeSplitter.hxx"]
 
 exceptions = ["Standard_Failure"]
 
@@ -514,13 +521,14 @@ parsing_header = '''#include <Standard_Handle.hxx>
 
     [Modules.BRepMesh]
 
+        include_header_pre = "#include <IMeshData_Wire.hxx>"
         exclude_classes = ["BRepMesh_Triangle","BRepMesh_Delaun","BRepMesh_DefaultRangeSplitter"] #constructor with int&[3]
         exclude_methods = ["BRepMesh_GeomTool::IntLinLin",
         "BRepMesh_DataStructureOfDelaun::ElementNodes","BRepMesh_MeshTool::AddTriangle",
         "BRepMesh_ConeRangeSplitter::GetSplitSteps",
         "BRepMesh_Delaun::FreeEdges","BRepMesh_Delaun::ProcessConstraints",
         "BRepMesh_DefaultRangeSplitter::computeTolerance","BRepMesh_DefaultRangeSplitter::computeDelta",
-        "BRepMesh_Delaun::Frontier"]
+        "BRepMesh_Delaun::Frontier","BRepMesh_GeomTool::CellsCount"]
 
     [Modules.TopOpeBRepTool]
 
