@@ -93,7 +93,7 @@ jobs:
         call activate cpp-py-bindgen
         cmake -B build -S "$(conf.OUTPUT)" -G Ninja -DCMAKE_BUILD_TYPE=Release
         cmake --build build -j $(n_cores) -- -k 0
-        rmdir /S /Q build/CMakeFiles
+        rmdir /S /Q build\CMakeFiles
       displayName: 'Compile'
       env:
         CXX: "cl.exe"
