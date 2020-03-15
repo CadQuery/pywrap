@@ -553,7 +553,8 @@ parsing_header = '''#include <Standard_Handle.hxx>
 
     [Modules.OpenGl]
 
-        include_header_pre = "#include <Message_Messenger.hxx>"
+        include_header_pre = """#include <Message_Messenger.hxx>
+struct NSOpenGLContext {};"""
         exclude_methods = ["OpenGl_GlCore11::glGetPointerv","OpenGl_RaytraceGeometry::Clear",
                            "OpenGl_View::ChangeGraduatedTrihedron","OpenGl_View::LayerList"]
         exclude_typedefs = ["OpenGl_SequenceOfLayers","OpenGl_SetterList","OpenGl_MapOfHatchStylesAndIds","OpenGl_MapOfZLayerSettings","OpenGl_IndexedMapOfStructure","OpenGl_MapOfShaderPrograms","OpenGl_IndexedMapOfStructure","OpenGl_LayerSeqIds"]
@@ -604,7 +605,8 @@ auto OptionsForAttach = [](){return AIS_Manipulator::OptionsForAttach();};"""
 
     [Modules.Graphic3d]
 
-        include_header_pre = """#include <Media_PlayerContext.hxx>"""
+        include_header_pre = """#include <Media_PlayerContext.hxx>
+struct NSOpenGLContext {};"""
         exclude_typedefs = ["Graphic3d_IndexedMapOfView","Graphic3d_IndexedMapOfAddress","Graphic3d_MapOfStructure","Graphic3d_NMapOfTransient","Graphic3d_MapOfObject","Graphic3d_Vec4u","Graphic3d_Vec2u","Graphic3d_Vec3u","Graphic3d_Vec3d","Graphic3d_MapOfAspectsToAspects"]
         exclude_methods = ["Graphic3d_BvhCStructureSet::Size","Graphic3d_BvhCStructureSet::Box",
             "Graphic3d_BvhCStructureSet::Center","Graphic3d_BvhCStructureSet::Swap",
@@ -780,6 +782,11 @@ using PolygonOnTriangulation = ShapePersistent_BRep::PolygonOnTriangulation;
     [Modules.WNT]
 
         include_header_pre = "#include <Aspect_DisplayConnection.hxx>"
+
+    [Modules.Cocoa]
+
+        include_header_pre = """#include <Aspect_DisplayConnection.hxx>
+struct NSView {};"""
 
     [Modules.StepData]
 
