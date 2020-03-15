@@ -81,7 +81,7 @@ jobs:
     - bash: |
         source activate cpp-py-bindgen && \
         cmake -B build -S "$(conf.OUTPUT)" -G Ninja -DCMAKE_BUILD_TYPE=Release && \
-        cmake --build build -j $(n_cores) && \
+        cmake --build build -j $(n_cores) -- -k 0 && \
         rm -rf build/CMakeFiles
       displayName: 'Compile'
       env:
@@ -92,7 +92,7 @@ jobs:
         call "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat"
         call activate cpp-py-bindgen
         cmake -B build -S "$(conf.OUTPUT)" -G Ninja -DCMAKE_BUILD_TYPE=Release
-        cmake --build build -j $(n_cores)
+        cmake --build build -j $(n_cores) -- -k 0
         rmdir /S /Q build/CMakeFiles
       displayName: 'Compile'
       env:
