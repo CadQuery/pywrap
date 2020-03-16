@@ -39,4 +39,5 @@ else()
                          PROPERTIES
                          CMAKE_CXX_FLAGS_RELEASE "-O3 "
                          COMPILE_FLAGS "-fpermissive -fvisibility=hidden -fvisibility-inlines-hidden" )
+  target_link_options( OCP "-Wl,--no-undefined" )
 endif()
