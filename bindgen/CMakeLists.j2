@@ -23,7 +23,7 @@ file( GLOB CPP_FILES ${PROJECT_SOURCE_DIR}/*.cpp )
 
 add_library( {{ name }} MODULE ${CPP_FILES} )
 
-target_link_libraries( {{ name }} PRIVATE OPENCASCADE pybind11::module )
+target_link_libraries( {{ name }} PRIVATE OPENCASCADE pybind11::pybind11 )
 set_target_properties( {{ name }}
                        PROPERTIES
                        CXX_STANDARD 17
@@ -39,5 +39,8 @@ else()
                          PROPERTIES
                          CMAKE_CXX_FLAGS_RELEASE "-O3 "
                          COMPILE_FLAGS "-fpermissive -fvisibility=hidden -fvisibility-inlines-hidden" )
-  target_link_options( OCP PRIVATE LINKER:--no-undefined )
+endif()
+
+if(APPLE)
+  target_link_options( OCP PRIVATE -Wl,-undefined,warning )
 endif()
