@@ -74,7 +74,7 @@ jobs:
   - task: PublishBuildArtifacts@1
     inputs:
       pathtoPublish: $(conf.OUTPUT)
-      artifactName: OCP_src
+      artifactName: OCP_src_${{ parameters.vmImage }}
     displayName: 'Publish resulting code'
 
   - ${{ if not(contains(parameters.vmImage, 'win')) }}:
@@ -101,7 +101,7 @@ jobs:
   - task: PublishBuildArtifacts@1
     inputs:
       pathtoPublish: 'build'
-      artifactName: OCP
+      artifactName: OCP_${{ parameters.vmImage }}
     displayName: 'Publish compilation result'
 
   - bash: |
