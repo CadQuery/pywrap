@@ -7,7 +7,6 @@ parameters:
   conda_bld: '3.16.3'
   conda_env_file: 'env.yml'
   CXX: g++-8
-  CXX_OSX: clang++
 
 jobs:
 - job: ${{ parameters.name }}_${{ parameters.py_maj }}_${{ parameters.py_min }}
@@ -88,7 +87,7 @@ jobs:
       env:
         CXX: ${{ parameters.CXX }}
 
-  - ${{ if contains(parameters.vmImage, 'osx') }}:
+  - ${{ if contains(parameters.vmImage, 'mac') }}:
     - bash: |
         source activate cpp-py-bindgen && \
         cmake -B build -S "$(conf.OUTPUT)" -G Ninja -DCMAKE_BUILD_TYPE=Release && \
@@ -96,7 +95,7 @@ jobs:
         rm -rf build/CMakeFiles
       displayName: 'Compile'
       env:
-        CXX: ${{ parameters.CXX_OSX }}        
+        CXX: "clang++"     
 
   - ${{ if contains(parameters.vmImage, 'win') }}:
     - script: |
