@@ -50,7 +50,8 @@ jobs:
       which python && \
       env && \
       cd $CONDA_PREFIX && \
-      find . -name type_traits\*
+      find . -name type_traits\* && \
+      sudo find /usr/local/ -name type_traits\*
     displayName: 'Conda env sanity checks'
 
   - bash: |
