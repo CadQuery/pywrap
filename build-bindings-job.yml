@@ -7,6 +7,7 @@ parameters:
   conda_bld: '3.16.3'
   conda_env_file: 'env.yml'
   CXX: g++-8
+  CXX_OSX: clang++
 
 jobs:
 - job: ${{ parameters.name }}_${{ parameters.py_maj }}_${{ parameters.py_min }}
@@ -77,7 +78,7 @@ jobs:
       artifactName: OCP_src_${{ parameters.vmImage }}
     displayName: 'Publish resulting code'
 
-  - ${{ if not(contains(parameters.vmImage, 'win')) }}:
+  - ${{ if contains(parameters.vmImage, 'Ubuntu') }}:
     - bash: |
         source activate cpp-py-bindgen && \
         cmake -B build -S "$(conf.OUTPUT)" -G Ninja -DCMAKE_BUILD_TYPE=Release && \
@@ -86,6 +87,16 @@ jobs:
       displayName: 'Compile'
       env:
         CXX: ${{ parameters.CXX }}
+
+  - ${{ if contains(parameters.vmImage, 'osx') }}:
+    - bash: |
+        source activate cpp-py-bindgen && \
+        cmake -B build -S "$(conf.OUTPUT)" -G Ninja -DCMAKE_BUILD_TYPE=Release && \
+        cmake --build build -j $(n_cores) -- -k 0 && \
+        rm -rf build/CMakeFiles
+      displayName: 'Compile'
+      env:
+        CXX: ${{ parameters.CXX_OSX }}        
 
   - ${{ if contains(parameters.vmImage, 'win') }}:
     - script: |
