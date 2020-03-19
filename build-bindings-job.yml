@@ -46,8 +46,11 @@ jobs:
   - bash: |
       source activate cpp-py-bindgen && \
       conda info -a && \
+      conda list && \
       which python && \
-      env
+      env && \
+      cd $CONDA_PREFIX && \
+      find -iname type_traits\*
     displayName: 'Conda env sanity checks'
 
   - bash: |
