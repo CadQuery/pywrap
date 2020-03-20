@@ -47,8 +47,7 @@ jobs:
       conda info -a && \
       conda list && \
       which python && \
-      env && \
-      cd $CONDA_PREFIX && \
+      env
     displayName: 'Conda env sanity checks'
     
   - ${{ if contains(parameters.vmImage, 'mac') }}:
