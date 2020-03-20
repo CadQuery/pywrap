@@ -41,6 +41,7 @@ def get_includes():
         rv.append(Path(prefix) / 'lib/clang/8.0.0/include/')
         rv.append(Path(prefix) / 'lib/clang/6.0.1/include/')
         rv.append(Path(prefix) / 'lib/clang/9.0.1/include/')
+        rv.append(Path(prefix) / 'include/c++/v1/')
     
     return rv
 
