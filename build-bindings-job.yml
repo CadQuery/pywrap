@@ -42,7 +42,6 @@ jobs:
       conda env create -f ${{ parameters.conda_env_file }}
     displayName: 'Prepare conda environment'
 
-
   - bash: |
       source activate cpp-py-bindgen && \
       conda info -a && \
@@ -50,9 +49,16 @@ jobs:
       which python && \
       env && \
       cd $CONDA_PREFIX && \
-      find . -name type_traits\* && \
-      sudo find /usr/local/ -name type_traits\*
     displayName: 'Conda env sanity checks'
+    
+  - ${{ if contains(parameters.vmImage, 'mac') }}:
+    - bash: |
+        source activate cpp-py-bindgen && \
+        echo | clang -v -E -x c - && \
+        cd $CONDA_PREFIX && \
+        find . -name type_traits\* && \
+        sudo find /usr/local/ -name type_traits\*
+      displayName: 'Mac header check'
 
   - bash: |
       source activate cpp-py-bindgen && \
