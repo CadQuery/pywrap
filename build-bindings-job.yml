@@ -101,7 +101,7 @@ jobs:
         source activate cpp-py-bindgen && \
         cp -rf opencascade $CONDA_PREFIX/include && \
         cat $CONDA_PREFIX/include/opencascade/OpenGl_HaltonSampler.hxx  &&\
-        cmake -B build -S "$(conf.OUTPUT)" -G Ninja -DCMAKE_BUILD_TYPE=Release && \
+        cmake -B build -S "$(conf.OUTPUT)" -G Ninja -DCMAKE_BUILD_TYPE=Debug && \
         cmake --build build -j $(n_cores) -- -k 0 && \
         rm -rf build/CMakeFiles
       displayName: 'Compile'
