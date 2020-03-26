@@ -75,12 +75,6 @@ jobs:
       contents: 'out*.pkl'
       targetFolder: $(conf.OUTPUT)
     displayName: 'Copy pkl outputs'
-
-  - task: PublishBuildArtifacts@1
-    inputs:
-      pathtoPublish: $(conf.OUTPUT)
-      artifactName: OCP_src_${{ parameters.vmImage }}
-    displayName: 'Publish resulting code'
     
   - publish:  $(conf.OUTPUT)
     artifact: OCP_src_${{ parameters.vmImage }}
