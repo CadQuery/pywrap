@@ -94,7 +94,7 @@ jobs:
     n_cores: 2
     OCP_src: OCP_src_${{ parameters.vmImage }}
   steps:
-  - donwload: current
+  - download: current
     artifact: OCP_src_${{ parameters.vmImage }}
     
   - ${{ if contains(parameters.vmImage, 'Ubuntu') }}:
