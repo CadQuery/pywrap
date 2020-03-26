@@ -9,7 +9,7 @@ parameters:
   CXX: g++-8
 
 jobs:
-- job: ${{ parameters.name }}_${{ parameters.vmImage }}
+- job: ${{ parameters.name }}
   timeoutInMinutes: 360
   pool:
     vmImage: ${{ parameters.vmImage }}
