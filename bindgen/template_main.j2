@@ -11,7 +11,7 @@ namespace py = pybind11;
 
 // forward declaration of the register_* functions
 
-{% for mod in modules %}
+{% for mod in module_names %}
 void register_{{mod}}_enums(py::module&);
 {% endfor %}
 

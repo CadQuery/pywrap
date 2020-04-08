@@ -304,24 +304,7 @@ def render(settings,module_settings,modules,class_dict):
 
     pre = settings['Extras']['include_pre']
     post = settings['Extras']['include_post']
-
-    jinja_env = Environment(loader=FileSystemLoader(Path(__file__).dirname()),
-                            trim_blocks=True,
-                            lstrip_blocks = True,
-                            extensions=['jinja2.ext.do'])
-
-    all_classes = {c.name : c for m in modules for c in m.classes}
-    jinja_env.globals['parent_has_nonpublic_destructor'] = lambda c: any(all_classes[p].nonpublic_destructors for p in c.superclasses if p in all_classes)
-    jinja_env.globals['is_byref'] = lambda t: is_byref_arg(t,settings['byref_types'])
-    jinja_env.globals['enumerate'] = enumerate
-    jinja_env.globals['platform'] = platform
-
-    template_sub = jinja_env.get_template('template_sub.j2')
-    template_sub_pre = jinja_env.get_template('template_sub_pre.j2')
-    template_tmpl = jinja_env.get_template('template_templates.j2')
-    template_main = jinja_env.get_template('template_main.j2')
-    template_cmake = jinja_env.get_template('CMakeLists.j2')
-
+    
     def proper_new_operator(cls):
 
         new_ops = [op for op in cls.static_operators if op.name =='operator new']
@@ -344,52 +327,57 @@ def render(settings,module_settings,modules,class_dict):
 
         return del_ops
 
+    jinja_env = Environment(loader=FileSystemLoader(Path(__file__).dirname()),
+                            trim_blocks=True,
+                            lstrip_blocks = True,
+                            extensions=['jinja2.ext.do'])
+
+    all_classes = {c.name : c for m in modules for c in m.classes}
+    jinja_env.globals.update({
+        'parent_has_nonpublic_destructor' : lambda c: any(all_classes[p].nonpublic_destructors for p in c.superclasses if p in all_classes),
+        'is_byref' : lambda t: is_byref_arg(t,settings['byref_types']),
+        'enumerate' : enumerate,
+        'platform' : platform,
+        'class_dict' : class_dict,
+        'all_classes' : all_classes,
+        'project_name' : name,
+        'operator_dict' : operator_dict,
+        'include_pre' : pre,
+        'include_post' : post,
+        'references_inner' : lambda name,method: name+"::" in method.return_type or any([name+"::" in a for _,a,_ in method.args]),
+        'proper_new_operator' : proper_new_operator,
+        'proper_delete_operator' : proper_delete_operator,
+        'module_names' : module_names,
+        'sorted_modules' : toposort_modules(modules)
+        })
+
+    template_sub = jinja_env.get_template('template_sub.j2')
+    template_sub_pre = jinja_env.get_template('template_sub_pre.j2')
+    template_tmpl = jinja_env.get_template('template_templates.j2')
+    template_main = jinja_env.get_template('template_main.j2')
+    template_cmake = jinja_env.get_template('CMakeLists.j2')
+
     output_path.mkdir_p()
     with  output_path:
         for m in tqdm(modules):
-            tqdm.write('Processing module {}'.format(m.name))
-            with open('{}_pre.cpp'.format(m.name),'w') as f:
-                f.write(template_sub_pre.render({'module' : m,
-                                                   'class_dict' : class_dict,
-                                                   'all_classes' : all_classes,
-                                                   'project_name' : name,
-                                                   'operator_dict' : operator_dict,
-                                                   'include_pre' : pre,
-                                                   'include_post' : post,
-                                                   'references_inner' : lambda name,method: name+"::" in method.return_type or any([name+"::" in a for _,a in method.args]),
-                                                   'proper_new_operator' : proper_new_operator,
-                                                   'proper_delete_operator' : proper_delete_operator,
-                                                   'module_settings' : module_settings.get(m.name,module_schema.validate({}))}))
-            with open('{}.cpp'.format(m.name),'w') as f:
-                f.write(template_sub.render({'module' : m,
-                                             'class_dict' : class_dict,
-                                             'all_classes' : all_classes,
-                                             'project_name' : name,
-                                             'operator_dict' : operator_dict,
-                                             'include_pre' : pre,
-                                             'include_post' : post,
-                                             'references_inner' : lambda name,method: name+"::" in method.return_type or any([name+"::" in a for _,a in method.args]),
-                                             'proper_new_operator' : proper_new_operator,
-                                             'proper_delete_operator' : proper_delete_operator,
-                                             'module_settings' : module_settings.get(m.name,module_schema.validate({}))}))
+            tqdm.write(f'Processing module {m.name}')
+            
+            jinja_env.globals.update({'module_settings' : module_settings.get(m.name,module_schema.validate({}))})
+                
+            with open(f'{m.name}_pre.cpp','w') as f:
+                f.write(template_sub_pre.render({'module' : m }))
+            
+            with open(f'{m.name}.cpp','w') as f:
+                f.write(template_sub.render({'module' : m }))
 
-            with open('{}_tmpl.hxx'.format(m.name),'w') as f:
-                f.write(template_tmpl.render({'module' : m,
-                                             'class_dict' : class_dict,
-                                             'project_name' : name,
-                                             'operator_dict' : operator_dict,
-                                             'include_pre' : pre,
-                                             'include_post' : post,
-                                             'references_inner' : lambda name,method: name+"::" in method.return_type or any([name+"::" in a for _,a,_ in method.args])}))
+            with open(f'{m.name}_tmpl.hxx','w') as f:
+                f.write(template_tmpl.render({'module' : m }))
 
-        with open('{}.cpp'.format(name),'w') as f:
-                f.write(template_main.render({'name' : name,
-                                              'sorted_modules' : toposort_modules(modules),
-                                              'modules' : module_names}))
+        with open(f'{m.name}.cpp','w') as f:
+                f.write(template_main.render({'name' : name }))
 
         with open('CMakeLists.txt','w') as f:
-                f.write(template_cmake.render({'name' : name,
-                                               'modules' : modules}))
+                f.write(template_cmake.render({'name' : name }))
 
     for p in settings['additional_files']:
         Path(p).copy(output_path)
