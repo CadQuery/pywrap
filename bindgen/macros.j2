@@ -91,4 +91,57 @@
     {%- endif -%}
 {%- endmacro -%}
 
+{%- macro trampoline_class(c) -%}
+    class Py_{{c.name}} : public {{c.name}}{
+    public:
+        using {{c.name}}::{{c.name}};
+
+        {% set methods = [] %}
+
+        // public pure virtual
+        {% for m in c.methods+c.methods_byref %}{% if m.pure_virtual %}
+        {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
+        {% do methods.append(m.full_name) %}
+        {% endif %}{% endfor %}
+
+        {% for super in c.superclasses %}
+        {% set p = all_classes.get(super,None) %}{% if p %}
+        {% for m in p.methods %}{% if m.pure_virtual and m.name not in c.methods_dict and not m.full_name in methods %}
+        {{ prototype(m) }} override { {{pybind_overload(p,m)}} };
+        {% do methods.append(m.full_name) %}
+        {% endif %}{% endfor %}
+        {% endif %}
+        {% endfor %}
+
+        // protected pure virtual
+        {% for m in c.protected_virtual_methods %}
+        {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
+        {% do methods.append(m.full_name) %}
+        {% endfor %}
+
+        {% for super in c.superclasses %}
+        {% set p = all_classes.get(super,None) %}{% if p %}
+        {% for m in p.protected_virtual_methods %}{% if m.name not in c.protected_virtual_methods_dict and not m.full_name in methods %}
+        {{ prototype(m) }} override { {{pybind_overload(p,m)}} };
+        {% do methods.append(m.full_name) %}
+        {% endif %}{% endfor %}
+        {% endif %}
+        {% endfor %}
+
+        // private pure virtual
+        {% for m in c.private_virtual_methods %}
+        {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
+        {% endfor %}
+
+        {% for super in c.superclasses %}
+        {% set p = all_classes.get(super,None) %}{% if p %}
+        {% for m in p.private_virtual_methods %}{% if m.name not in c.private_virtual_methods_dict and not m.full_name in methods %}
+        {{ prototype(m) }} override { {{pybind_overload(p,m)}} };
+        {% do methods.append(m.full_name) %}
+        {% endif %}{% endfor %}
+        {% endif %}
+        {% endfor %}
+    };
+{%- endmacro -%}
+
 {# end of macros macros -#}

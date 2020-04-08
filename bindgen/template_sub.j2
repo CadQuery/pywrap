@@ -2,7 +2,7 @@
 static_method_pointer,function_pointer,template_args_typename,template_args,
 template_method_pointer,template_static_method_pointer, template_pointer,
 prototype, pybind_overload, argtypes_names, argnames_wo_type, argnames_byref,
-argtypes_names_not_byref, init_outputs_byref, argnames_not_byref %}
+argtypes_names_not_byref, init_outputs_byref, argnames_not_byref, trampoline_class %}
 
 // std lib related includes
 #include <tuple>
@@ -67,56 +67,7 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
 
 //Python trampoline classes
 {% for c in module.classes %}{% if c.abstract %}
-    class Py_{{c.name}} : public {{c.name}}{
-    public:
-        using {{c.name}}::{{c.name}};
-
-        {% set methods = [] %}
-
-        // public pure virtual
-        {% for m in c.methods+c.methods_byref %}{% if m.pure_virtual %}
-        {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
-        {% do methods.append(m.full_name) %}
-        {% endif %}{% endfor %}
-
-        {% for super in c.superclasses %}
-        {% set p = all_classes.get(super,None) %}{% if p %}
-        {% for m in p.methods %}{% if m.pure_virtual and m.name not in c.methods_dict and not m.full_name in methods %}
-        {{ prototype(m) }} override { {{pybind_overload(p,m)}} };
-        {% do methods.append(m.full_name) %}
-        {% endif %}{% endfor %}
-        {% endif %}
-        {% endfor %}
-
-        // protected pure virtual
-        {% for m in c.protected_virtual_methods %}
-        {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
-        {% do methods.append(m.full_name) %}
-        {% endfor %}
-
-        {% for super in c.superclasses %}
-        {% set p = all_classes.get(super,None) %}{% if p %}
-        {% for m in p.protected_virtual_methods %}{% if m.name not in c.protected_virtual_methods_dict and not m.full_name in methods %}
-        {{ prototype(m) }} override { {{pybind_overload(p,m)}} };
-        {% do methods.append(m.full_name) %}
-        {% endif %}{% endfor %}
-        {% endif %}
-        {% endfor %}
-
-        // private pure virtual
-        {% for m in c.private_virtual_methods %}
-        {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
-        {% endfor %}
-
-        {% for super in c.superclasses %}
-        {% set p = all_classes.get(super,None) %}{% if p %}
-        {% for m in p.private_virtual_methods %}{% if m.name not in c.private_virtual_methods_dict and not m.full_name in methods %}
-        {{ prototype(m) }} override { {{pybind_overload(p,m)}} };
-        {% do methods.append(m.full_name) %}
-        {% endif %}{% endfor %}
-        {% endif %}
-        {% endfor %}
-    };
+    {{ trampoline_class(c) }}
 {% endif %}{% endfor %}
 
 // classes
