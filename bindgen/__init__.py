@@ -327,7 +327,12 @@ def render(settings,module_settings,modules,class_dict):
 
         return del_ops
 
-    jinja_env = Environment(loader=FileSystemLoader(Path(__file__).dirname()),
+
+    default_path = [Path(__file__).dirname()]
+    additional_path = [Path(settings['template_path']), ] if settings['template_path'] else []
+    template_paths =  additional_path + default_path
+    
+    jinja_env = Environment(loader=FileSystemLoader(template_paths),
                             trim_blocks=True,
                             lstrip_blocks = True,
                             extensions=['jinja2.ext.do'])
