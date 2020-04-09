@@ -151,15 +151,15 @@ def get_template_type_params(cls):
             yield t,''.join([tok.spelling for tok in t.get_tokens()][3:])
 
 def get_base_class(c):
-    '''Get all class-baseclass pairs with public inheritance
+    '''Get all class-baseclass pairs with public or protected inheritance
     '''
 
     if c.get_definition():
         rv = [el for el in get_x(c.get_definition(),CursorKind.CXX_BASE_SPECIFIER) \
-              if el.access_specifier is AccessSpecifier.PUBLIC]
+              if el.access_specifier in (AccessSpecifier.PUBLIC, AccessSpecifier.PROTECTED)]
     else:
         rv = [el for el in get_x(c,CursorKind.CXX_BASE_SPECIFIER) \
-              if el.access_specifier is AccessSpecifier.PUBLIC]
+              if el.access_specifier in (AccessSpecifier.PUBLIC, AccessSpecifier.PROTECTED)]
 
     if len(rv) == 0:
         return []
