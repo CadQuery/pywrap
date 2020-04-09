@@ -156,10 +156,10 @@ def get_base_class(c):
 
     if c.get_definition():
         rv = [el for el in get_x(c.get_definition(),CursorKind.CXX_BASE_SPECIFIER) \
-              if el.access_specifier in (AccessSpecifier.PUBLIC)] # how to handle  AccessSpecifier.PROTECTED?
+              if el.access_specifier in (AccessSpecifier.PUBLIC,)] # how to handle  AccessSpecifier.PROTECTED?
     else:
         rv = [el for el in get_x(c,CursorKind.CXX_BASE_SPECIFIER) \
-              if el.access_specifier in (AccessSpecifier.PUBLIC)] # how to handle  AccessSpecifier.PROTECTED?
+              if el.access_specifier in (AccessSpecifier.PUBLIC,)] # how to handle  AccessSpecifier.PROTECTED?
 
     if len(rv) == 0:
         return []
