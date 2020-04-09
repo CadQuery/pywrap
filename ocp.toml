@@ -497,7 +497,42 @@ parsing_header = '''#include <Standard_Handle.hxx>
         include_header_pre = "#include <BOPAlgo_Builder.hxx>"
         exclude_methods = ["BRepAlgoAPI_BuilderAlgo::Builder",] #this will be fixed by the include
         exclude_typedefs = ["TopOpeBRepDS_ShapeSurface"]
+        
+        [Modules.BRepAlgoAPI.Classes]
 
+        [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo]
+
+        [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo.additional_methods]
+
+        [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo.additional_methods.RunParallel]
+
+            body = "[]( BRepAlgoAPI_Algo & self){ return self.RunParallel(); }"
+            help = "Returns the flag of parallel processing."
+            arguments  = []
+            
+        [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo.additional_methods.SetRunParallel]
+
+            body = "[]( BRepAlgoAPI_Algo & self , const Standard_Boolean theFlag){ self.SetRunParallel(theFlag); }"
+            help = "Set the flag of parallel processing."
+            arguments  = ["thFlag"]
+            
+        [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo.additional_methods.FuzzyValue]
+
+            body = "[]( BRepAlgoAPI_Algo & self){ return self.FuzzyValue(); }"
+            help = "Returns the additional tolerance."
+            arguments  = []
+            
+        [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo.additional_methods.SetFuzzyValue]
+
+            body = "[]( BRepAlgoAPI_Algo & self , const Standard_Real theFuzz){ self.SetFuzzyValue(theFuzz); }"
+            help = "Sets the additional tolerance."
+            arguments  = ["theFuzz"]
+            
+        [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo.additional_methods.SetUseOBB]
+
+            body = "[]( BRepAlgoAPI_Algo & self , const Standard_Boolean theFlag){ self.SetUseOBB(theFlag); }"
+            help = "Set the flag of parallel processing."
+            arguments  = ["thFlag"]
 
     [Modules.TopOpeBRep]
 
