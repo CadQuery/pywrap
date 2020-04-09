@@ -378,7 +378,7 @@ def render(settings,module_settings,modules,class_dict):
             with open(f'{m.name}_tmpl.hxx','w') as f:
                 f.write(template_tmpl.render({'module' : m }))
 
-        with open(f'{m.name}.cpp','w') as f:
+        with open(f'{name}.cpp','w') as f:
                 f.write(template_main.render({'name' : name }))
 
         with open('CMakeLists.txt','w') as f:

@@ -15,7 +15,7 @@ namespace py = pybind11;
 void register_{{mod}}_enums(py::module&);
 {% endfor %}
 
-{% for mod in modules %}
+{% for mod in module_names %}
 void register_{{mod}}(py::module&);
 {% endfor %}
 
