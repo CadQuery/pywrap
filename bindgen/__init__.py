@@ -49,17 +49,11 @@ def read_symbols(p):
                       error_bad_lines=False).dropna()
     return sym
 
-def remove_undefined(m,sym):
-
-
-    #exclude methods
-    for c in m.classes:
-        c.methods = [el for el in c.methods if sym.name.str.contains('{}::{}'.format(c.name,el.name)).any()]
-
-    #exclude functions
-    m.functions = [f for f in m.functions if sym.name.str.startswith(f.name).any()]
-
 def remove_undefined_mangled(m,sym):
+    
+    def cleanup(name):
+        #workaround related to osx manngling
+        return name[2:] if name.startswith('__') else name
 
     #exclude methods
     for c in m.classes:
@@ -69,11 +63,11 @@ def remove_undefined_mangled(m,sym):
         c.static_methods_byref_unfiltered = c.static_methods_byref
         c.constructors_unfiltered = c.constructors
 
-        c.methods = [el for el in c.methods if sym.name.str.endswith(el.mangled_name).any() or el.inline or el.pure_virtual or el.virtual]
-        c.methods_byref = [el for el in c.methods_byref if sym.name.str.endswith(el.mangled_name).any() or el.inline or el.pure_virtual or el.virtual]
-        c.static_methods = [el for el in c.static_methods if sym.name.str.endswith(el.mangled_name).any() or el.inline]
-        c.static_methods_byref = [el for el in c.static_methods_byref if sym.name.str.endswith(el.mangled_name).any() or el.inline]
-        c.constructors = [el for el in c.constructors if sym.name.str.endswith(el.mangled_name).any() or el.inline or el.pure_virtual or el.virtual]
+        c.methods = [el for el in c.methods if sym.name.str.endswith(cleanup(el.mangled_name)).any() or el.inline or el.pure_virtual or el.virtual]
+        c.methods_byref = [el for el in c.methods_byref if sym.name.str.endswith(cleanup(el.mangled_name)).any() or el.inline or el.pure_virtual or el.virtual]
+        c.static_methods = [el for el in c.static_methods if sym.name.str.endswith(cleanup(el.mangled_name)).any() or el.inline]
+        c.static_methods_byref = [el for el in c.static_methods_byref if sym.name.str.endswith(cleanup(el.mangled_name)).any() or el.inline]
+        c.constructors = [el for el in c.constructors if sym.name.str.endswith(cleanup(el.mangled_name)).any() or el.inline or el.pure_virtual or el.virtual]
 
     #exclude functions
     m.functions_unfiltered = m.functions
