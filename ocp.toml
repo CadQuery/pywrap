@@ -389,7 +389,8 @@ parsing_header = '''#include <Standard_Handle.hxx>
     [Modules.Standard]
 
         exclude_functions = ["HashCode"]
-        exclude_methods = ["Standard_Dump::DumpCharacterValues","Standard_Dump::DumpRealValues"]
+        exclude_methods = ["Standard_Dump::DumpCharacterValues","Standard_Dump::DumpRealValues",
+            "Standard_CLocaleSentry::GetCLocale", ""]
 
     [Modules.Resource]
 
@@ -673,6 +674,7 @@ struct NSOpenGLContext {};"""
 
         exclude_typedefs = ["StdStorage_MapOfRoots"]
         exclude_classes = ["StdStorage_Bucket","StdStorage_BucketOfPersistent"]
+        exclude_methods = ["StdStorage_TypeData::Instantiator"]
 
     [Modules.BinMDF]
 
