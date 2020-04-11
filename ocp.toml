@@ -390,7 +390,7 @@ parsing_header = '''#include <Standard_Handle.hxx>
 
         exclude_functions = ["HashCode"]
         exclude_methods = ["Standard_Dump::DumpCharacterValues","Standard_Dump::DumpRealValues",
-            "Standard_CLocaleSentry::GetCLocale", ""]
+            "Standard_CLocaleSentry::GetCLocale"]
 
     [Modules.Resource]
 
