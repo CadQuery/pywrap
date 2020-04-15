@@ -14,7 +14,7 @@ from jinja2 import Environment, FileSystemLoader
 from toposort import toposort_flatten
 
 from .module import ModuleInfo
-from .header import parse_tu
+from .header import parse_tu, ClassInfo
 from .utils import current_platform, on_windows
 from .schemas import global_schema, module_schema
 
@@ -282,9 +282,20 @@ def transform_modules(verbose,
 def toposort_modules(modules):
 
     deps = {}
+    
     cls_dict = {c.name : m.name for m in modules for c in m.classes}
+    tmpl_dict = {t.name : t for m in modules for t in m.class_templates}
+    
     for m in modules:
-        deps[m.name] = set(cls_dict[s] for c in m.classes for s in c.superclass if s in cls_dict) - {m.name}
+        
+        typedefs = []
+        for t in m.typedefs:
+            if not t.pod:
+                if t.template_base:
+                    if t.template_base[0] in tmpl_dict: typedefs.append(tmpl_dict[t.template_base[0]])
+        
+        deps[m.name] = set(cls_dict[s] for c in m.classes + m.class_templates +
+                           typedefs for s in c.superclass if s in cls_dict) - {m.name}
 
     return toposort_flatten(deps)
 
@@ -355,16 +366,39 @@ def render(settings,module_settings,modules,class_dict):
     template_tmpl = jinja_env.get_template('template_templates.j2')
     template_main = jinja_env.get_template('template_main.j2')
     template_cmake = jinja_env.get_template('CMakeLists.j2')
-
+    
     output_path.mkdir_p()
     with  output_path:
         for m in tqdm(modules):
             tqdm.write(f'Processing module {m.name}')
             
             jinja_env.globals.update({'module_settings' : module_settings.get(m.name,module_schema.validate({}))})
+            
+            class_templates = {el.name:el for el in m.class_templates}
+            
+            typedefs = (t for h in m.headers for t in h.typedefs if not t.pod and not "_H" in t.name and len(t.template_base)>0 and not t.type.startswith("opencascade::handle"))
+            typedefs = filter(lambda t: not t.type.split(t.template_base[0])[-1].endswith("::Iterator"), typedefs)
+
+            classes_typedefs = { el.name : el for el in (m.classes + list(typedefs)) }
+            
+            dag = {}
+            for el in classes_typedefs.values():
+                if isinstance(el,ClassInfo):
+                    deps = set(el.superclass)
+                else:
+                    base = el.template_base[0]
+                    deps = set(el.template_args)
+                    deps |= set(class_templates[base].superclass) if base in class_templates else set()
                 
+                dag[el.name] = deps
+            
+            sorted_classes_typedefs = [ classes_typedefs[k] for k in toposort_flatten(dag) if k in classes_typedefs]
+            
             with open(f'{m.name}_pre.cpp','w') as f:
-                f.write(template_sub_pre.render({'module' : m }))
+                f.write(template_sub_pre.render({'module' : m,
+                                                 'classes_typedefs' : sorted_classes_typedefs,
+                                                 'str' : str,
+                                                 'type': type}))
             
             with open(f'{m.name}.cpp','w') as f:
                 f.write(template_sub.render({'module' : m }))

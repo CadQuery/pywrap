@@ -34,14 +34,14 @@ namespace py = pybind11;
 {% endfor %}
 
 // template related includes
-{% for h in module.headers %}
-{% for td in h.typedefs %}
-{% if not td.pod and not "_H" in td.name and td.template_base.__len__()>0 and not td.type.startswith("opencascade::handle") %}
-// {{h.name}}
+{% for td in  classes_typedefs %}
+{% if 'TypedefInfo' in str(type(td)) %}
+
+{% if not td.pod and td.template_base.__len__()>0 and not td.type.startswith("opencascade::handle") %}
 {% set dep_module = td.type.split("_") %}
 #include "{{dep_module[0]}}_tmpl.hxx"
 {% endif %}
-{% endfor %}
+{% endif %}
 {% endfor %}
 
 
@@ -85,24 +85,23 @@ py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#
     {{ trampoline_class(c) }}
 {% endif %}{% endfor %}
 
-// pre-register typdefs
-{% for h in module.headers %}
-{% for td in h.typedefs %}
-{% if not td.pod and not "_H" in td.name and td.template_base.__len__()>0 and not td.type.startswith("opencascade::handle") %}
-{% set dep_module = td.template_base[0].split("_") %}
-{% set arg = td.type.split(td.template_base[0])[-1] %}
-{% set base =  td.template_base[0] %}
+// pre-register typdefs+classes (topologically sorted)
+{% for el in  classes_typedefs %}
+{% if 'TypedefInfo' in str(type(el)) %}
+{% if not el.pod and not "_H" in el.name and el.template_base.__len__()>0 and not el.type.startswith("opencascade::handle") %}
+{% set dep_module = el.template_base[0].split("_") %}
+{% set arg = el.type.split(el.template_base[0])[-1] %}
+{% set base =  el.template_base[0] %}
 {% if not arg.endswith("::Iterator") %}
-    preregister_template_{{ base }}{{ arg }}(m,"{{td.name}}");
+    preregister_template_{{ base }}{{ arg }}(m,"{{el.name}}");
+{% endif %}
+{% endif %}
+{% else %}
+{% if (proper_new_operator(el) and proper_delete_operator(el)) or 'Standard_Transient' in el.rootclass %}
+    py::class_<{{el.name}} {{pointer(el)}} {% if el.abstract %},Py_{{el.name}}{% endif %} {{super(el,class_dict,module.typedef_dict)}}>(m,"{{cls_name(el)}}",R"#({{el.comment}})#");
 {% endif %}
 {% endif %}
 {% endfor %}
-{% endfor %}
-
-// classes forward declarations only
-{% for c in module.classes %}{% if (proper_new_operator(c) and proper_delete_operator(c)) or 'Standard_Transient' in c.rootclass %}
-    py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,class_dict,module.typedef_dict)}}>(m,"{{cls_name(c)}}",R"#({{c.comment}})#");
-{% endif %}{% endfor %}
 
 };
 

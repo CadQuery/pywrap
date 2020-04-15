@@ -26,6 +26,8 @@ class ModuleInfo(object):
         
         self.classes = []
         self.class_dict = {}
+        self.class_templates = []
+        self.class_template_dict = {}
         self.typedefs = []
         self.typedef_dict = {}
         self.enums = []
@@ -37,11 +39,13 @@ class ModuleInfo(object):
         
         for h in self.headers:
             self.classes.extend(h.classes.values())
+            self.class_templates.extend(h.class_templates.values())
             self.typedefs.extend(h.typedefs)
             self.enums.extend(h.enums)
             self.functions.extend(h.functions)
             self.operators.extend(h.operators)
             self.class_dict.update(h.class_dict)
+            self.class_template_dict.update(h.class_template_dict)
             self.typedef_dict.update(h.typedef_dict)
             self.dependencies_headers.update(h.dependencies)
             
