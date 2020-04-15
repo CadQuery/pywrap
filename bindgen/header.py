@@ -174,6 +174,18 @@ def get_inheritance_relations(tu):
 
     for c in all_classes:
         yield c.spelling,get_base_class((c))
+        
+    all_templates = get_x(tu.cursor,CursorKind.CLASS_TEMPLATE)
+
+    for c in all_templates:
+        yield c.spelling,get_base_class((c))
+        
+def get_public_fields(cls):
+    '''Public methods of a given class
+    '''
+
+    for child in get_xx(cls,CursorKind.CXCursor_FieldDecl, AccessSpecifier.PUBLIC):
+        yield child
 
 def get_public_methods(cls):
     '''Public methods of a given class
@@ -283,6 +295,16 @@ class BaseInfo(object):
         self.name = cur.spelling
         self.comment = cur.brief_comment
 
+class FieldInfo(BaseInfo):
+    '''Container for field parsing reults
+    '''
+    
+    def __init__(self,cur):
+
+        super(FieldInfo,self).__init__(cur)
+        
+        self.type = cur.type.spelling
+        self.const = cur.type.is_const_qualified()
 
 class EnumInfo(BaseInfo):
     '''Container for enum parsing results
@@ -426,6 +448,8 @@ class ClassInfo(object):
         self.nonpublic_constructors = [ConstructorInfo(el) for el in get_private_constructors(cur)]\
             + [ConstructorInfo(el) for el in get_protected_constructors(cur)]
 
+        self.fields = [FieldInfo(el) for el in  get_public_constructors(cur)]
+
         self.methods = self.filter_rvalues((MethodInfo(el) for el in get_public_methods(cur)))
         self.protected_virtual_methods = self.filter_rvalues((MethodInfo(el) for el in get_protected_pure_virtual_methods(cur)))
         self.private_virtual_methods = self.filter_rvalues((MethodInfo(el) for el in get_private_pure_virtual_methods(cur)))
@@ -516,6 +540,7 @@ class HeaderInfo(object):
 
         self.dependencies = []
         self.classes = {}
+        self.class_templates = {}
         self.functions = []
         self.enums = []
         self.methods = []
@@ -570,6 +595,7 @@ class HeaderInfo(object):
 
         self.class_dict = {k : self.name for k in self.classes}
         self.class_templates = {el.displayname:ClassTemplateInfo(el) for el in get_class_templates(tr_unit)}
+        self.class_template_dict = {k: self.name for k in self.class_templates}
         self.inheritance = {k:v for k,v in get_inheritance_relations(tr_unit) if v}
         self.typedefs = [TypedefInfo(el) for el in get_typedefs(tr_unit)]
         self.typedef_dict = {t.name : self.name for t in self.typedefs}
@@ -586,6 +612,9 @@ class HeaderInfo(object):
 
         #resolve inheritance relations
         for c in self.classes.values():
+            self.resolve_inheritance(c)
+            
+        for c in self.class_templates.values():
             self.resolve_inheritance(c)
 
         return tr_unit
