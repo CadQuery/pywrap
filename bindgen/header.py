@@ -184,7 +184,7 @@ def get_public_fields(cls):
     '''Public methods of a given class
     '''
 
-    for child in get_xx(cls,CursorKind.CXCursor_FieldDecl, AccessSpecifier.PUBLIC):
+    for child in get_xx(cls,CursorKind.FIELD_DECL, AccessSpecifier.PUBLIC):
         yield child
 
 def get_public_methods(cls):
@@ -305,6 +305,7 @@ class FieldInfo(BaseInfo):
         
         self.type = cur.type.spelling
         self.const = cur.type.is_const_qualified()
+        self.pod = cur.type.is_pod()
 
 class EnumInfo(BaseInfo):
     '''Container for enum parsing results
@@ -448,7 +449,7 @@ class ClassInfo(object):
         self.nonpublic_constructors = [ConstructorInfo(el) for el in get_private_constructors(cur)]\
             + [ConstructorInfo(el) for el in get_protected_constructors(cur)]
 
-        self.fields = [FieldInfo(el) for el in  get_public_constructors(cur)]
+        self.fields = [FieldInfo(el) for el in  get_public_fields(cur)]
 
         self.methods = self.filter_rvalues((MethodInfo(el) for el in get_public_methods(cur)))
         self.protected_virtual_methods = self.filter_rvalues((MethodInfo(el) for el in get_protected_pure_virtual_methods(cur)))

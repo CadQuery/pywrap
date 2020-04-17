@@ -131,6 +131,7 @@ def transform_module(m,
             h.functions = [f for f in h.functions if f.name not in s['exclude_functions']]
 
         #exclude typedefs
+        m.typedefs = [t for t in m.typedefs if t.name not in s['exclude_typedefs']]
         for h in m.headers:
             h.typedefs = [t for t in h.typedefs if t.name not in s['exclude_typedefs']]
 
@@ -343,6 +344,9 @@ def render(settings,module_settings,modules,class_dict):
                             extensions=['jinja2.ext.do'])
 
     all_classes = {c.name : c for m in modules for c in m.classes}
+    all_enums = {e.name : e for m in modules for e in m.enums}
+    all_typedefs = {t.name : t for m in modules for t in m.typedefs}
+    
     jinja_env.globals.update({
         'parent_has_nonpublic_destructor' : lambda c: any(all_classes[p].nonpublic_destructors for p in c.superclasses if p in all_classes),
         'is_byref' : lambda t: is_byref_arg(t,settings['byref_types']),
@@ -350,6 +354,8 @@ def render(settings,module_settings,modules,class_dict):
         'platform' : platform,
         'class_dict' : class_dict,
         'all_classes' : all_classes,
+        'all_enums' : all_enums,
+        'all_typedefs' : all_typedefs,
         'project_name' : name,
         'operator_dict' : operator_dict,
         'include_pre' : pre,
@@ -358,7 +364,8 @@ def render(settings,module_settings,modules,class_dict):
         'proper_new_operator' : proper_new_operator,
         'proper_delete_operator' : proper_delete_operator,
         'module_names' : module_names,
-        'sorted_modules' : toposort_modules(modules)
+        'sorted_modules' : toposort_modules(modules),
+        'settings' : settings
         })
 
     template_sub = jinja_env.get_template('template_sub.j2')

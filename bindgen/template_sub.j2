@@ -147,7 +147,15 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
                     R"#({{ m['help'] }})#"
                     {% for arg in m['arguments'] %}, py::arg("{{ arg }}"){% endfor %})
     {% endfor %}
-    {% endif %};
+    {% endif %}
+    // properties
+    {% for f in c.fields if f.type in all_classes or f.type in all_enums or f.type in all_typedefs or f.type in settings['byref_types'] %}
+    {% if f.const %}
+        .def_readonly("{{f.name}}", &{{c.name}}::{{f.name}})
+    {% else %}
+        .def_readwrite("{{f.name}}", &{{c.name}}::{{f.name}})
+    {% endif %}    
+    {% endfor %};
 {% endif %}{% endfor %}
 
 // functions
