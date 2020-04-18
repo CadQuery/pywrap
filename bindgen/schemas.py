@@ -3,7 +3,8 @@ from schema import Schema, Optional
 method_schema = Schema({
         'body' : str,
         Optional('help',default=None) : str,
-        Optional('arguments',default=[]) : [str]
+        Optional('arguments',default=[]) : [str],
+        Optional('return_policy',default=None) : str
         })
 
 function_schema = method_schema

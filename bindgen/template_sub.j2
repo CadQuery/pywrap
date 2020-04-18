@@ -139,13 +139,13 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
         .def("{{ name}}",
              {{ m['body']}},
              R"#({{ m['help'] }})#"
-             {% for arg in m['arguments'] %}, py::arg("{{ arg }}"){% endfor %})
+             {% for arg in m['arguments'] %}, py::arg("{{ arg }}"){% endfor %}{% if m['return_policy'] %}, {{ m['return_policy'] }} {% endif %})
     {% endfor %}
     {% for name,m in module_settings['Classes'][c.name]['additional_static_methods'].items() %}
         .def_static("{{ name}}",
                     {{ m['body']}},
                     R"#({{ m['help'] }})#"
-                    {% for arg in m['arguments'] %}, py::arg("{{ arg }}"){% endfor %})
+                    {% for arg in m['arguments'] %}, py::arg("{{ arg }}"){% endfor %}{% if m['return_policy'] %}, {{ m['return_policy'] }} {% endif %})
     {% endfor %}
     {% endif %}
     // properties
