@@ -45,15 +45,11 @@ def read_symbols(p):
     This information is used later for flagging undefined symbols
     '''
 
-    sym = pd.read_csv(p,header=None,names=['adr','code','name'],delim_whitespace=True,
+    sym = pd.read_csv(p,header=None,names=['name'],delim_whitespace=True,
                       error_bad_lines=False).dropna()
     return sym
 
 def remove_undefined_mangled(m,sym):
-    
-    def cleanup(name):
-        #workaround related to osx manngling
-        return name[2:] if name.startswith('__') else name
 
     #exclude methods
     for c in m.classes:
@@ -63,14 +59,13 @@ def remove_undefined_mangled(m,sym):
         c.static_methods_byref_unfiltered = c.static_methods_byref
         c.constructors_unfiltered = c.constructors
 
-        c.methods = [el for el in c.methods if sym.name.str.endswith(cleanup(el.mangled_name)).any() or el.inline or el.pure_virtual or el.virtual]
-        c.methods_byref = [el for el in c.methods_byref if sym.name.str.endswith(cleanup(el.mangled_name)).any() or el.inline or el.pure_virtual or el.virtual]
-        c.static_methods = [el for el in c.static_methods if sym.name.str.endswith(cleanup(el.mangled_name)).any() or el.inline]
-        c.static_methods_byref = [el for el in c.static_methods_byref if sym.name.str.endswith(cleanup(el.mangled_name)).any() or el.inline]
-        c.constructors = [el for el in c.constructors if sym.name.str.endswith(cleanup(el.mangled_name)).any() or el.inline or el.pure_virtual or el.virtual]
+        c.methods = [el for el in c.methods if sym.name.str.endswith(el.mangled_name).any() or el.inline or el.pure_virtual or el.virtual]
+        c.methods_byref = [el for el in c.methods_byref if sym.name.str.endswith(el.mangled_name).any() or el.inline or el.pure_virtual or el.virtual]
+        c.static_methods = [el for el in c.static_methods if sym.name.str.endswith(el.mangled_name).any() or el.inline]
+        c.static_methods_byref = [el for el in c.static_methods_byref if sym.name.str.endswith(el.mangled_name).any() or el.inline]
+        c.constructors = [el for el in c.constructors if sym.name.str.endswith(el.mangled_name).any() or el.inline or el.pure_virtual or el.virtual]
 
     #exclude functions
-    m.functions_unfiltered = m.functions
     m.functions = [f for f in m.functions if sym.name.str.startswith(f.mangled_name).any() or f.inline]
 
     #exclude functions per header
@@ -221,10 +216,7 @@ def transform_modules(verbose,
                       settings_per_module,
                       modules):
 
-    if on_windows() and 'path_mangled_msvc' in settings['Symbols']:
-        sym = read_symbols(settings['Symbols']['path_mangled_msvc'])
-    else:
-        sym = read_symbols(settings['Symbols']['path_mangled'])
+    sym = read_symbols(settings[current_platform()]['symbols'])
 
     #ignore functions and classes based on settings and update the global class_dict
     def _filter_module(m):

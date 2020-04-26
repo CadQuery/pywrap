@@ -32,6 +32,7 @@ module_schema = Schema({
         })
 
 platform_settings = Schema({
+       'symbols' : str,
        Optional('modules',default=[]) : [str],
        Optional('includes',default=[]) : [str],
        Optional('prefix',default=None) : str,
@@ -52,9 +53,6 @@ global_schema = Schema({'name' : str,
                         'Operators' : {str:[str]},
                         'Extras' : {Optional('include_pre',default=None) : str,
                                     Optional('include_post',default=None) : str},
-                        'Symbols' : {'path' : str,
-                                     'path_mangled' : str,
-                                     Optional('path_mangled_msvc') : str},
                         Optional('byref_types',default=[]) : [str],
                         Optional('parsing_header',default='') : str,
                         Optional('Linux',default=None) : platform_settings,

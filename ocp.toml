@@ -339,13 +339,16 @@ parsing_header = '''#include <Standard_Handle.hxx>
 
 [Linux]
     modules = ["Xw"]
+    symbols = "symbols_mangled_linux.dat"
 
 [Windows]
     modules = ["WNT"]
     exclude_classes = ["Handle_*"]
+    symbols = "symbols_mangled_win.dat"
 
 [OSX]
     modules = ["Cocoa"]
+    symbols = "symbols_mangled_mac.dat"
     prefix = "/usr/local/miniconda/envs/cpp-py-bindgen"
     includes = ['/usr/local/Cellar/gcc@8/8.3.0_2/lib/gcc/8/gcc/x86_64-apple-darwin19/8.3.0/../../../../../../include/c++/8.3.0',
                 '/usr/local/Cellar/gcc@8/8.3.0_2/lib/gcc/8/gcc/x86_64-apple-darwin19/8.3.0/../../../../../../include/c++/8.3.0/x86_64-apple-darwin19',
@@ -373,12 +376,6 @@ parsing_header = '''#include <Standard_Handle.hxx>
 [Extras]
 
     include_pre = "OCP_specific.inc"
-
-[Symbols]
-
-    path = "symbols.dat"
-    path_mangled = "symbols_mangled.dat"
-    path_mangled_msvc = "symbols_mangled_win.dat"
 
 [Modules]
 
@@ -498,12 +495,6 @@ parsing_header = '''#include <Standard_Handle.hxx>
         include_header_pre = "#include <BOPAlgo_Builder.hxx>"
         exclude_methods = ["BRepAlgoAPI_BuilderAlgo::Builder",] #this will be fixed by the include
         exclude_typedefs = ["TopOpeBRepDS_ShapeSurface"]
-        
-        [Modules.BRepAlgoAPI.Classes]
-
-        [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo]
-
-        [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo.additional_methods]
 
         [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo.additional_methods.RunParallel]
 
@@ -622,12 +613,6 @@ auto OptionsForAttach = [](){return AIS_Manipulator::OptionsForAttach();};"""
 
         exclude_classes = ["Font_BRepFont"]
         include_header_pre = "struct FT_LibraryRec_ {};"
-
-        [Modules.Font.Classes]
-
-        [Modules.Font.Classes.Font_BRepTextBuilder]
-
-        [Modules.Font.Classes.Font_BRepTextBuilder.additional_methods]
 
         [Modules.Font.Classes.Font_BRepTextBuilder.additional_methods.Perform]
 
@@ -826,6 +811,12 @@ using PolygonOnTriangulation = ShapePersistent_BRep::PolygonOnTriangulation;
         include_header_pre = """#include <Aspect_DisplayConnection.hxx>
 struct NSView {};"""
 
+        [[Modules.Cocoa.Classes.Cocoa_Window.additional_constructors]]
+
+            body = "[](void* ptr){ return Cocoa_Window(reinterpret_cast<NSView*>(ptr)); }"
+            help = "Creates a wrapper over existing NSView handle."
+            arguments  = ["NSView*"]
+
     [Modules.StepData]
 
         exclude_classes = ["StepData_EnumTool"]
@@ -846,15 +837,9 @@ struct NSView {};"""
     [Modules.V3d]
     
         exclude_methods = ["V3d_View::ChangeRenderingParams"]
-        
-        [Modules.V3d.Classes]
-
-        [Modules.V3d.Classes.V3d_View]
-
-        [Modules.V3d.Classes.V3d_View.additional_methods]
 
         [Modules.V3d.Classes.V3d_View.additional_methods.ChangeRenderingParams]
         
-        body = "(Graphic3d_RenderingParams & (V3d_View::*)()) static_cast<Graphic3d_RenderingParams & (V3d_View::*)()>(&V3d_View::ChangeRenderingParams)"
+        body = "[]( V3d_View & self){ return self.ChangeRenderingParams();}"
         help = "Returns reference to current rendering parameters and effect settings."
         return_policy = "py::return_value_policy::reference_internal"
