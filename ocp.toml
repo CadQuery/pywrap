@@ -855,6 +855,6 @@ struct NSView {};"""
 
         [Modules.V3d.Classes.V3d_View.additional_methods.ChangeRenderingParams]
         
-        body = "[]( V3d_View & self){ return self.ChangeRenderingParams();}"
+        body = "(Graphic3d_RenderingParams & (V3d_View::*)()) static_cast<Graphic3d_RenderingParams & (V3d_View::*)()>(&V3d_View::ChangeRenderingParams)"
         help = "Returns reference to current rendering parameters and effect settings."
         return_policy = "py::return_value_policy::reference_internal"
