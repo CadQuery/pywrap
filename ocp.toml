@@ -836,6 +836,7 @@ struct NSView {};"""
         
     [Modules.V3d]
     
+        include_header_pre = """struct NSOpenGLContext {}; //OSX related"""
         exclude_methods = ["V3d_View::ChangeRenderingParams"]
 
         [Modules.V3d.Classes.V3d_View.additional_methods.ChangeRenderingParams]
