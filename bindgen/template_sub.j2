@@ -87,7 +87,7 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
     {% endif %}
     {% endfor %}
     // custom constructors
-    {% for con in module_settings['Classes'].get(c.name,{}).get('custom_constructors',[]) %}
+    {% for con in module_settings['Classes'].get(c.name,{}).get('additional_constructors',[]) %}
         .def(py::init( {{con.body}} ))
     {% endfor %}
     // methods
