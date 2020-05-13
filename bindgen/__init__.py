@@ -131,7 +131,7 @@ def transform_module(m,
             h.typedefs = [t for t in h.typedefs if t.name not in s['exclude_typedefs']]
 
     #collect methods and static methods using byref i.s.o. return
-    byref_types = settings['byref_types']
+    byref_types = settings['byref_types']+settings['byref_types_smart_ptr']
 
     if byref_types:
         for c in m.classes:
@@ -342,6 +342,8 @@ def render(settings,module_settings,modules,class_dict):
     jinja_env.globals.update({
         'parent_has_nonpublic_destructor' : lambda c: any(all_classes[p].nonpublic_destructors for p in c.superclasses if p in all_classes),
         'is_byref' : lambda t: is_byref_arg(t,settings['byref_types']),
+        'is_byref_smart_ptr' : lambda t: is_byref_arg(t,settings['byref_types_smart_ptr']),
+        'args_byref' : lambda f: [arg for arg,t,_ in f.args if is_byref_arg(t,settings['byref_types'])],
         'enumerate' : enumerate,
         'platform' : platform,
         'class_dict' : class_dict,

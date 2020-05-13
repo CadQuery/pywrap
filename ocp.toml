@@ -314,7 +314,11 @@ modules = ["Standard",
 "XCAFDoc",
 "XCAFNoteObjects",
 "XCAFPrs",
-"XCAFView"
+"XCAFView",
+#"IVtk",
+#"IVtkOCC",
+#"IVtkTools",
+#"IVtkVTK",
 ]
 
 exclude = ["Standard_Handle.hxx","Standard",
@@ -338,6 +342,7 @@ exceptions = ["Standard_Failure"]
 module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 
 byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
+byref_types_smart_ptr = ["opencascade::handle"]
 
 parsing_header = '''#include <Standard_Handle.hxx>
 #undef Standard_NODISCARD
