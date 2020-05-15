@@ -459,6 +459,7 @@ class ClassInfo(object):
         
         self.static_methods_byref = []
         self.methods_byref = []
+        self.methods_return_byref = []
 
         self.operators = [MethodInfo(el) for el in get_public_operators(cur)]
         self.static_operators = [MethodInfo(el) for el in get_public_static_operators(cur)]

@@ -157,7 +157,15 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
     {% else %}
         .def_readwrite("{{f.name}}", &{{c.name}}::{{f.name}})
     {% endif %}    
-    {% endfor %};
+    {% endfor %}
+    // methods returning by ref wrapped as properties
+    {% for m in c.methods_return_byref %}
+    {% if m.return_type.replace('&','').strip() in settings['byref_types'] %}
+       .def_property("{{m.name}}",
+                     []({{c.name}}& self){return self.{{m.name}}();},
+                     []({{c.name}}& self, {{m.return_type.replace('&','')}} val){self.{{m.name}}() = val;})
+    {% endif %}
+    {%- endfor -%};
 {% endif %}{% endfor %}
 
 // functions
