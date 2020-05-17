@@ -2,7 +2,8 @@
 static_method_pointer,function_pointer,template_args_typename,template_args,
 template_method_pointer,template_static_method_pointer, template_pointer,
 prototype, pybind_overload, argtypes_names, argnames_wo_type, argnames_byref,
-argtypes_names_not_byref, init_outputs_byref, argnames_not_byref, trampoline_class %}
+argtypes_names_not_byref, init_outputs_byref, argnames_not_byref, trampoline_class,
+handle_results_ptr_byref %}
 
 // std lib related includes
 #include <tuple>
@@ -118,10 +119,13 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
     {% for m in c.static_methods_byref %}
     {% if not m.pointer_by_ref %}
         .def_static("{{m.name}}_s",
-                    []({{argtypes_names_not_byref(m)}} ){ {{init_outputs_byref(m)}}
-                        {{c.name}}::{{m.name}}({{argnames_wo_type(m)}});
-                        {% if args_byref(m) %}return std::make_tuple({{argnames_byref(m)}});{% endif %} },
-                    R"#({{m.comment}})#" {{argnames_not_byref(m)}})
+            []({{argtypes_names_not_byref(m)}} ){ 
+                {{init_outputs_byref(m) | indent(16) }}
+                {{c.name}}::{{m.name}}({{argnames_wo_type(m)}});
+                
+                {{handle_results_ptr_byref(m) | indent(16) }}
+                {% if args_byref(m) %}return std::make_tuple({{argnames_byref(m)}});{% endif %} },
+            R"#({{m.comment}})#" {{argnames_not_byref(m)}})
     {% endif %}
     {% endfor %}
     // operators
