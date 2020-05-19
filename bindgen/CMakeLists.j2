@@ -38,7 +38,8 @@ if(WIN32)
                               "Standard_EXPORTEXTERN="
                               "Standard_EXPORTEXTERNC="
                               "Standard_IMPORT=extern"
-                              "Standard_IMPORTC=extern \"C\"" )
+                              "Standard_IMPORTC=extern \"C\""
+                              "_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING")
   target_link_libraries( OCP PRIVATE opengl32 )
 else()
   set_target_properties( OCP
