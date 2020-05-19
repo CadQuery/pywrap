@@ -33,12 +33,12 @@ set_target_properties( {{ name }}
 
 if(WIN32)
   target_compile_options( OCP PRIVATE /bigobj )
-#  target_compile_definitions( OCP PRIVATE 
-#                              "Standard_EXPORT="
-#                              "Standard_EXPORTEXTERN="
-#                              "Standard_EXPORTEXTERNC="
-#                              "Standard_IMPORT="
-#                              "Standard_IMPORTC=" )
+  target_compile_definitions( OCP PRIVATE 
+                              "Standard_EXPORT="
+                              "Standard_EXPORTEXTERN="
+                              "Standard_EXPORTEXTERNC="
+                              "Standard_IMPORT=extern"
+                              "Standard_IMPORTC=extern \"C\"" )
   target_link_libraries( OCP PRIVATE opengl32 )
 else()
   set_target_properties( OCP
