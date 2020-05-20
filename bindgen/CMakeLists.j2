@@ -18,6 +18,11 @@ endif()
 find_package( pybind11 REQUIRED )
 find_package( OpenCascade REQUIRED COMPONENTS OPENCASCADE )
 
+#clang-cl related workaround
+if(WIN32)
+  set( PYTHON_LIBRARY $ENV{CONDA_PREFIX}/libs/python${PYTHON_VER}.lib )
+endif()
+
 include_directories( ${PROJECT_SOURCE_DIR} )
 file( GLOB CPP_FILES ${PROJECT_SOURCE_DIR}/*.cpp )
 
