@@ -18,6 +18,7 @@ namespace py = pybind11;
 // Windows specific
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#undef GetObject
 {% endif %}
 
 // Standard Handle
@@ -103,7 +104,11 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
     {% for m in c.methods_byref %}
     {% if not m.pointer_by_ref %}
         .def("{{m.name}}",
-             []( {{c.name}} &self {{ "," if argtypes_names_not_byref(m)|length}} {{argtypes_names_not_byref(m)}} ){ {{init_outputs_byref(m)}}; self.{{m.name}}({{argnames_wo_type(m)}}); return std::make_tuple({{argnames_byref(m)}}); },
+             []( {{c.name}} &self {{ "," if argtypes_names_not_byref(m)|length}} {{argtypes_names_not_byref(m)}} ){ 
+                 {{init_outputs_byref(m) | indent(16) }}
+                 self.{{m.name}}({{argnames_wo_type(m)}});
+                 {{handle_results_ptr_byref(m) | indent(16) }}
+                 return std::make_tuple({{argnames_byref(m)}}); },
              R"#({{m.comment}})#" {{argnames_not_byref(m)}})
     {% endif %}
     {% endfor %}
@@ -122,7 +127,6 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
             []({{argtypes_names_not_byref(m)}} ){ 
                 {{init_outputs_byref(m) | indent(16) }}
                 {{c.name}}::{{m.name}}({{argnames_wo_type(m)}});
-                
                 {{handle_results_ptr_byref(m) | indent(16) }}
                 {% if args_byref(m) %}return std::make_tuple({{argnames_byref(m)}});{% endif %} },
             R"#({{m.comment}})#" {{argnames_not_byref(m)}})
