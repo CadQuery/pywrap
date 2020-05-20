@@ -596,7 +596,8 @@ parsing_header = '''#include <Standard_Handle.hxx>
 struct NSOpenGLContext {};"""
         include_body_pre = 'py::class_<NSOpenGLContext>(m, "NSOpenGLContext");'
         exclude_methods = ["OpenGl_GlCore11::glGetPointerv","OpenGl_RaytraceGeometry::Clear",
-                           "OpenGl_View::ChangeGraduatedTrihedron","OpenGl_View::LayerList"]
+                           "OpenGl_View::ChangeGraduatedTrihedron","OpenGl_View::LayerList",
+                           "OpenGl_ShaderManager::Unregister"]
         exclude_typedefs = ["OpenGl_SequenceOfLayers","OpenGl_SetterList","OpenGl_MapOfHatchStylesAndIds","OpenGl_MapOfZLayerSettings","OpenGl_IndexedMapOfStructure","OpenGl_MapOfShaderPrograms","OpenGl_IndexedMapOfStructure","OpenGl_LayerSeqIds"]
         exclude_classes = ["OpenGl_GraduatedTrihedron","OpenGl_LayerList","OpenGl_VariableSetterSelector","OpenGl_RaytraceGeometry"]
 
