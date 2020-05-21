@@ -513,25 +513,25 @@ parsing_header = '''#include <Standard_Handle.hxx>
             body = "[]( BRepAlgoAPI_Algo & self){ return self.RunParallel(); }"
             help = "Returns the flag of parallel processing."
             arguments  = []
-            
+
         [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo.additional_methods.SetRunParallel]
 
             body = "[]( BRepAlgoAPI_Algo & self , const Standard_Boolean theFlag){ self.SetRunParallel(theFlag); }"
             help = "Set the flag of parallel processing."
             arguments  = ["thFlag"]
-            
+
         [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo.additional_methods.FuzzyValue]
 
             body = "[]( BRepAlgoAPI_Algo & self){ return self.FuzzyValue(); }"
             help = "Returns the additional tolerance."
             arguments  = []
-            
+
         [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo.additional_methods.SetFuzzyValue]
 
             body = "[]( BRepAlgoAPI_Algo & self , const Standard_Real theFuzz){ self.SetFuzzyValue(theFuzz); }"
             help = "Sets the additional tolerance."
             arguments  = ["theFuzz"]
-            
+
         [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo.additional_methods.SetUseOBB]
 
             body = "[]( BRepAlgoAPI_Algo & self , const Standard_Boolean theFlag){ self.SetUseOBB(theFlag); }"
@@ -845,34 +845,38 @@ struct NSView {};"""
     [Modules.ShapeAnalysis]
 
         exclude_classes = ["ShapeAnalysis_BoxBndTreeSelector"]
-        
+
     [Modules.V3d]
-    
+
         include_header_pre = """struct NSOpenGLContext {}; //OSX related"""
         exclude_methods = ["V3d_View::ChangeRenderingParams"]
 
         [Modules.V3d.Classes.V3d_View.additional_methods.ChangeRenderingParams]
-        
+
         body = "[]( V3d_View & self){ return self.ChangeRenderingParams();}"
         help = "Returns reference to current rendering parameters and effect settings."
         return_policy = "py::return_value_policy::reference_internal"
-        
+
     [Modules.STEPCAFControl]
-    
-        include_header_pre = "#include <XCAFDoc_ShapeTool.hxx>"        
+
+        include_header_pre = "#include <XCAFDoc_ShapeTool.hxx>"
         exclude_typedefs = ["STEPCAFControl_DataMapOfShapePD","STEPCAFControl_DataMapOfShapePD",
             "STEPCAFControl_DataMapOfSDRExternFile","STEPCAFControl_DataMapOfSDRExternFile",
             "STEPCAFControl_DataMapOfPDExternFile","STEPCAFControl_DataMapOfLabelExternFile",
             "STEPCAFControl_DataMapOfShapeSDR"]
-            
+
     [Modules.XCAFDimTolObjects]
-    
+
         exclude_typedefs = ["XCAFDimTolObjects_DataMapOfToleranceDatum"]
-        
+
     [Modules.XCAFPrs]
-    
+
         exclude_typedefs = ["XCAFPrs_DataMapOfStyleTransient"]
-        
-    [Modules.XCAFDoc]
-        
-        include_header_pre = "#undef GetObject"
+
+    [Modules.AdvApp2Var]
+
+        include_header_pre_top ="""#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+"""
