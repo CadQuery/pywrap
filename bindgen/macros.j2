@@ -62,7 +62,7 @@
 
 {%- macro handle_results_ptr_byref(f) -%}
     {% for arg,t,_ in f.args if is_byref_smart_ptr(t) -%}
-    if ( {{ arg }}_ptr.get() != &{{arg}} ) {{arg}} = *{{ arg }}_ptr;
+    if ( {{ arg }}_ptr.get() != &{{arg}} ) copy_if_copy_constructible({{arg}}, *{{ arg }}_ptr);
     {% endfor -%}
 {%- endmacro -%}
 
