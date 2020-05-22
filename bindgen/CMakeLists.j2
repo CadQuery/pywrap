@@ -28,7 +28,7 @@ file( GLOB CPP_FILES ${PROJECT_SOURCE_DIR}/*.cpp )
 
 add_library( {{ name }} MODULE ${CPP_FILES} )
 
-target_link_libraries( {{ name }} PRIVATE OPENCASCADE PYTHON_LIBRARY pybind11::pybind11 )
+target_link_libraries( {{ name }} PRIVATE OPENCASCADE ${PYTHON_LIBRARY} pybind11::pybind11 )
 set_target_properties( {{ name }}
                        PROPERTIES
                        CXX_STANDARD 17
