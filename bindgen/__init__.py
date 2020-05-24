@@ -83,13 +83,12 @@ def is_byref_arg(arg,byref_types):
 
     return rv
 
-def is_byref_return(met,byref_types):
+def is_byref_return(met):
 
     rv = False
     
-    ret = met.return_type    
-    if any(ret.startswith(byref_t) and ret.endswith('&')
-           for byref_t in byref_types) and len(met.args) == 0:
+    ret = met.return_type
+    if ret.endswith('&') and len(met.args) == 0:
         rv = True
 
     return rv
@@ -148,7 +147,7 @@ def transform_module(m,
         for c in m.classes:
 
             c.methods_byref = [met for met in c.methods if is_byref(met,byref_types)]
-            c.methods_return_byref = [met for met in c.methods if is_byref_return(met,byref_types) and not met.pure_virtual]
+            c.methods_return_byref = [met for met in c.methods if is_byref_return(met) and not met.pure_virtual]
             c.static_methods_byref = [met for met in c.static_methods if is_byref(met,byref_types)]
 
             for met in c.methods_byref:

@@ -165,6 +165,10 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
        .def_property("{{m.name}}",
                      []({{c.name}}& self){return self.{{m.name}}();},
                      []({{c.name}}& self, {{m.return_type.replace('&','')}} val){self.{{m.name}}() = val;})
+    {% else %}
+       .def_property_readonly("{{m.name}}",
+                              {{ method_pointer(c,m) }},
+                              py::return_value_policy::reference_internal)
     {% endif %}
     {%- endfor -%};
 {% endif %}{% endfor %}
