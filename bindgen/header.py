@@ -1,3 +1,4 @@
+from typing import List, Tuple, Any, Mapping, Optional
 from itertools import chain
 
 from clang.cindex import CursorKind, TypeKind, AccessSpecifier
@@ -7,7 +8,7 @@ from .type_parser import parse_type
 from .translation_unit import parse_tu
 from .utils import current_platform
 
-def paths_approximately_equal(p1,p2):
+def paths_approximately_equal(p1 : str, p2 : str):
     '''Approximate path equality. This is due to
     '''
     return any([Path(p1).name.split('.')[0] == Path(p).name.split('.')[0] for p in p2])
@@ -289,6 +290,9 @@ def get_free_method_definitions(tu):
 class BaseInfo(object):
     '''Base class for the info objects
     '''
+    
+    name : str
+    comment : str
 
     def __init__(self,cur):
 
@@ -298,6 +302,10 @@ class BaseInfo(object):
 class FieldInfo(BaseInfo):
     '''Container for field parsing reults
     '''
+    
+    type : str
+    const : bool
+    pod : bool
     
     def __init__(self,cur):
 
@@ -310,6 +318,10 @@ class FieldInfo(BaseInfo):
 class EnumInfo(BaseInfo):
     '''Container for enum parsing results
     '''
+    
+    comment : str
+    values : List[str]
+    anonymous : bool
 
     def __init__(self,cur):
 
@@ -329,6 +341,14 @@ class EnumInfo(BaseInfo):
 class FunctionInfo(BaseInfo):
     '''Container for function parsing results
     '''
+    
+    full_name : str
+    mangled_name : str
+    return_type : str
+    inline : bool
+    pointer_by_ref : bool
+    args : List[Tuple[str, str, str]]
+    default_value_types : List[str]
 
     KIND_DICT = {TypeKind.LVALUEREFERENCE : ' &',
                  TypeKind.RVALUEREFERENCE : ' &&',
@@ -415,6 +435,10 @@ class MethodInfo(FunctionInfo):
     '''Container for method parsing results
     '''
 
+    const : bool
+    virtual : bool
+    pure_virtual : bool
+
     def __init__(self,cur):
 
         super(MethodInfo,self).__init__(cur)
@@ -438,6 +462,39 @@ class DestructorInfo(FunctionInfo):
 class ClassInfo(object):
     '''Container for class parsing results
     '''
+    
+    name : str
+    comment : str
+    abstract : bool
+
+    constructors : List[ConstructorInfo]
+    nonpublic_constructors : List[ConstructorInfo]
+
+    fields : List[FieldInfo]
+
+    methods : List[MethodInfo]
+    protected_virtual_methods : List[MethodInfo]
+    private_virtual_methods : List[MethodInfo]
+    static_methods : List[MethodInfo]
+    static_methods_byref : List[MethodInfo]
+    methods_byref : List[MethodInfo]
+    methods_return_byref : List[MethodInfo]
+
+    operators : List[MethodInfo]
+    static_operators : List[MethodInfo]
+
+    destructors : List[DestructorInfo]
+    nonpublic_destructors : List[DestructorInfo]
+
+    ptr : Any #is this needed?
+    
+    superclass : List[str]
+    rootclass : List[str]
+    superclasses : List[str]
+
+    methods_dict : Mapping[str,MethodInfo]
+    protected_virtual_methods_dict : Mapping[str,MethodInfo]
+    private_virtual_methods_dict : Mapping[str,MethodInfo]
 
     def __init__(self,cur):
 
@@ -506,6 +563,8 @@ class ClassInfo(object):
         self.private_virtual_methods_dict = {**self.protected_virtual_methods_dict,**other.protected_virtual_methods_dict}
 
 class ClassTemplateInfo(ClassInfo):
+  
+    type_params : List[Tuple[Optional[str],str,str]]
 
     def __init__(self,cur):
 
@@ -516,6 +575,11 @@ class ClassTemplateInfo(ClassInfo):
                               default) for el,default in get_template_type_params(cur)]
 
 class TypedefInfo(BaseInfo):
+  
+    type : str
+    pod : bool
+    template_base : List[str]
+    template_args : List[str]
 
     def __init__(self,cur):
 
@@ -537,6 +601,19 @@ class ForwardInfo(BaseInfo):
 class HeaderInfo(object):
     '''Container for header parsing results
     '''
+    
+    name : str
+    short_name : str
+    dependencies : List[str]
+    classes : Mapping[str, ClassInfo]
+    class_templates : Mapping[str, ClassTemplateInfo]
+    functions : List[FunctionInfo]
+    enums : List[EnumInfo]
+    methods : List[MethodInfo]
+    inheritance : Mapping[str,str]
+    typedefs : List[TypedefInfo]
+    typedef_dict : Mapping[str,str]
+    forwards : List[ForwardInfo]
 
     def __init__(self):
 
@@ -547,7 +624,7 @@ class HeaderInfo(object):
         self.enums = []
         self.methods = []
         self.inheritance = {}
-        self.typedefs = {}
+        self.typedefs = []
         self.forwards = []
 
     def resolve_inheritance(self,cls):
