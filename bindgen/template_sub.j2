@@ -90,7 +90,8 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
     {% if not m.pointer_by_ref %}
         .def("{{m.name}}",
              {{ method_pointer(c,m) }},
-             R"#({{m.comment}})#" {{argnames(m)}})
+             R"#({{m.comment}})#" {{argnames(m)}}
+          )
     {% endif %}
     {% endfor %}
     // methods using call by reference i.s.o. return
@@ -102,7 +103,8 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
                  self.{{m.name}}({{argnames_wo_type(m)}});
                  {{handle_results_ptr_byref(m) | indent(16) }}
                  return std::make_tuple({{argnames_byref(m)}}); },
-             R"#({{m.comment}})#" {{argnames_not_byref(m)}})
+             R"#({{m.comment}})#" {{argnames_not_byref(m)}}
+          )
     {% endif %}
     {% endfor %}
     // static methods
@@ -110,7 +112,8 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
     {% if not m.pointer_by_ref %}
         .def_static("{{m.name}}_s",
                     {{ static_method_pointer(c,m) }},
-                    R"#({{m.comment}})#" {{argnames(m)}})
+                    R"#({{m.comment}})#" {{argnames(m)}}
+          )
     {% endif %}
     {% endfor %}
     // static methods using call by reference i.s.o. return
@@ -122,7 +125,8 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
                 {{c.name}}::{{m.name}}({{argnames_wo_type(m)}});
                 {{handle_results_ptr_byref(m) | indent(16) }}
                 {% if args_byref(m) %}return std::make_tuple({{argnames_byref(m)}});{% endif %} },
-            R"#({{m.comment}})#" {{argnames_not_byref(m)}})
+            R"#({{m.comment}})#" {{argnames_not_byref(m)}}
+          )
     {% endif %}
     {% endfor %}
     // operators
@@ -132,7 +136,8 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
         .def("{{py_op}}",
              {{ method_pointer(c,op) }},
              py::is_operator(),
-             R"#({{op.comment}})#" {{argnames(op)}})
+             R"#({{op.comment}})#" {{argnames(op)}}
+          )
     {% endfor %}
     {% endif %}
     {% endfor %}
@@ -142,13 +147,15 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
         .def("{{ name}}",
              {{ m['body']}},
              R"#({{ m['help'] }})#"
-             {% for arg in m['arguments'] %}, py::arg("{{ arg }}"){% endfor %}{% if m['return_policy'] %}, {{ m['return_policy'] }} {% endif %})
+             {% for arg in m['arguments'] %}, py::arg("{{ arg }}"){% endfor %}{% if m['return_policy'] %}, {{ m['return_policy'] }} {% endif %}
+          )
     {% endfor %}
     {% for name,m in module_settings['Classes'][c.name]['additional_static_methods'].items() %}
         .def_static("{{ name}}",
                     {{ m['body']}},
                     R"#({{ m['help'] }})#"
-                    {% for arg in m['arguments'] %}, py::arg("{{ arg }}"){% endfor %}{% if m['return_policy'] %}, {{ m['return_policy'] }} {% endif %})
+                    {% for arg in m['arguments'] %}, py::arg("{{ arg }}"){% endfor %}{% if m['return_policy'] %}, {{ m['return_policy'] }} {% endif %}
+          )
     {% endfor %}
     {% endif %}
     // properties
@@ -163,12 +170,17 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
     {% for m in c.methods_return_byref %}
     {% if m.return_type.replace('&','').strip() in settings['byref_types'] %}
        .def_property("{{m.name}}",
-                     []({{c.name}}& self){return self.{{m.name}}();},
-                     []({{c.name}}& self, {{m.return_type.replace('&','')}} val){self.{{m.name}}() = val;})
+                     []({{c.name}}& self){return self.{{m.name}}();} {% if not  m.return_type.startswith('const') %},
+                     []({{c.name}}& self, {{m.return_type.replace('&','')}} val){self.{{m.name}}() = val;}, {% endif %}
+                     R"#({{m.comment}})#"
+         )
     {% else %}
-       .def_property_readonly("{{m.name}}",
-                              {{ method_pointer(c,m) }},
-                              py::return_value_policy::reference_internal)
+       .def("{{m.name}}",
+             {{ method_pointer(c,m) }},
+             R"#({{m.comment}})#" 
+             {{argnames(m)}} 
+             {% if not is_byref_smart_ptr(m.return_type) and not m.return_type.startswith('const') %}, py::return_value_policy::reference_internal {% endif %}
+         )
     {% endif %}
     {%- endfor -%};
 {% endif %}{% endfor %}
@@ -179,7 +191,8 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
 {% for f in h.functions %}
     m.def("{{f.name}}",
           {{ function_pointer(f) }},
-          R"#({{ f.comment }})#" {{argnames(f)}});
+          R"#({{ f.comment }})#" {{argnames(f)}}
+          );
 {% endfor %}
 {% endfor %}
 
@@ -188,7 +201,8 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
     m.def("{{name}}",
           {{ m['body']}},
           R"#({{ m['help'] }})#"
-          {% for arg in m['arguments'] %}, py::arg("{{ arg }}"){% endfor %})
+          {% for arg in m['arguments'] %}, py::arg("{{ arg }}"){% endfor %}
+          )
 {% endfor %}
 
 // operators
