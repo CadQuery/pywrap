@@ -608,6 +608,7 @@ class HeaderInfo(object):
     classes : Mapping[str, ClassInfo]
     class_templates : Mapping[str, ClassTemplateInfo]
     functions : List[FunctionInfo]
+    operators : List[FunctionInfo]
     enums : List[EnumInfo]
     methods : List[MethodInfo]
     inheritance : Mapping[str,str]
