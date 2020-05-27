@@ -1,4 +1,6 @@
-from .header import process_header
+from typing import List, Set, Mapping, Any
+
+from .header import process_header, HeaderInfo, ClassInfo, ClassTemplateInfo, TypedefInfo, FunctionInfo, EnumInfo
 from logzero import logger
 from toposort import toposort_flatten
 
@@ -6,7 +8,25 @@ from path import Path
 
 class ModuleInfo(object):
     '''Container for the whole module
-    '''    
+    '''
+    
+    prefix : str
+    name : str
+    headers : List[HeaderInfo]
+    
+    classes : List[ClassInfo]
+    class_dict : Mapping[str,ClassInfo]
+    class_templates : List[ClassTemplateInfo]
+    class_template_dict : Mapping[str,ClassTemplateInfo]
+    typedefs : List[TypedefInfo]
+    typedef_dict : Mapping[str,TypedefInfo]
+    enums : List[EnumInfo]
+    functions : List[FunctionInfo]
+    operators : List[FunctionInfo]
+    exceptions : List[Any]
+    
+    dependencies : Set[Any]
+    dependencies_headers : Set[str]
     
     def get_module_name(self,x):
         
