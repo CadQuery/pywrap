@@ -53,11 +53,11 @@
 {%- endmacro -%}
 
 {%- macro argnames(f) -%}
-    {% for arg,t,d in f.args %} {{ "," if loop.first }} py::arg("{{arg}}"){% if d %}=static_cast<{{t}}>({{d}}){% endif %}{{ "," if not loop.last }}{% endfor %}
+    {% for arg,t,d in f.args %} {{ "," if loop.first }} py::arg("{{arg if arg!='' else 'arg'}}"){% if d %}=static_cast<{{t}}>({{d}}){% endif %}{{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
 
 {%- macro argnames_not_byref(f) -%}
-    {% for arg,t,d in f.args if not is_byref(t) %} {{ "," if loop.first }} py::arg("{{arg}}"){% if d %}=static_cast<{{t}}>({{d}}){% endif %}{{ "," if not loop.last }}{% endfor %}
+    {% for arg,t,d in f.args if not is_byref(t) %} {{ "," if loop.first }} py::arg("{{arg if arg!='' else 'arg'}}"){% if d %}=static_cast<{{t}}>({{d}}){% endif %}{{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
 
 {%- macro handle_results_ptr_byref(f) -%}
