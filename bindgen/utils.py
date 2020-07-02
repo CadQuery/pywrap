@@ -18,6 +18,8 @@ def current_platform():
         rv='Linux'
     elif platform.startswith('darwin'):
         rv='OSX'
+    elif platform.startswith('freebsd'):
+        rv='FreeBSD'
     else:
         raise RuntimeError(f'Unsupported platform: {platform}')
         
@@ -54,7 +56,7 @@ def init_clang():
         
         if platform.startswith('win'):
             Config.set_library_file(conda_prefix / 'Library' / 'bin' / 'libclang.dll')
-        elif platform.startswith('linux'):
+        elif platform.startswith('linux') or platform.startswith('freebsd'):
             Config.set_library_file(conda_prefix / 'lib' / 'libclang.so')
         elif platform.startswith('darwin'):
             Config.set_library_file(conda_prefix / 'lib' / 'libclang.dylib')
