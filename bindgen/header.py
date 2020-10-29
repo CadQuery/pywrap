@@ -1,7 +1,7 @@
 from typing import List, Tuple, Any, Mapping, Optional
 from itertools import chain
 
-from clang.cindex import CursorKind, TypeKind, AccessSpecifier
+from clang.cindex import CursorKind, Type, TypeKind, AccessSpecifier
 from path import Path
 
 from .type_parser import parse_type
@@ -361,7 +361,7 @@ class FunctionInfo(BaseInfo):
         self.comment = cur.brief_comment
         self.full_name = cur.displayname
         self.mangled_name = cur.mangled_name
-        self.return_type = cur.result_type.spelling
+        self.return_type = self._underlying_type(cur.result_type)
         self.inline = cur.get_definition().is_inline() if cur.get_definition() else False
         self.pointer_by_ref = any(self._pointer_by_ref(el) for el in cur.get_arguments())
         self.args = [(el.spelling,self._underlying_type(el),self._default_value(el)) for el in cur.get_arguments()]
@@ -388,18 +388,21 @@ class FunctionInfo(BaseInfo):
         '''Tries to resolve the underlying type. Needed for typedefed templates.
         '''
 
-        ptr = self.KIND_DICT.get(cur.type.kind,'')
+        T = cur if isinstance(cur, Type) else cur.type
+
+
+        ptr = self.KIND_DICT.get(T.kind,'')
 
         # if lvaule,rvalue or pointer type
         if ptr:
-            const_ptr = ' const ' if cur.type.is_const_qualified() else ''
-            pointee = cur.type.get_pointee()
+            const_ptr = ' const ' if T.is_const_qualified() else ''
+            pointee = T.get_pointee()
             const = ' const ' if pointee.is_const_qualified() else ''
             decl = pointee.get_declaration()
         else:
             const_ptr = ''
-            const = ' const ' if cur.type.is_const_qualified() else ''
-            decl = cur.type.get_declaration()
+            const = ' const ' if T.is_const_qualified() else ''
+            decl = T.get_declaration()
 
         # if typedef that is not POD
         if decl.kind == CursorKind.TYPEDEF_DECL and not decl.underlying_typedef_type.is_pod():
@@ -409,7 +412,7 @@ class FunctionInfo(BaseInfo):
             else:
                 rv=spelling
         else:
-            rv = cur.type.spelling
+            rv = T.spelling
 
         # strip possible opencascade::handle<T> when
         if not add_qualifiers:
