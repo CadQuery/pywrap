@@ -124,6 +124,10 @@ def transform_module(m,
         #exclude classes
         m.classes = [c for c in m.classes if c.name not in s['exclude_classes']]
         m.class_dict = {k:v for k,v, in m.class_dict.items() if k not in s['exclude_classes']}
+        
+        #exclude class templates
+        m.class_templates = [c for c in m.class_templates if c.name not in s['exclude_class_templates']]
+        m.class_template_dict = {k:v for k,v, in m.class_template_dict.items() if k not in s['exclude_class_templates']}
 
         #exclude methods (including static methods)
         for pat in s['exclude_methods']:
