@@ -135,7 +135,8 @@ def transform_module(m,
         m.class_dict = {k:v for k,v, in m.class_dict.items() if k not in s['exclude_classes']}
         
         #exclude class templates
-        m.class_templates = [c for c in m.class_templates if c.name not in s['exclude_class_templates']]
+        m.class_templates = [c for c in m.class_templates
+            if not any(match(f'^{pat}<.*>',c.name) for pat in s['exclude_class_templates'])]
         m.class_template_dict = {k:v for k,v, in m.class_template_dict.items() 
             if not any(match(f'^{pat}<.*>',k) for pat in s['exclude_class_templates'])}
 
