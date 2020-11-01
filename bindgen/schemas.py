@@ -24,6 +24,7 @@ module_schema = Schema({
         Optional('exclude_classes',default=[]) : [str],
         Optional('exclude_class_templates',default=[]) : [str],
         Optional('exclude_methods',default=[]) : [str],
+        Optional('exclude_class_template_methods',default=[]) : [str],
         Optional('exclude_typedefs',default=[]) : [str],
         Optional('include_body_post',default=None) : str,
         Optional('include_header_post',default=None) : str,
