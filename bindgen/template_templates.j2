@@ -30,7 +30,7 @@ namespace py = pybind11;
 // Class template handling functions
 {% for h in module.headers %}
 // {{h.name}}
-{% for n,t in h.class_templates.items()%}
+{% for n,t in h.class_templates.items() if n in module.class_template_dict %}
 
 template {{template_args_typename(t)}}
 void preregister_template_{{t.name}}(py::object &m, const char *name){
