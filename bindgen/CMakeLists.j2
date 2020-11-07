@@ -48,11 +48,14 @@ if(WIN32)
   target_link_libraries( {{ name }} PRIVATE opengl32 )
   target_link_libraries( {{ name }} PRIVATE ${PYTHON_LIBRARY} )
 else()
-  target_link_options( {{ name }} PRIVATE "LINKER:--allow-multiple-definition")
   set_target_properties( {{ name }}
                          PROPERTIES
                          CMAKE_CXX_FLAGS_RELEASE "-O3 "
                          COMPILE_FLAGS "-fpermissive -fvisibility=hidden -fvisibility-inlines-hidden" )
+endif()
+
+if(UNIX AND NOT APPLE)
+  target_link_options( {{ name }} PRIVATE "LINKER:--allow-multiple-definition")
 endif()
 
 if(APPLE)
