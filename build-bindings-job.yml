@@ -25,6 +25,10 @@ jobs:
         sudo find /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/ && \
         ln -s "$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/OpenGL.framework/Headers" /usr/local/include/OpenGL
       displayName: 'Search for GL'
+      
+    - bash: |
+        ld -help
+      displayName: 'List linker options'
 
   - ${{ if contains(parameters.vmImage, 'win') }}:
     - bash: ls "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build"
