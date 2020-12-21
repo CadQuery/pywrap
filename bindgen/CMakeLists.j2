@@ -55,5 +55,5 @@ else()
 endif()
 
 if(APPLE)
-  target_link_libraries( {{ name }} PRIVATE "-undefined dynamic_lookup")
+  target_link_libraries( {{ name }} PRIVATE "-undefined dynamic_lookup --allow-multiple-definition")
 endif()
