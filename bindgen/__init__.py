@@ -15,7 +15,7 @@ from toposort import toposort_flatten
 
 from .module import ModuleInfo
 from .header import parse_tu, ClassInfo
-from .utils import current_platform, on_windows
+from .utils import current_platform
 from .schemas import global_schema, module_schema
 
 def read_settings(p):
@@ -108,6 +108,15 @@ def is_byref(met,byref_types):
 
     return rv
 
+def _exclude_methods(classes, exclusions):
+
+    for pat in exclusions:
+        cls_pat,m_pat = pat.split('::')
+        for c in (c for c in classes if match(cls_pat,c.name)):
+            c.methods = [m for m in c.methods if not match(m_pat,m.name)]
+            c.static_methods = [m for m in c.static_methods if not match(m_pat,m.name)]
+
+
 def transform_module(m,
                      sym,
                      settings,
@@ -126,15 +135,14 @@ def transform_module(m,
         m.class_dict = {k:v for k,v, in m.class_dict.items() if k not in s['exclude_classes']}
         
         #exclude class templates
-        m.class_templates = [c for c in m.class_templates if c.name not in s['exclude_class_templates']]
-        m.class_template_dict = {k:v for k,v, in m.class_template_dict.items() if k not in s['exclude_class_templates']}
+        m.class_templates = [c for c in m.class_templates
+            if c.name not in s['exclude_class_templates']]
+        m.class_template_dict = {k:v for k,v, in m.class_template_dict.items() 
+            if not any(match(f'^{pat}<.*>',k) for pat in s['exclude_class_templates'])}
 
         #exclude methods (including static methods)
-        for pat in s['exclude_methods']:
-            cls_pat,m_pat = pat.split('::')
-            for c in (c for c in m.classes if match(cls_pat,c.name)):
-                c.methods = [m for m in c.methods if not match(m_pat,m.name)]
-                c.static_methods = [m for m in c.static_methods if not match(m_pat,m.name)]
+        _exclude_methods(m.classes, s['exclude_methods'])
+        _exclude_methods(m.class_templates, s['exclude_class_template_methods'])
 
         #exclude functions
         m.functions = [f for f in m.functions if f.name not in s['exclude_functions']]

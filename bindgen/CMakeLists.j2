@@ -54,6 +54,10 @@ else()
                          COMPILE_FLAGS "-fpermissive -fvisibility=hidden -fvisibility-inlines-hidden" )
 endif()
 
+if(UNIX AND NOT APPLE)
+  target_link_options( {{ name }} PRIVATE "LINKER:--allow-multiple-definition")
+endif()
+
 if(APPLE)
   target_link_libraries( {{ name }} PRIVATE "-undefined dynamic_lookup")
 endif()
