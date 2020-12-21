@@ -26,8 +26,7 @@ jobs:
         ln -s "$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/OpenGL.framework/Headers" /usr/local/include/OpenGL
       displayName: 'Search for GL'
       
-    - bash: |
-        ld -help
+    - bash: man ld | col
       displayName: 'List linker options'
 
   - ${{ if contains(parameters.vmImage, 'win') }}:
