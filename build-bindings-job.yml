@@ -65,9 +65,10 @@ jobs:
 
   - bash: |
       source activate cpp-py-bindgen && \
-      python -m bindgen -n $(n_cores) parse ${{ parameters.config_file }} out.pkl && \
-      python -m bindgen -n $(n_cores) transform ${{ parameters.config_file }} out.pkl out_f.pkl && \
-      python -m bindgen -n $(n_cores) generate ${{ parameters.config_file }} out_f.pkl
+      pip install . && \
+      pywrap -n $(n_cores) parse ${{ parameters.config_file }} out.pkl && \
+      pywrap -n $(n_cores) transform ${{ parameters.config_file }} out.pkl out_f.pkl && \
+      pywrap -n $(n_cores) generate ${{ parameters.config_file }} out_f.pkl
     displayName: 'Generate'
 
   - task: CopyFiles@2

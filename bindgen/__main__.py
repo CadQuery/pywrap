@@ -6,17 +6,26 @@ from types import SimpleNamespace
 from path import Path
 
 from . import read_settings, run, parse_modules, transform_modules, render, validate_result
+from .utils import get_includes, init_clang
 
 
 @click.group()
 @click.option('-n','--njobs', default=-2,type=int)
 @click.option('-v','--verbose',is_flag=True)
 @click.option('-c','--clean',is_flag=True)
+@click.option('-i', '--include', multiple=True, type=click.Path(), default=[], help='additional inlcude paths')
+@click.option('-l', '--libclang',type=click.File(), default=None, help='libclang location')
 @click.pass_context
-def main(ctx,clean,verbose,njobs):
+def main(ctx,clean,verbose,njobs,include,libclang):
     
     if not verbose:
         logzero.logger.setLevel(logzero.logging.INFO)
+        
+    if include:
+        get_includes.__defaults__ = (include,)
+        
+    if libclang:
+        init_clang.__defaults__ = (libclang,)
     
     ctx.obj = SimpleNamespace(verbose=verbose,njobs=njobs,clean=clean)
 

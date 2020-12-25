@@ -33,11 +33,11 @@ def on_windows():
         
     return rv
 
-def get_includes():
+def get_includes(rv=[]):
     
-    rv = []
-    
-    if on_windows():
+    if rv:
+        pass
+    elif on_windows():
         rv.append(Path(prefix) / 'Library/include/clang/')
     else:
         rv.append(Path(prefix) / 'lib/clang/8.0.0/include/')
@@ -48,19 +48,23 @@ def get_includes():
     
     return rv
 
-def init_clang():
+def init_clang(path=None):
     
     global initialized,ix
     
     if not initialized:
         conda_prefix = Path(getenv('CONDA_PREFIX'))
         
-        if platform.startswith('win'):
-            Config.set_library_file(conda_prefix / 'Library' / 'bin' / 'libclang.dll')
+        if path:
+            pass
+        elif platform.startswith('win'):
+            path = conda_prefix / 'Library' / 'bin' / 'libclang.dll'
         elif platform.startswith('linux') or platform.startswith('freebsd'):
-            Config.set_library_file(conda_prefix / 'lib' / 'libclang.so')
+            path = conda_prefix / 'lib' / 'libclang.so'
         elif platform.startswith('darwin'):
-            Config.set_library_file(conda_prefix / 'lib' / 'libclang.dylib')
+            path = conda_prefix / 'lib' / 'libclang.dylib'
+        
+        Config.set_library_file(path)
         
         # Monkeypatch clang
         monkeypatch_cursor('is_virtual',
