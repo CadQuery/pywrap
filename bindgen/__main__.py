@@ -13,8 +13,8 @@ from .utils import get_includes, init_clang
 @click.option('-n','--njobs', default=-2,type=int)
 @click.option('-v','--verbose',is_flag=True)
 @click.option('-c','--clean',is_flag=True)
-@click.option('-i', '--include', multiple=True, type=click.Path(), default=[], help='additional inlcude paths')
-@click.option('-l', '--libclang',type=click.File(), default=None, help='libclang location')
+@click.option('-i', '--include', multiple=True, type=click.Path(True,False,True), default=[], help='additional inlcude paths')
+@click.option('-l', '--libclang',type=click.Path(True,True,False), default=None, help='libclang location')
 @click.pass_context
 def main(ctx,clean,verbose,njobs,include,libclang):
     
