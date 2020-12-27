@@ -42,7 +42,7 @@ class ModuleInfo(object):
         
         for p in paths:
             logger.debug(p)
-            self.headers.append(process_header(p,prefix,settings))
+            self.headers.append(process_header(p,prefix,settings,name))
         
         self.classes = []
         self.class_dict = {}

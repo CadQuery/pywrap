@@ -14,6 +14,7 @@ def parse_tu(path,
              args=['-x', 'c++', '-std=c++17','-D__CODE_GENERATOR__',
                    '-Wno-deprecated-declarations'],
              parsing_header = '',
+             tu_parsing_header = '',
              platform_parsing_header = ''):
     '''Run a translation unit thorugh clang
     '''
@@ -35,7 +36,7 @@ def parse_tu(path,
     with open(path) as f:
         src = f.read()
 
-    dummy_code = f'{parsing_header}\n{platform_parsing_header}\n{src}'
+    dummy_code = f'{parsing_header}\n{platform_parsing_header}\n{tu_parsing_header}\n{src}'
     tr_unit = ix.parse('dummy.cxx',
                        args,
                        unsaved_files=[('dummy.cxx',dummy_code)],
