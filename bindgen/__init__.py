@@ -206,6 +206,8 @@ def parse_modules(verbose,
                   settings_per_module,
                   target_platform):
 
+    settings['Modules'] = settings_per_module
+
     path = Path(settings['input_folder'])
     file_pats = settings['pats']
     file_exc = settings['exclude']

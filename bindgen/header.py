@@ -650,13 +650,21 @@ class HeaderInfo(object):
         _resolve_inheritance(cls.superclass)
 
 
-    def parse(self, path,input_folder,settings):
+    def parse(self, path,input_folder,settings,module_name):
+
+        module_settings= settings['Modules'].get(module_name)
+
+        if module_settings:
+            tu_parsing_header = module_settings['parsing_headers'].get(path.name,'')
+        else:
+            tu_parsing_header = ''
 
         tr_unit = parse_tu(path,
                            input_folder,
                            prefix=settings[current_platform()]['prefix'],
                            platform_includes=settings[current_platform()]['includes'],
                            parsing_header=settings['parsing_header'],
+                           tu_parsing_header=tu_parsing_header,
                            platform_parsing_header=settings[current_platform()]['parsing_header'])
 
         self.name = path
@@ -699,12 +707,12 @@ class HeaderInfo(object):
 
         return tr_unit
 
-def process_header(path,input_folder,settings):
+def process_header(path,input_folder,settings,module_name=None):
     '''Main function from this module
     '''
 
     hi = HeaderInfo()
-    hi.parse(path,input_folder,settings)
+    hi.parse(path,input_folder,settings,module_name)
 
     return hi
 
