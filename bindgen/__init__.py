@@ -15,7 +15,7 @@ from toposort import toposort_flatten
 
 from .module import ModuleInfo
 from .header import parse_tu, ClassInfo
-from .utils import current_platform
+from .utils import current_platform, get_includes, init_clang
 from .schemas import global_schema, module_schema
 
 def read_settings(p):
@@ -229,13 +229,19 @@ def parse_modules(verbose,
     modules = []
 
     #parse modules using libclang
-    def _process_module(name,files,module_names):
+
+    def _process_module(name,files,module_names,includes,clang_location):
+        
+        #loky based workaround
+        get_includes.__defaults__ = includes
+        init_clang.__defaults__ = clang_location
+        
         if not verbose:
             logzero.logger.setLevel(logzero.logging.INFO)
         return ModuleInfo(name,path,files,module_names,settings)
 
     modules = Parallel(prefer='processes',n_jobs=n_jobs)\
-        (delayed(_process_module)(name,files,module_names) for name,files in tqdm(module_dict.items()))
+        (delayed(_process_module)(name,files,module_names, get_includes.__defaults__,init_clang.__defaults__) for name,files in tqdm(module_dict.items()))
 
     return modules
 
