@@ -5,7 +5,7 @@ import pickle
 from types import SimpleNamespace
 from path import Path
 
-from . import read_settings, run, parse_modules, transform_modules, render, validate_result
+from . import read_settings, parse_modules, transform_modules, render, validate_result
 from .utils import get_includes, init_clang
 
 
