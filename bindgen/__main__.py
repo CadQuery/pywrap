@@ -92,13 +92,15 @@ def validate(obj,folder):
 
 @main.command()
 @click.argument('configuration')
-@click.pass_obj
-def all(obj,configuration):
+@click.argument('platform', default=None,required=False,type=click.Choice(('Linux','Windows','OSX','FreeBSD')))
+@click.argument('tmp_parsed', default = 'tmp.pkl')
+@click.argument('tmp_filtered', default = 'tmp_filtered.pkl')
+@click.pass_context
+def all(ctx,configuration,platform,tmp_parsed,tmp_filtered):
     
-    settings,module_mapping,modules = read_settings(configuration)
-    logzero.logger.setLevel(logzero.logging.INFO)
-    run(settings,module_mapping,modules)
-    
+    ctx.invoke(parse, configuration=configuration, output=tmp_parsed, platform=platform)
+    ctx.invoke(transform,  configuration=configuration, input=tmp_parsed, output=tmp_filtered)
+    ctx.invoke(generate, configuration=configuration, input=tmp_filtered)
 
 if __name__ == '__main__':
     

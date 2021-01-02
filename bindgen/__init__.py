@@ -469,13 +469,3 @@ def validate_result(verbose,n_jobs,folder):
         (delayed(_validate)(n) for n in Path(folder).files('*.cpp'))
 
     for r in result: pass
-
-def run(settings,
-        module_mapping,
-        settings_per_module):
-
-    modules,class_dict = parse_modules(False,1,settings,
-                                       module_mapping,settings_per_module)
-    render(settings,modules,class_dict)
-
-    return modules
