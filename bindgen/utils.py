@@ -53,7 +53,7 @@ def init_clang(path=None):
     global initialized,ix
     
     if not initialized:
-        conda_prefix = Path(getenv('CONDA_PREFIX'))
+        conda_prefix = Path(getenv('CONDA_PREFIX', ''))
         
         if path:
             pass
