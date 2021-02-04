@@ -79,10 +79,10 @@ py::object klass;
     {% for enum in c.enums %}
     {% if enum.anonymous %}
         {% for val in enum.values %}
-        m.attr("{{ val }}") = py::cast(int({{ enum.name+"::" if enum.name}}{{ val }}));
+        klass.attr("{{ val }}") = py::cast(int({{ enum.name+"::" if enum.name}}{{ val }}));
         {% endfor %}
     {% else %}
-        py::enum_<{{enum.name}}>(m, "{{enum.name}}",R"#({{enum.comment}})#")
+        py::enum_<{{enum.name}}>(klass, "{{enum.name}}",R"#({{enum.comment}})#")
         {% for val in enum.values %}
             .value("{{val}}",{{enum.name}}::{{val}}){{ ".export_values();" if loop.last }}
         {% endfor %}
