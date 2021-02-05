@@ -68,12 +68,13 @@ py::object klass;
 // classes
 {% for c in module.classes %}{% if (proper_new_operator(c) and proper_delete_operator(c)) or 'Standard_Transient' in  c.rootclass %}
 
+    // Class {{c.name}} from {{ module.class_dict[c.name] }}
+    klass = m.attr("{{cls_name(c)}}");
+
     {% if not c.constructors_unfiltered and not c.nonpublic_constructors and not c.abstract %}
     // default constructor
     register_default_constructor<{{c.name}} {{pointer(c)}}>(m,"{{cls_name(c)}}");
     {% endif %}
-
-    klass = m.attr("{{cls_name(c)}}");
     
     // nested enums
     {% for enum in c.enums %}
@@ -82,9 +83,9 @@ py::object klass;
         klass.attr("{{ val }}") = py::cast(int({{ enum.name+"::" if enum.name}}{{ val }}));
         {% endfor %}
     {% else %}
-        py::enum_<{{enum.name}}>(klass, "{{enum.name}}",R"#({{enum.comment}})#")
+        py::enum_<{{enum.name}}>(klass, "{{ enum.name.split('::')[-1] }}", R"#({{enum.comment}})#")
         {% for val in enum.values %}
-            .value("{{val}}",{{enum.name}}::{{val}}){{ ".export_values();" if loop.last }}
+            .value("{{val}}", {{enum.name}}::{{val}}){{ ".export_values();" if loop.last }}
         {% endfor %}
     {% endif %}
     {% endfor %}
