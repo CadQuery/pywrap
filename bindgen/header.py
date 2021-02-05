@@ -22,7 +22,10 @@ def get_symbols(tu,
                 kind,
                 ignore_forwards=True,
                 search_in = (CursorKind.NAMESPACE,)):
-    '''Symbols defined locally (i.e. without includes) and are not forward declarations
+    '''
+    Symbols defined locally (i.e. without includes) and are not forward declarations
+    Search_in allows to explore nested entities as well.
+    
     '''
     tu_path = tu.path
     
@@ -357,7 +360,6 @@ class EnumInfo(BaseInfo):
         self.name = cur.type.spelling
             
         if 'anonymous' in self.name:
-            print(self.name)
             self.anonymous = True
             self.name = '::'.join(self.name.split('::')[:-1]) #get rid of anonymous
             
