@@ -13,23 +13,43 @@ def paths_approximately_equal(p1 : str, p2 : str):
     '''
     return any([Path(p1).name.split('.')[0] == Path(p).name.split('.')[0] for p in p2])
 
-def get_symbols(tu,kind,ignore_forwards=True):
-    '''Symbols defined locally (i.e. without includes) and are not forward declarations
+
+def is_public(el):
+
+    return (el.acess_specifier == AccessSpecifier.PUBLIC) or (el.access_specifier is None)
+
+def get_symbols(tu,
+                kind,
+                ignore_forwards=True,
+                search_in = (CursorKind.NAMESPACE,)):
+    '''
+    Symbols defined locally (i.e. without includes) and are not forward declarations
+    Search_in allows to explore nested entities as well.
+    
     '''
     tu_path = tu.path
-
-    for child in tu.cursor.get_children():
-        if paths_approximately_equal(Path(child.location.file.name),tu_path) \
-        and child.kind == kind:
-            if ignore_forwards:
-                if child.get_definition() is None:
-                    pass #forward declaration
-                elif not paths_approximately_equal(Path(child.get_definition().location.file.name),tu_path):
-                    pass #forward declaration but declared in an include
+    
+    def _get_symbols(cursor,kind,ignore_forwards):
+    
+        for child in cursor.get_children():
+            if paths_approximately_equal(Path(child.location.file.name),tu_path) \
+            and child.kind == kind:
+                if ignore_forwards:
+                    if child.get_definition() is None:
+                        pass #forward declaration
+                    elif not paths_approximately_equal(Path(child.get_definition().location.file.name),tu_path):
+                        pass #forward declaration but declared in an include
+                    else:
+                        yield child #legitimate
                 else:
-                    yield child #legitimate
-            else:
-                yield child
+                    yield child
+            if paths_approximately_equal(Path(child.location.file.name),tu_path) \
+            and child.kind in search_in:
+                for nested in _get_symbols(child,kind,ignore_forwards):
+                    if nested.access_specifier == AccessSpecifier.PUBLIC: yield nested
+    
+    for child in _get_symbols(tu.cursor, kind, ignore_forwards):
+        yield child
 
 def get_forward_declarations(tu):
     '''Get all symbols that are forward declared'''
@@ -187,6 +207,13 @@ def get_public_fields(cls):
 
     for child in get_xx(cls,CursorKind.FIELD_DECL, AccessSpecifier.PUBLIC):
         yield child
+        
+def get_public_enums(cls):
+    '''Public enums of a given class
+    '''
+
+    for child in get_xx(cls,CursorKind.ENUM_DECL, AccessSpecifier.PUBLIC):
+        yield child
 
 def get_public_methods(cls):
     '''Public methods of a given class
@@ -330,13 +357,12 @@ class EnumInfo(BaseInfo):
         self.comment = cur.brief_comment
         self.values = [el.spelling for el in get_enum_values(cur)]
         self.anonymous = False
-
-        if self.name == '':
-            name = cur.type.spelling
-            if 'anonymous' in name:
-                self.anonymous = True
-            else:
-                self.name = name
+        self.name = cur.type.spelling
+            
+        if 'anonymous' in self.name:
+            self.anonymous = True
+            self.name = '::'.join(self.name.split('::')[:-1]) #get rid of anonymous
+            
 
 class FunctionInfo(BaseInfo):
     '''Container for function parsing results
@@ -471,6 +497,8 @@ class ClassInfo(object):
     nonpublic_constructors : List[ConstructorInfo]
 
     fields : List[FieldInfo]
+    
+    enums : List[EnumInfo]
 
     methods : List[MethodInfo]
     protected_virtual_methods : List[MethodInfo]
@@ -507,6 +535,7 @@ class ClassInfo(object):
             + [ConstructorInfo(el) for el in get_protected_constructors(cur)]
 
         self.fields = [FieldInfo(el) for el in  get_public_fields(cur)]
+        self.enums = [EnumInfo(el) for el in  get_public_enums(cur)]
 
         self.methods = self.filter_rvalues((MethodInfo(el) for el in get_public_methods(cur)))
         self.protected_virtual_methods = self.filter_rvalues((MethodInfo(el) for el in get_protected_pure_virtual_methods(cur)))
@@ -557,6 +586,9 @@ class ClassInfo(object):
         self.static_operators += other.static_operators
         self.destructors += other.destructors
         self.nonpublic_destructors +=  other.nonpublic_destructors
+        
+        self.fields += other.fields
+        self.enums += other.enums
 
         self.methods_dict = {**self.methods_dict,**other.methods_dict}
         self.protected_virtual_methods_dict = {**self.protected_virtual_methods_dict,**other.protected_virtual_methods_dict}
@@ -675,11 +707,13 @@ class HeaderInfo(object):
         self.operators = [FunctionInfo(el) for el in get_operators(tr_unit)]
 
         self.classes = {}
+
         for el in get_classes(tr_unit):
-            if el.displayname in self.classes:
-                self.classes[el.displayname].extend_defintion(ClassInfo(el))
+            ci = ClassInfo(el)
+            if ci.name in self.classes:
+                self.classes[ci.name].extend_defintion(ci)
             else:
-                self.classes[el.displayname] = ClassInfo(el)
+                self.classes[ci.name] = ci
 
         self.class_dict = {k : self.name for k in self.classes}
         self.class_templates = {el.displayname:ClassTemplateInfo(el) for el in get_class_templates(tr_unit)}

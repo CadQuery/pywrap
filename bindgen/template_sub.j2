@@ -58,7 +58,7 @@ void register_{{module.name}}(py::module &main_module) {
 
 
 py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
-
+py::object klass;
 
 //Python trampoline classes
 {% for c in module.classes %}{% if c.abstract %}
@@ -68,12 +68,29 @@ py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
 // classes
 {% for c in module.classes %}{% if (proper_new_operator(c) and proper_delete_operator(c)) or 'Standard_Transient' in  c.rootclass %}
 
+    // Class {{c.name}} from {{ module.class_dict[c.name] }}
+    klass = m.attr("{{cls_name(c)}}");
+
     {% if not c.constructors_unfiltered and not c.nonpublic_constructors and not c.abstract %}
     // default constructor
     register_default_constructor<{{c.name}} {{pointer(c)}}>(m,"{{cls_name(c)}}");
     {% endif %}
+    
+    // nested enums
+    {% for enum in c.enums %}
+    {% if enum.anonymous %}
+        {% for val in enum.values %}
+        klass.attr("{{ val }}") = py::cast(int({{ enum.name+"::" if enum.name}}{{ val }}));
+        {% endfor %}
+    {% else %}
+        py::enum_<{{enum.name}}>(klass, "{{ enum.name.split('::')[-1] }}", R"#({{enum.comment}})#")
+        {% for val in enum.values %}
+            .value("{{val}}", {{enum.name}}::{{val}}){{ ".export_values();" if loop.last }}
+        {% endfor %}
+    {% endif %}
+    {% endfor %}
 
-    static_cast<py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,class_dict,module.typedef_dict)}}>>(m.attr("{{cls_name(c)}}"))
+    static_cast<py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,class_dict,module.typedef_dict)}}>>(klass)
     // constructors
     {% for i,con in enumerate(c.constructors) %}
     {% if (not con.pointer_by_ref) and
