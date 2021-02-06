@@ -83,7 +83,7 @@ py::object klass;
         klass.attr("{{ val }}") = py::cast(int({{ enum.name+"::" if enum.name}}{{ val }}));
         {% endfor %}
     {% else %}
-        py::enum_<{{enum.name}}>(klass, "{{ enum.name.split('::')[-1] }}", R"#({{enum.comment}})#")
+        py::enum_<{{enum.name}}>(klass, "{{ enum.name.split('::')[-1] + '_e' }}", R"#({{enum.comment}})#")
         {% for val in enum.values %}
             .value("{{val}}", {{enum.name}}::{{val}}){{ ".export_values();" if loop.last }}
         {% endfor %}
