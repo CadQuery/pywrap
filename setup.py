@@ -9,7 +9,7 @@ setup(
     install_requires=[
         'click',
         'logzero',
-        'path.py',
+        'path',
         'clang',
         'cymbal',
         'toml',
