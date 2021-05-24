@@ -16,7 +16,7 @@ setup(
         'pandas',
         'joblib',
         'tqdm',
-        'jinja2',
+        'jinja2==2.11.3',
         'toposort',
         'pyparsing',
         'pybind11',
