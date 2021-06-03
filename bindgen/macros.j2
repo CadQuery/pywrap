@@ -12,7 +12,7 @@
     {%- endif -%}
 {%- endmacro -%}
 
-{%- macro super(cls,classes,typedefs) -%}
+{%- macro super(cls,classes,typedefs=[]) -%}
     {% for super in cls.superclass if super in classes or super in typedefs %}, {{super}} {% endfor %}
 {%- endmacro -%}
 
