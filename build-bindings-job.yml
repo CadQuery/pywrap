@@ -15,6 +15,10 @@ jobs:
     vmImage: ${{ parameters.vmImage }}
   variables:
     n_cores: 2
+    ${{ if contains(parameters.vmImage, 'win') }}:
+      include_dir: '${CONDA_PREFIX}/Library/include'
+    ${{ if not(contains(parameters.vmImage, 'win')) }}:
+      include_dir: '${CONDA_PREFIX}/include'
   steps:
   - ${{ if contains(parameters.vmImage, 'Ubuntu') }}:
     - bash: |
@@ -54,6 +58,11 @@ jobs:
       displayName: 'Mac header check'
 
   - bash: |
+      source activate cpp-py-bindgen &&
+      python configure.py --input-folder "${{ variables.include_dir }}/opencascade"
+    displayName: Configure generator
+
+  - bash: |
       source activate cpp-py-bindgen && \
       OUTPUT=`python -c'import toml; print(toml.load("${{ parameters.config_file }}")["output_folder"])'`  && \
       echo $OUTPUT && \
@@ -65,7 +74,7 @@ jobs:
     - bash: |
         ls && env && \
         source activate cpp-py-bindgen && \
-        python -m bindgen -n $(n_cores) -i $CONDA_PREFIX/include/ -i $CONDA_PREFIX/include/vtk-9.0/ -i $CONDA_PREFIX/lib/clang/10.0.1/include/ parse ${{ parameters.config_file }} out.pkl && \
+        python -m bindgen -n $(n_cores) -i "${{ variables.include_dir }}/" -i "${{ variables.include_dir }}/vtk-9.0/" -i $CONDA_PREFIX/lib/clang/10.0.1/include/ parse ${{ parameters.config_file }} out.pkl && \
         python -m bindgen -n $(n_cores) transform ${{ parameters.config_file }} out.pkl out_f.pkl && \
         python -m bindgen -n $(n_cores) generate ${{ parameters.config_file }} out_f.pkl
       displayName: 'Generate'
@@ -76,7 +85,7 @@ jobs:
     - bash: |
         ls && env && \
         source activate cpp-py-bindgen && \
-        python -m bindgen -n $(n_cores) -i $CONDA_PREFIX/include/ -i $CONDA_PREFIX/include/vtk-9.0/ -i $CONDA_PREFIX/lib/clang/10.0.1/include/ -i $CONDA_PREFIX/include/c++/v1/ parse ${{ parameters.config_file }} out.pkl && \
+        python -m bindgen -n $(n_cores) -i "${{ variables.include_dir }}/" -i "${{ variables.include_dir }}/vtk-9.0/" -i $CONDA_PREFIX/lib/clang/10.0.1/include/ -i $CONDA_PREFIX/include/c++/v1/ parse ${{ parameters.config_file }} out.pkl && \
         python -m bindgen -n $(n_cores) transform ${{ parameters.config_file }} out.pkl out_f.pkl && \
         python -m bindgen -n $(n_cores) generate ${{ parameters.config_file }} out_f.pkl
       displayName: 'Generate'
@@ -87,7 +96,7 @@ jobs:
     - bash: |
         ls && env && \
         source activate cpp-py-bindgen && \
-        python -m bindgen -n $(n_cores) -i $CONDA_PREFIX/Library/include/ -i $CONDA_PREFIX/Library/include/vtk-9.0/ -i $CONDA_PREFIX/Library/include/clang/ parse ${{ parameters.config_file }} out.pkl && \
+        python -m bindgen -n $(n_cores) -i "${{ variables.include_dir }}/" -i "${{ variables.include_dir }}/vtk-9.0/" -i "${{ variables.include_dir }}/clang/" parse ${{ parameters.config_file }} out.pkl && \
         python -m bindgen -n $(n_cores) transform ${{ parameters.config_file }} out.pkl out_f.pkl && \
         python -m bindgen -n $(n_cores) generate ${{ parameters.config_file }} out_f.pkl
       displayName: 'Generate'
@@ -172,8 +181,6 @@ jobs:
   - ${{ if contains(parameters.vmImage, 'mac') }}:
     - bash: |
         source activate cpp-py-bindgen && \
-        cp -rf opencascade $CONDA_PREFIX/include && \
-        cat $CONDA_PREFIX/include/opencascade/OpenGl_HaltonSampler.hxx  &&\
         cmake -B build -S "../$(OCP_src)" -G Ninja -DCMAKE_BUILD_TYPE=Debug && \
         cmake --build build -j $(n_cores) -- -k 0 && \
         rm -rf build/CMakeFiles
