@@ -1,8 +1,9 @@
 name = "OCP"
 input_folder = "./opencascade"
 output_folder = "./OCP"
+template_path = "./templates"
 
-additional_files = ["FindOpenCascade.cmake"]
+additional_files = ["FindOpenCascade.cmake","pystreambuf.h","vtk_pybind.h"]
 
 pats = ["{}_*.hxx","{}.hxx"]
 
@@ -315,11 +316,15 @@ modules = ["Standard",
 "XCAFNoteObjects",
 "XCAFPrs",
 "XCAFView",
-#"IVtk",
-#"IVtkOCC",
-#"IVtkTools",
-#"IVtkVTK",
-]
+"BinXCAFDrivers",
+"XmlXCAFDrivers",
+"Vrml",
+"VrmlAPI",
+"RWGltf",
+"IVtk",
+"IVtkOCC",
+"IVtkTools",
+"IVtkVTK"]
 
 exclude = ["Standard_Handle.hxx","Standard",
            "math_GaussPoints.hxx","NCollection_Shared.hxx","OSD_WNT.hxx",
@@ -334,7 +339,9 @@ exclude = ["Standard_Handle.hxx","Standard",
            "BRepMesh_NodeInsertionMeshAlgo.hxx","BRepMesh_BoundaryParamsRangeSplitter.hxx",
            "BRepMesh_ConeRangeSplitter.hxx","BRepMesh_CylinderRangeSplitter.hxx",
            "BRepMesh_NURBSRangeSplitter.hxx","BRepMesh_SphereRangeSplitter.hxx",
-           "BRepMesh_TorusRangeSplitter.hxx","BRepMesh_UVParamRangeSplitter.hxx"]
+           "BRepMesh_TorusRangeSplitter.hxx","BRepMesh_UVParamRangeSplitter.hxx","OpenGl_GLESExtensions.hxx",
+           "IVtk_IShapePickerAlgo.hxx"]
+#           "BVH_Box.hxx","BVH_tools.hxx"
 
 exceptions = ["Standard_Failure"]
 
@@ -344,7 +351,8 @@ module_mapping = "lambda x: Path(x).splitpath()[-1].split('.')[0].split('_')[0]"
 byref_types = ["Standard_Real","Standard_Integer","Standard_Boolean"]
 byref_types_smart_ptr = ["opencascade::handle"]
 
-parsing_header = '''#include <Standard_Handle.hxx>
+parsing_header = '''#pragma clang diagnostic ignored "-Wmacro-redefined"
+#include <Standard_Handle.hxx>
 #undef Standard_NODISCARD
 #define Standard_NODISCARD
 '''
@@ -399,7 +407,7 @@ parsing_header = '''#include <Standard_Handle.hxx>
 
         exclude_functions = ["HashCode"]
         exclude_methods = ["Standard_Dump::DumpCharacterValues","Standard_Dump::DumpRealValues",
-            "Standard_CLocaleSentry::GetCLocale"]
+            "Standard_CLocaleSentry::GetCLocale","Standard_Dump::InitRealValues"]
 
     [Modules.Resource]
 
@@ -407,8 +415,15 @@ parsing_header = '''#include <Standard_Handle.hxx>
 
     [Modules.NCollection]
 
+        include_header_pre_top = """#include <gp_XYZ.hxx>
+#include <gp_XY.hxx>"""
         include_header_pre = "const size_t DefaultBlockSize = 24600;"
         exclude_classes = ["NCollection","NCollection_ListNode"]
+        
+        [Modules.NCollection.parsing_headers]
+        
+            "NCollection_CellFilter.hxx" = """#include <gp_XYZ.hxx>
+#include <gp_XY.hxx>"""
 
     [Modules.OSD]
 
@@ -463,7 +478,7 @@ parsing_header = '''#include <Standard_Handle.hxx>
     [Modules.BRepBuilderAPI]
 
         exclude_typedefs = ["BRepBuilderAPI_CellFilter","BRepBuilderAPI_BndBoxTree"]
-         exclude_methods = ["BRepBuilderAPI_FastSewing::GetStatuses"]
+        exclude_methods = ["BRepBuilderAPI_FastSewing::GetStatuses"]
 
 
     [Modules.MAT2d]
@@ -496,6 +511,10 @@ parsing_header = '''#include <Standard_Handle.hxx>
     [Modules.HLRBRep]
 
         exclude_classes = ["HLRBRep_CLPropsATool",]
+        
+        [Modules.HLRBRep.parsing_headers]
+        
+            "HLRBRep_CLPropsATool.hxx" = "#include <HLRBRep_Curve.hxx>"
 
     [Modules.TopOpeBRepDS]
 
@@ -513,25 +532,25 @@ parsing_header = '''#include <Standard_Handle.hxx>
             body = "[]( BRepAlgoAPI_Algo & self){ return self.RunParallel(); }"
             help = "Returns the flag of parallel processing."
             arguments  = []
-
+            
         [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo.additional_methods.SetRunParallel]
 
             body = "[]( BRepAlgoAPI_Algo & self , const Standard_Boolean theFlag){ self.SetRunParallel(theFlag); }"
             help = "Set the flag of parallel processing."
             arguments  = ["thFlag"]
-
+            
         [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo.additional_methods.FuzzyValue]
 
             body = "[]( BRepAlgoAPI_Algo & self){ return self.FuzzyValue(); }"
             help = "Returns the additional tolerance."
             arguments  = []
-
+            
         [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo.additional_methods.SetFuzzyValue]
 
             body = "[]( BRepAlgoAPI_Algo & self , const Standard_Real theFuzz){ self.SetFuzzyValue(theFuzz); }"
             help = "Sets the additional tolerance."
             arguments  = ["theFuzz"]
-
+            
         [Modules.BRepAlgoAPI.Classes.BRepAlgoAPI_Algo.additional_methods.SetUseOBB]
 
             body = "[]( BRepAlgoAPI_Algo & self , const Standard_Boolean theFlag){ self.SetUseOBB(theFlag); }"
@@ -547,6 +566,11 @@ parsing_header = '''#include <Standard_Handle.hxx>
     [Modules.BRepFill]
 
         exclude_typedefs = ["BRepFill_DataMapOfShapeHArray2OfShape"]
+        
+        [Modules.BRepFill.parsing_headers]
+        
+            "BRepFill_Sweep.hxx" = "#include <TopTools_HArray1OfShape.hxx>"
+            "BRepFill_TrimShellCorner.hxx" = "#include <TopoDS_Vertex.hxx>"
 
     [Modules.ChFi3d]
     #error: invalid use of incomplete type ‘class Geom_BSplineCurve’
@@ -557,11 +581,16 @@ parsing_header = '''#include <Standard_Handle.hxx>
     [Modules.BOPDS]
 
         exclude_typedefs = ["BOPDS_DataMapOfPaveBlockCommonBlock"]
+        
+        [Modules.BOPDS.parsing_headers]
+        
+            "BOPDS_DataMapOfPaveBlockListOfInteger.hxx" = "#include <BOPDS_PaveBlock.hxx>"
+            "BOPDS_DataMapOfIntegerListOfPaveBlock.hxx" = "#include <TColStd_MapIntegerHasher.hxx>"
 
     [Modules.BRepMesh]
 
         include_header_pre = "#include <IMeshData_Wire.hxx>"
-        exclude_classes = ["BRepMesh_Triangle","BRepMesh_Delaun","BRepMesh_DefaultRangeSplitter"] #constructor with int&[3]
+        exclude_classes = ["BRepMesh_Triangle","BRepMesh_Delaun","BRepMesh_DefaultRangeSplitter","BRepMesh_Context"] #constructor with int&[3]
         exclude_methods = ["BRepMesh_GeomTool::IntLinLin",
         "BRepMesh_DataStructureOfDelaun::ElementNodes","BRepMesh_MeshTool::AddTriangle",
         "BRepMesh_ConeRangeSplitter::GetSplitSteps",
@@ -576,11 +605,16 @@ parsing_header = '''#include <Standard_Handle.hxx>
     [Modules.BOPTools]
 
         exclude_typedefs = ["BOPTools_BoxBndTree","BOPTools_PairSelector","BOPTools_Box2dTree","BOPTools_BoxPairSelector","BOPTools_Box2dPairSelector"]
+        
+        [Modules.BOPTools.parsing_headers]
+        
+            "BOPTools_SetMapHasher.hxx" = "#include <BOPTools_Set.hxx>"
 
     [Modules.Aspect]
 
         include_header_pre = "struct __GLXFBConfigRec {};"
         exclude_methods = ["Aspect_NeutralWindow::NativeFBConfig","Aspect_Window::NativeFBConfig","Aspect_NeutralWindow::SetNativeHandles","Aspect_DisplayConnection::GetDisplay","Aspect_DisplayConnection::Init"]
+        exclude_typedefs = ["Aspect_XRActionSetMap","Aspect_XRActionMap"]
 
         [Modules.Aspect.Classes.Aspect_DisplayConnection]
 
@@ -593,16 +627,23 @@ parsing_header = '''#include <Standard_Handle.hxx>
     [Modules.OpenGl]
 
         include_header_pre = """#include <Message_Messenger.hxx>
+#include <Image_SupportedFormats.hxx>
+#include <Image_CompressedPixMap.hxx>
 struct NSOpenGLContext {};"""
         include_body_pre = 'py::class_<NSOpenGLContext>(m, "NSOpenGLContext");'
         exclude_methods = ["OpenGl_GlCore11::glGetPointerv","OpenGl_RaytraceGeometry::Clear",
                            "OpenGl_View::ChangeGraduatedTrihedron","OpenGl_View::LayerList"]
         exclude_typedefs = ["OpenGl_SequenceOfLayers","OpenGl_SetterList","OpenGl_MapOfHatchStylesAndIds","OpenGl_MapOfZLayerSettings","OpenGl_IndexedMapOfStructure","OpenGl_MapOfShaderPrograms","OpenGl_IndexedMapOfStructure","OpenGl_LayerSeqIds"]
         exclude_classes = ["OpenGl_GraduatedTrihedron","OpenGl_LayerList","OpenGl_VariableSetterSelector","OpenGl_RaytraceGeometry"]
+        
+        [Modules.OpenGl.parsing_headers]
+        
+            "OpenGl_LayerList.hxx" = "#include <OpenGl_FrameBuffer.hxx>"
+            "OpenGl_ShaderObject.hxx" = "#include <NCollection_Sequence.hxx>"
 
     [Modules.StdSelect]
 
-        include_header_pre = "#include <Prs3d_Projector.hxx>"
+        include_header_pre = "#include <V3d_Viewer.hxx>"
         exclude_typedefs = ["StdSelect_IndexedDataMapOfOwnerPrs"]
 
     [Modules.Xw]
@@ -617,6 +658,7 @@ struct NSOpenGLContext {};"""
     [Modules.AIS]
 
         include_header_pre = """#include <Media_PlayerContext.hxx>
+#include <WNT_HIDSpaceMouse.hxx>
 auto OptionsForAttach = [](){return AIS_Manipulator::OptionsForAttach();};"""
         include_body_pre = "py::class_<AIS_Manipulator::OptionsForAttach>(m,\"AIS_Manipulator_OptionsForAttach\");"
         exclude_typedefs = ["AIS_DataMapOfShapeDrawer","AIS_DataMapOfIOStatus","AIS_DataMapOfILC","AIS_IndexedDataMapOfOwnerPrs"]
@@ -624,6 +666,7 @@ auto OptionsForAttach = [](){return AIS_Manipulator::OptionsForAttach();};"""
     [Modules.Font]
 
         exclude_classes = ["Font_BRepFont"]
+        exclude_methods = ["Font_FTFont::renderGlyphOutline"]
         include_header_pre = "struct FT_LibraryRec_ {};"
 
         [Modules.Font.Classes.Font_BRepTextBuilder.additional_methods.Perform]
@@ -641,7 +684,8 @@ auto OptionsForAttach = [](){return AIS_Manipulator::OptionsForAttach();};"""
 
         include_header_pre = """#include <Media_PlayerContext.hxx>
 struct NSOpenGLContext {};"""
-        exclude_typedefs = ["Graphic3d_IndexedMapOfView","Graphic3d_IndexedMapOfAddress","Graphic3d_MapOfStructure","Graphic3d_NMapOfTransient","Graphic3d_MapOfObject","Graphic3d_Vec4u","Graphic3d_Vec2u","Graphic3d_Vec3u","Graphic3d_Vec3d","Graphic3d_MapOfAspectsToAspects"]
+        exclude_typedefs = ["Graphic3d_IndexedMapOfView","Graphic3d_IndexedMapOfAddress","Graphic3d_MapOfStructure","Graphic3d_NMapOfTransient","Graphic3d_MapOfObject","Graphic3d_Vec4u","Graphic3d_Vec2u","Graphic3d_Vec3u","Graphic3d_Vec3d","Graphic3d_MapOfAspectsToAspects",
+            "Graphic3d_BndBox4d","Graphic3d_BndBox3d","Graphic3d_BndBox4f"]
         exclude_methods = ["Graphic3d_BvhCStructureSet::Size","Graphic3d_BvhCStructureSet::Box",
             "Graphic3d_BvhCStructureSet::Center","Graphic3d_BvhCStructureSet::Swap",
             "Graphic3d_BvhCStructureSetTrsfPers::Size","Graphic3d_BvhCStructureSetTrsfPers::Box",
@@ -657,6 +701,12 @@ struct NSOpenGLContext {};"""
     [Modules.BVH]
 
         exclude_typedefs = ["BVH_PrimitiveSet3d"]
+        exclude_class_templates = ["BVH_BaseBox"]
+        exclude_class_template_methods = ["BVH_Tools::PointBoxProjection"]
+        
+        [Modules.BVH.parsing_headers]
+        
+            "BVH_Ray.hxx" = "#include <BVH_Types.hxx>"
 
     [Modules.TDocStd]
 
@@ -679,7 +729,12 @@ struct NSOpenGLContext {};"""
 
     [Modules.CDM]
 
-        exclude_typedefs = ["CDM_PresentationDirectory"]
+        exclude_typedefs = ["CDM_PresentationDirectory", "CDM_MetaDataLookUpTable"]
+        
+        [Modules.CDM.parsing_headers]
+        
+            "CDM_MetaDataLookUpTable.hxx" = "#include <CDM_MetaData.hxx>"
+            "CDM_DataMapIteratorOfMetaDataLookUpTable.hxx" = "#include <CDM_MetaData.hxx>"
 
     [Modules.TDataStd]
 
@@ -707,11 +762,16 @@ struct NSOpenGLContext {};"""
 
         exclude_typedefs = ["TNaming_DataMapOfShapePtrRefShape"]
         exclude_methods = ["TNaming_RefShape::FirstUse"]
+        
+        [Modules.TNaming.parsing_headers]
+        
+            "TNaming_NCollections.hxx" = "#include <TopoDS_Shape.hxx>"
 
     [Modules.TDF]
 
         exclude_typedefs = ["TDF_AttributeDataMap","TDF_AttributeDoubleMap"]
         exclude_classes = ["TDF_LabelNode"]
+        exclude_methods = ["TDF_DerivedAttribute::Register"]
 
     [Modules.XmlTObjDrivers]
 
@@ -725,6 +785,10 @@ struct NSOpenGLContext {};"""
     [Modules.STEPConstruct]
 
         exclude_typedefs = ["STEPConstruct_DataMapOfAsciiStringTransient","STEPConstruct_DataMapOfPointTransient"]
+    
+        [Modules.STEPConstruct.parsing_headers]
+        
+            "STEPConstruct_PointHasher.hxx" = "#include <gp_Pnt.hxx>"
 
     [Modules.RWStl]
 
@@ -741,10 +805,19 @@ struct NSOpenGLContext {};"""
     [Modules.ShapeFix]
 
         include_header_pre_top = "#include <TColStd_HArray1OfReal.hxx>"
+        
+        [Modules.ShapeFix.parsing_headers]
+        
+            "ShapeFix_Solid.hxx" = "#include <Message_ProgressRange.hxx>"
 
     [Modules.BRepBlend]
 
         exclude_methods = ["BRepBlend_AppSurface::TolReached"]
+        
+        [Modules.BRepBlend.parsing_headers]
+        
+            "BRepBlend_HCurve2dTool.hxx" = "#include <Adaptor2d_HCurve2d.hxx>"
+            "BRepBlend_HCurveTool.hxx" = "#include <Adaptor3d_HCurve.hxx>"
 
     [Modules.StdPersistent]
 
@@ -801,6 +874,15 @@ using PolygonOnTriangulation = ShapePersistent_BRep::PolygonOnTriangulation;
     [Modules.IntAna]
 
         exclude_methods = ["IntAna_Quadric::SpecialPoints"]
+        
+        [Modules.IntAna.parsing_headers]
+        
+            "IntAna_Quadric.hxx" = """#include <gp_Pln.hxx>
+#include <gp_Sphere.hxx>
+#include <gp_Cylinder.hxx>
+#include <gp_Cone.hxx>
+#include <gp_Ax3.hxx>
+#include <gp_Pnt.hxx>"""
 
     [Modules.CDF]
 
@@ -812,7 +894,12 @@ using PolygonOnTriangulation = ShapePersistent_BRep::PolygonOnTriangulation;
 
     [Modules.Prs3d]
 
-        include_header_pre = "#include <Graphic3d_StructureManager.hxx>"
+        include_header_pre = """#include <Graphic3d_StructureManager.hxx>
+#include <Graphic3d_Text.hxx>"""
+
+        [Modules.Prs3d.parsing_headers]
+
+            "Prs3d_Point.hxx" = "#include <Prs3d_Presentation.hxx>"
 
     [Modules.WNT]
 
@@ -841,31 +928,42 @@ struct NSView {};"""
     [Modules.PCDM]
 
         exclude_classes = ["PCDM_DOMHeaderParser"]
+        
+        [Modules.PCDM.parsing_headers]
+        
+            "PCDM_ReadWriter.hxx" = "#include <Standard_IStream.hxx>"
+            "PCDM_ReadWriter_1.hxx" = "#include <Standard_IStream.hxx>"
 
     [Modules.ShapeAnalysis]
 
         exclude_classes = ["ShapeAnalysis_BoxBndTreeSelector"]
-
+        
     [Modules.V3d]
-
+    
         include_header_pre = """struct NSOpenGLContext {}; //OSX related"""
-
+        
     [Modules.STEPCAFControl]
-
-        include_header_pre = "#include <XCAFDoc_ShapeTool.hxx>"
+    
+        include_header_pre = "#include <XCAFDoc_ShapeTool.hxx>"        
         exclude_typedefs = ["STEPCAFControl_DataMapOfShapePD","STEPCAFControl_DataMapOfShapePD",
             "STEPCAFControl_DataMapOfSDRExternFile","STEPCAFControl_DataMapOfSDRExternFile",
             "STEPCAFControl_DataMapOfPDExternFile","STEPCAFControl_DataMapOfLabelExternFile",
             "STEPCAFControl_DataMapOfShapeSDR"]
-
+        
+        [Modules.STEPCAFControl.parsing_headers]
+        
+            "STEPCAFControl_Writer.hxx" = "#include <NCollection_Vector.hxx>"
+            
     [Modules.XCAFDimTolObjects]
-
+    
         exclude_typedefs = ["XCAFDimTolObjects_DataMapOfToleranceDatum"]
-
+        
     [Modules.XCAFPrs]
-
+        
+        include_header_pre = """#include <Image_SupportedFormats.hxx>
+#include <Image_CompressedPixMap.hxx>"""
         exclude_typedefs = ["XCAFPrs_DataMapOfStyleTransient"]
-
+        
     [Modules.AdvApp2Var]
 
         include_header_pre_top ="""#ifdef WIN32
@@ -877,3 +975,118 @@ struct NSView {};"""
     [Modules.BOPAlgo]
     
         include_header_pre = "#include <BOPDS_Iterator.hxx>"
+    
+    [Modules.VrmlAPI]
+    
+        include_header_pre = "#include <VrmlConverter_Drawer.hxx>"
+    
+    [Modules.IFSelect]
+
+        include_header_pre = """#include <istream>
+using std::basic_istream;"""
+
+    [Modules.XSControl]
+    
+        include_header_pre = """#include <istream>
+using std::basic_istream;"""
+
+    [Modules.Message]
+
+        [Modules.Message.Classes.Message_ProgressScope]
+
+            exclude_constructors = [2]
+
+    [Modules.RWGltf]
+
+        include_header_pre = """#include <istream>
+using std::basic_istream;
+using rapidjson::BasicOStreamWrapper;"""
+
+        [Modules.RWGltf.parsing_headers]
+
+            "RWGltf_GltfOStreamWriter.hxx" = "#include <rapidjson/rapidjson.h>"
+
+    
+    [Modules.BRepApprox_SurfaceTool]
+
+        [Modules.BRepApprox.parsing_headers]
+        
+            "BRepApprox_SurfaceTool.hxx" = "#include <BRepAdaptor_Surface.hxx>"
+            
+    [Modules.IntPatch]
+    
+        [Modules.IntPatch.parsing_headers]
+        
+            "IntPatch_PolyhedronTool.hxx" = "#include <IntPatch_Polyhedron.hxx>"
+            
+    [Modules.ShapeConstruct]
+    
+        [Modules.ShapeConstruct.parsing_headers]
+        
+            "ShapeConstruct_ProjectCurveOnSurface.hxx" = "#include <TColStd_HArray1OfReal.hxx>"
+    
+    [Modules.HLRAlgo]
+    
+        [Modules.HLRAlgo.parsing_headers]
+            
+            "HLRAlgo_HArray1OfPHDat.hxx" = "#include <gp_XYZ.hxx>"
+            "HLRAlgo_Array1OfPHDat.hxx" = "#include <gp_XYZ.hxx>"
+            "HLRAlgo_PolyHidingData.hxx" = "#include <gp_XYZ.hxx>"
+            "HLRAlgo_PolyShellData.hxx" = "#include <HLRAlgo_PolyData.hxx>"
+    
+    [Modules.ShapeUpgrade]
+    
+        [Modules.ShapeUpgrade.parsing_headers]        
+            
+            "ShapeUpgrade_UnifySameDomain.hxx" = "#include <Precision.hxx>"
+    
+    [Modules.IntTools]
+    
+        [Modules.IntTools.parsing_headers]
+                
+            "IntTools_SurfaceRangeSampleMapHasher.hxx" = "#include <IntTools_SurfaceRangeSample.hxx>"
+            "IntTools_CurveRangeSampleMapHasher.hxx" = "#include <IntTools_CurveRangeSample.hxx>"
+            "IntTools_EdgeFace.hxx" = "#include <Precision.hxx>"
+     
+    [Modules.BRepOffset]
+    
+        [Modules.BRepOffset.parsing_headers]       
+            
+            "BRepOffset_Inter2d.hxx" = "#include <TopoDS_Edge.hxx>"
+     
+    [Modules.StdPrs]
+    
+        [Modules.StdPrs.parsing_headers]
+               
+            "StdPrs_HLRShape.hxx" = "#include <TopoDS_Shape.hxx>"
+            "StdPrs_Vertex.hxx" = "#include <Prs3d_Presentation.hxx>"
+            "StdPrs_Point.hxx" = "#include <Prs3d_Presentation.hxx>"
+      
+    [Modules.Interface]
+    
+        [Modules.Interface.parsing_headers]      
+            
+            "Interface_ValueInterpret.hxx" = "#include <Interface_TypedValue.hxx>"
+            
+    [Modules.IVtkVTK]
+    
+        include_header_pre = """#include <vtkRenderer.h>
+#include "vtk_pybind.h" """
+            
+    [Modules.IVtkTools]
+    
+        include_header_pre = """#undef Handle
+#include <vtkRenderer.h>
+#include <vtkActor.h>
+#include <vtkInformationObjectBaseKey.h>"""
+
+        exclude_methods = ["IVtkTools_ShapePicker::Pick","IVtkTools_ShapePicker::pick",
+        "IVtkTools_SubPolyDataFilter::PrintSelf", "IVtkTools_DisplayModeFilter::PrintSelf"]
+
+    [Modules.IVtk]
+    
+        exclude_typedefs = ["IVtk_PointIdList"]
+        
+    [Modules.IVtkOCC]
+
+        exclude_methods = ["IVtkOCC_ShapePickerAlgo::Pick", "IVtkOCC_ViewerSelector::Pick"]
