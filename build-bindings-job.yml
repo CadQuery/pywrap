@@ -93,7 +93,7 @@ jobs:
     artifact: OCP_src_${{ parameters.vmImage }}
     
   - ${{ if contains(parameters.vmImage, 'Ubuntu') }}:
-    - bash: sudo apt-get install ${{ parameters.CXX }} mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
+    - bash: sudo apt-get update && sudo apt-get install ${{ parameters.CXX }} mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
       displayName: 'Install g++8 and gl headers'
 
   - ${{ if contains(parameters.vmImage, 'mac') }}:
