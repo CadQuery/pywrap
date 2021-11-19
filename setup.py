@@ -11,7 +11,6 @@ setup(
         'logzero',
         'path',
         'clang',
-        'cymbal',
         'toml',
         'pandas',
         'joblib',
