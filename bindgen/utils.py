@@ -1,9 +1,10 @@
 from clang.cindex import Config, Index, Cursor
-from cymbal import monkeypatch_cursor
 from ctypes import c_uint
 from path import Path
 from os import getenv
 from sys import platform, prefix
+
+from .cymbal import monkeypatch_cursor
 
 initialized = False
 ix = None
