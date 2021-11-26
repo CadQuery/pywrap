@@ -359,7 +359,7 @@ class EnumInfo(BaseInfo):
         self.anonymous = False
         self.name = cur.type.spelling
             
-        if 'anonymous' in self.name:
+        if any(x in self.name for x in ['anonymous', 'unnamed']):
             self.anonymous = True
             self.name = '::'.join(self.name.split('::')[:-1]) #get rid of anonymous
             
