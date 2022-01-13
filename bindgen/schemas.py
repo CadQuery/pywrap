@@ -17,6 +17,7 @@ class_schema = Schema({
         })
 
 module_schema = Schema({
+        Optional('module_parsing_header',default='') : str,
         Optional('parsing_headers',default={}) : {str : str},
         Optional('include_header_pre_top',default=None) : str,
         Optional('include_header_pre',default=None) : str,

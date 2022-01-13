@@ -687,7 +687,10 @@ class HeaderInfo(object):
         module_settings= settings['Modules'].get(module_name)
 
         if module_settings:
-            tu_parsing_header = module_settings['parsing_headers'].get(path.name,'')
+            tu_parsing_header = '\n'.join((
+                module_settings['module_parsing_header'],
+                module_settings['parsing_headers'].get(path.name,''),
+            ))
         else:
             tu_parsing_header = ''
 
