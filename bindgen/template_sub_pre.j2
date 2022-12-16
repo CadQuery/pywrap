@@ -37,7 +37,9 @@ namespace py = pybind11;
 {% for td in  classes_typedefs %}
 {% if 'TypedefInfo' in str(type(td)) %}
 
-{% if not td.pod and td.template_base.__len__()>0 and not td.type.startswith("opencascade::handle") %}
+{% if not td.pod and td.template_base.__len__()>0
+    and not td.type.startswith("opencascade::handle")
+    and not td.type.startswith("std::") %}
 {% set dep_module = td.type.split("_") %}
 #include "{{dep_module[0]}}_tmpl.hxx"
 {% endif %}
