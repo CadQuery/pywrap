@@ -34,7 +34,10 @@ namespace py = pybind11;
 // template related includes
 {% for h in module.headers %}
 {% for td in h.typedefs %}
-{% if not td.pod and not "_H" in td.name and td.template_base.__len__()>0 and not td.type.startswith("opencascade::handle") %}
+{% if not td.pod and not "_H" in td.name and td.template_base.__len__()>0
+    and not td.type.startswith("opencascade::handle")
+    and not td.type.startswith("std::") %}
+
 // {{h.name}}
 {% set dep_module = td.type.split("_") %}
 #include "{{dep_module[0]}}_tmpl.hxx"
@@ -75,7 +78,7 @@ py::object klass;
     // default constructor
     register_default_constructor<{{c.name}} {{pointer(c)}}>(m,"{{cls_name(c)}}");
     {% endif %}
-    
+
     // nested enums
     {% for enum in c.enums %}
     {% if enum.anonymous %}
@@ -115,7 +118,7 @@ py::object klass;
     {% for m in c.methods_byref %}
     {% if not m.pointer_by_ref %}
         .def("{{m.name}}",
-             []( {{c.name}} &self {{ "," if argtypes_names_not_byref(m)|length}} {{argtypes_names_not_byref(m)}} ){ 
+             []( {{c.name}} &self {{ "," if argtypes_names_not_byref(m)|length}} {{argtypes_names_not_byref(m)}} ){
                  {{init_outputs_byref(m) | indent(16) }}
                  self.{{m.name}}({{argnames_wo_type(m)}});
                  {{handle_results_ptr_byref(m) | indent(16) }}
@@ -137,7 +140,7 @@ py::object klass;
     {% for m in c.static_methods_byref %}
     {% if not m.pointer_by_ref %}
         .def_static("{{m.name}}_s",
-            []({{argtypes_names_not_byref(m)}} ){ 
+            []({{argtypes_names_not_byref(m)}} ){
                 {{init_outputs_byref(m) | indent(16) }}
                 {{c.name}}::{{m.name}}({{argnames_wo_type(m)}});
                 {{handle_results_ptr_byref(m) | indent(16) }}
@@ -181,7 +184,7 @@ py::object klass;
         .def_readonly("{{f.name}}", &{{c.name}}::{{f.name}})
     {% else %}
         .def_readwrite("{{f.name}}", &{{c.name}}::{{f.name}})
-    {% endif %}    
+    {% endif %}
     {% endfor %}
     // methods returning by ref wrapped as properties
     {% for m in c.methods_return_byref %}
@@ -194,8 +197,8 @@ py::object klass;
     {% else %}
        .def("{{m.name}}",
              {{ method_pointer(c,m) }},
-             R"#({{m.comment}})#" 
-             {{argnames(m)}} 
+             R"#({{m.comment}})#"
+             {{argnames(m)}}
              {% if not is_byref_smart_ptr(m.return_type) and not m.return_type.startswith('const') %}, py::return_value_policy::reference_internal {% endif %}
          )
     {% endif %}
