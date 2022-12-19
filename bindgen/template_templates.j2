@@ -1,6 +1,6 @@
 {% from "macros.j2" import cls_name,pointer,super,argtypes,argnames,method_pointer,
 static_method_pointer,function_pointer,template_args_typename,template_args,
-template_method_pointer,template_static_method_pointer, template_pointer %}
+template_method_pointer,template_static_method_pointer, template_pointer, argnames_template %}
 #pragma once
 
 // pybind 11 related includes
@@ -44,17 +44,17 @@ template {{template_args_typename(t)}}
 void register_template_{{t.name}}(py::object &m, const char *name){
     static_cast<py::class_<{{t.name}}{{template_args(t)}} {{template_pointer(t)}} {{super(t,all_classes,all_typedefs)}}>>(m.attr(name))
     {% for con in t.constructors %}
-        .def(py::init< {{ argtypes(con) }} >() {{argnames(con)}} )
+        .def(py::init< {{ argtypes(con) }} >() {{argnames_template(t, con)}} )
     {% endfor %}
     {% for m in t.methods if not references_inner(t.name,m)%}
         .def("{{m.name}}",
              {{ template_method_pointer(t,m) }},
-             R"#({{m.comment}})#" {{argnames(m)}})
+             R"#({{m.comment}})#" {{argnames_template(t, m)}})
     {% endfor %}
     {% for m in t.static_methods %}
         .def_static("{{m.name}}_s",
                     {{ template_static_method_pointer(t,m) }},
-                    R"#({{m.comment}})#" {{argnames(m)}})
+                    R"#({{m.comment}})#" {{argnames_template(t, m)}})
     {% endfor %}
     {% for op in t.operators %}
     {% if op.name in operator_dict %}
@@ -62,7 +62,7 @@ void register_template_{{t.name}}(py::object &m, const char *name){
         .def("{{py_op}}",
              {{ template_method_pointer(t,op) }},
              py::is_operator(),
-             R"#({{op.comment}})#" {{argnames(op)}})
+             R"#({{op.comment}})#" {{argnames_template(t, op)}})
     {% endfor %}
     {% endif %}
     {% endfor %}
