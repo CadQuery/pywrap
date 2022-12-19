@@ -88,13 +88,13 @@ def is_byref_arg(arg,byref_types):
 def is_byref_return(met):
 
     rv = False
-    
+
     ret = met.return_type
     if ret.endswith('&') and len(met.args) == 0:
         rv = True
 
     return rv
-  
+
 def is_byref(met,byref_types):
 
     rv = False
@@ -133,11 +133,11 @@ def transform_module(m,
         #exclude classes
         m.classes = [c for c in m.classes if c.name not in s['exclude_classes']]
         m.class_dict = {k:v for k,v, in m.class_dict.items() if k not in s['exclude_classes']}
-        
+
         #exclude class templates
         m.class_templates = [c for c in m.class_templates
             if c.name not in s['exclude_class_templates']]
-        m.class_template_dict = {k:v for k,v, in m.class_template_dict.items() 
+        m.class_template_dict = {k:v for k,v, in m.class_template_dict.items()
             if not any(match(f'^{pat}<.*>',k) for pat in s['exclude_class_templates'])}
 
         #exclude methods (including static methods)
@@ -166,7 +166,7 @@ def transform_module(m,
 
             for met in c.methods_byref:
                 c.methods.remove(met)
-                
+
             for met in c.methods_return_byref:
                 c.methods.remove(met)
 
@@ -231,11 +231,11 @@ def parse_modules(verbose,
     #parse modules using libclang
 
     def _process_module(name,files,module_names,includes,clang_location):
-        
+
         #loky based workaround
         get_includes.__defaults__ = includes
         init_clang.__defaults__ = clang_location
-        
+
         if not verbose:
             logzero.logger.setLevel(logzero.logging.INFO)
         return ModuleInfo(name,path,files,module_names,settings)
@@ -311,18 +311,18 @@ def transform_modules(verbose,
 def toposort_modules(modules):
 
     deps = {}
-    
+
     cls_dict = {c.name : m.name for m in modules for c in m.classes}
     tmpl_dict = {t.name : t for m in modules for t in m.class_templates}
-    
+
     for m in modules:
-        
+
         typedefs = []
         for t in m.typedefs:
             if not t.pod:
                 if t.template_base:
                     if t.template_base[0] in tmpl_dict: typedefs.append(tmpl_dict[t.template_base[0]])
-        
+
         deps[m.name] = set(cls_dict[s] for c in m.classes + m.class_templates +
                            typedefs for s in c.superclass if s in cls_dict) - {m.name}
 
@@ -338,7 +338,7 @@ def render(settings,module_settings,modules,class_dict):
 
     pre = settings['Extras']['include_pre']
     post = settings['Extras']['include_post']
-    
+
     def proper_new_operator(cls):
 
         new_ops = [op for op in cls.static_operators if op.name =='operator new']
@@ -365,7 +365,7 @@ def render(settings,module_settings,modules,class_dict):
     default_path = [Path(__file__).dirname()]
     additional_path = [Path(settings['template_path']), ] if settings['template_path'] else []
     template_paths =  additional_path + default_path
-    
+
     jinja_env = Environment(loader=FileSystemLoader(template_paths),
                             trim_blocks=True,
                             lstrip_blocks = True,
@@ -374,7 +374,7 @@ def render(settings,module_settings,modules,class_dict):
     all_classes = {c.name : c for m in modules for c in m.classes}
     all_enums = {e.name : e for m in modules for e in m.enums}
     all_typedefs = {t.name : t for m in modules for t in m.typedefs}
-    
+
     jinja_env.globals.update({
         'parent_has_nonpublic_destructor' : lambda c: any(all_classes[p].nonpublic_destructors for p in c.superclasses if p in all_classes),
         'is_byref' : lambda t: is_byref_arg(t,settings['byref_types']),
@@ -398,26 +398,28 @@ def render(settings,module_settings,modules,class_dict):
         'settings' : settings
         })
 
+    jinja_env.filters['get'] = lambda x,n: x[n]
+
     template_sub = jinja_env.get_template('template_sub.j2')
     template_sub_pre = jinja_env.get_template('template_sub_pre.j2')
     template_tmpl = jinja_env.get_template('template_templates.j2')
     template_main = jinja_env.get_template('template_main.j2')
     template_cmake = jinja_env.get_template('CMakeLists.j2')
-    
+
     output_path.mkdir_p()
     with  output_path:
         for m in tqdm(modules):
             tqdm.write(f'Processing module {m.name}')
-            
+
             jinja_env.globals.update({'module_settings' : module_settings.get(m.name,module_schema.validate({}))})
-            
+
             class_templates = {el.name:el for el in m.class_templates}
-            
+
             typedefs = (t for h in m.headers for t in h.typedefs if not t.pod and not "_H" in t.name and len(t.template_base)>0 and not t.type.startswith("opencascade::handle"))
             typedefs = filter(lambda t: not t.type.split(t.template_base[0])[-1].endswith("::Iterator"), typedefs)
 
             classes_typedefs = { el.name : el for el in (m.classes + list(typedefs)) }
-            
+
             dag = {}
             for el in classes_typedefs.values():
                 if isinstance(el,ClassInfo):
@@ -426,17 +428,17 @@ def render(settings,module_settings,modules,class_dict):
                     base = el.template_base[0]
                     deps = set(el.template_args)
                     deps |= set(class_templates[base].superclass) if base in class_templates else set()
-                
+
                 dag[el.name] = deps
-            
+
             sorted_classes_typedefs = [ classes_typedefs[k] for k in toposort_flatten(dag) if k in classes_typedefs]
-            
+
             with open(f'{m.name}_pre.cpp','w') as f:
                 f.write(template_sub_pre.render({'module' : m,
                                                  'classes_typedefs' : sorted_classes_typedefs,
                                                  'str' : str,
                                                  'type': type}))
-            
+
             with open(f'{m.name}.cpp','w') as f:
                 f.write(template_sub.render({'module' : m }))
 
