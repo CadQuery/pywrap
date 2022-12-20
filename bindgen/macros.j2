@@ -104,12 +104,16 @@
     <{% for type,name,default in t.type_params %}{{name}}{{ "," if not loop.last }}{% endfor %}>
 {%- endmacro -%}
 
+{%- macro template_return_type(cls,f) -%}
+    {% if f.return_type.startswith('cls.name'+'::') %}{{cls.name}}{{ template_args(cls) }}::{{ f.return_type.split('::')[1]}}{% else %}{{f.return_type}}{% endif %}
+{%- endmacro -%}
+
 {%- macro template_method_pointer(cls,f) -%}
-    ({{f.return_type}} ({{cls.name}}{{template_args(cls)}}::*)({% for _,t,d in f.args %} {{arg_type_with_template_params(cls, t)}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}{{template_args(cls)}}::{{f.name}}
+    ({{template_return_type(cls,f)}} ({{cls.name}}{{template_args(cls)}}::*)({% for _,t,d in f.args %} {{arg_type_with_template_params(cls, t)}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}{{template_args(cls)}}::{{f.name}}
 {%- endmacro -%}
 
 {%- macro template_static_method_pointer(cls,f) -%}
-    ({{f.return_type}} (*)({% for _,t,d in f.args %} {{arg_type_with_template_params(cls, t)}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}{{template_args(cls)}}::{{f.name}}
+    ({{template_return_type(cls,f)}} (*)({% for _,t,d in f.args %} {{arg_type_with_template_params(cls, t)}} {{ "," if not loop.last }} {% endfor %}) {{ "const" if f.const }}) &{{cls.name}}{{template_args(cls)}}::{{f.name}}
 {%- endmacro -%}
 
 {%- macro template_pointer(cls) -%}
