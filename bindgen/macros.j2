@@ -105,7 +105,7 @@
 {%- endmacro -%}
 
 {%- macro template_return_type(cls,f) -%}
-    {% if f.return_type.startswith('cls.name'+'::') %}{{cls.name}}{{ template_args(cls) }}::{{ f.return_type.split('::')[1]}}{% else %}{{f.return_type}}{% endif %}
+    {% if f.return_type.startswith(cls.name+'::') %}{{cls.name}}{{ template_args(cls) }}::{{ f.return_type.split('::')[1]}}{% else %}{{f.return_type}}{% endif %}
 {%- endmacro -%}
 
 {%- macro template_method_pointer(cls,f) -%}
