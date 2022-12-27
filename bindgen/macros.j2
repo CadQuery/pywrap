@@ -69,7 +69,7 @@
 {%- macro arg_type_with_template_params(template, t) -%}
     {%- set ns = namespace(t=t) -%}
     {%- if t.startswith(template.name+'::') -%}
-        {% set ns.t = template.name + '<' +  template.type_params|map('get',1)|join(', ') + '>' + t.split(template.name)[-1] %}
+        {% set ns.t = 'typename ' + template.name + '<' +  template.type_params|map('get',1)|join(', ') + '>' + t.split(template.name)[-1] %}
     {%- endif -%}
     {{ ns.t }}
 {%- endmacro -%}
