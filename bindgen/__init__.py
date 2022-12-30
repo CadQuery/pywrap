@@ -190,6 +190,11 @@ def transform_module(m,
     # remove undefined symbols
     remove_undefined_mangled(m,sym)
 
+    # sort to be reproducible
+    m.headers = sorted(m.headers, key=lambda x: x.name)
+    for h in m.headers:
+        h.dependancies = sorted(set(h.dependancies))
+
 def split_into_modules(names,files):
 
     rv = {}
