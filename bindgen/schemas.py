@@ -64,5 +64,6 @@ global_schema = Schema({'name' : str,
                         Optional('Windows',default=None) : platform_settings,
                         Optional('OSX',default=None) : platform_settings,
                         Optional('FreeBSD',default=None) : platform_settings,
+                        Optional('Attributes', default={}) : {str : str},
                         Optional('Modules',default=None) : {str : module_schema}
                         })

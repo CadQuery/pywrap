@@ -20,7 +20,7 @@ void register_{{mod}}(py::module&);
 {% endfor %}
 
 // main module definiiton
-PYBIND11_MODULE({{name}}, m) {    
+PYBIND11_MODULE({{name}}, m) {
 
 // register submodules
 
@@ -30,6 +30,12 @@ PYBIND11_MODULE({{name}}, m) {
 
 {% for mod in sorted_modules %}
     register_{{mod}}(m);
+{% endfor %}
+
+// Add attributes if present
+
+{% for k,v in settings['Attributes'].items() %}
+    m.attr("{{k}}") = py::cast("{{v}}");
 {% endfor %}
 
 }
