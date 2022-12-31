@@ -193,7 +193,7 @@ def transform_module(m,
     # sort to be reproducible
     m.headers = sorted(m.headers, key=lambda x: x.name)
     for h in m.headers:
-        h.dependencies = sorted(set(h.dependancies))
+        h.dependencies = sorted(set(h.dependencies))
 
 def split_into_modules(names,files):
 
