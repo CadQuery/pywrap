@@ -120,9 +120,9 @@ py::object klass;
         .def("{{m.name}}",
              []( {{c.name}} &self {{ "," if argtypes_names_not_byref(m)|length}} {{argtypes_names_not_byref(m)}} ){
                  {{init_outputs_byref(m) | indent(16) }}
-                 self.{{m.name}}({{argnames_wo_type(m)}});
+                 {%+ if is_boolean_return(m) +%}Standard_Boolean rv = {% endif %}self.{{m.name}}({{argnames_wo_type(m)}});
                  {{handle_results_ptr_byref(m) | indent(16) }}
-                 return std::make_tuple({{argnames_byref(m)}}); },
+                 return std::make_tuple({% if is_boolean_return(m) %}rv,{% endif %}{{argnames_byref(m)}}); },
              R"#({{m.comment}})#" {{argnames_not_byref(m)}}
           )
     {% endif %}
@@ -142,9 +142,9 @@ py::object klass;
         .def_static("{{m.name}}_s",
             []({{argtypes_names_not_byref(m)}} ){
                 {{init_outputs_byref(m) | indent(16) }}
-                {{c.name}}::{{m.name}}({{argnames_wo_type(m)}});
+                {%+ if is_boolean_return(m) +%}Standard_Boolean rv = {% endif %}{{c.name}}::{{m.name}}({{argnames_wo_type(m)}});
                 {{handle_results_ptr_byref(m) | indent(16) }}
-                {% if args_byref(m) %}return std::make_tuple({{argnames_byref(m)}});{% endif %} },
+                {% if args_byref(m) %}return std::make_tuple({% if is_boolean_return(m) %}rv,{% endif %}{{argnames_byref(m)}});{% endif %} },
             R"#({{m.comment}})#" {{argnames_not_byref(m)}}
           )
     {% endif %}

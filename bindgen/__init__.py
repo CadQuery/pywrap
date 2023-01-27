@@ -99,7 +99,7 @@ def is_byref(met,byref_types):
 
     rv = False
 
-    if met.return_type == 'void':
+    if met.return_type == 'void' or met.return_type == 'Standard_Boolean':
         for _,arg,_ in met.args:
             if any(arg.startswith(byref_t) and arg.endswith('&')
                    for byref_t in byref_types):
@@ -159,7 +159,6 @@ def transform_module(m,
 
     if byref_types:
         for c in m.classes:
-
             c.methods_byref = [met for met in c.methods if is_byref(met,byref_types)]
             c.methods_return_byref = [met for met in c.methods if is_byref_return(met) and not met.pure_virtual]
             c.static_methods_byref = [met for met in c.static_methods if is_byref(met,byref_types)]
@@ -384,6 +383,7 @@ def render(settings,module_settings,modules,class_dict):
         'parent_has_nonpublic_destructor' : lambda c: any(all_classes[p].nonpublic_destructors for p in c.superclasses if p in all_classes),
         'is_byref' : lambda t: is_byref_arg(t,settings['byref_types']),
         'is_byref_smart_ptr' : lambda t: is_byref_arg(t,settings['byref_types_smart_ptr']),
+        'is_boolean_return': lambda t: t.return_type == 'Standard_Boolean',
         'args_byref' : lambda f: [arg for arg,t,_ in f.args if is_byref_arg(t,settings['byref_types'])],
         'enumerate' : enumerate,
         'platform' : platform,
