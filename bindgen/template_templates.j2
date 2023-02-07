@@ -70,6 +70,25 @@ void register_template_{{t.name}}(py::object &m, const char *name){
         .def("__iter__",[](const {{t.name}}{{template_args(t)}} &self)
              { return py::make_iterator<py::return_value_policy::copy>(self.begin(), self.end()); },
              py::keep_alive<0, 1>())
+    {% elif "cbegin" in t.methods_dict and "cend" in t.methods_dict %}
+        .def("__iter__",[](const {{t.name}}{{template_args(t)}} &self)
+             { return py::make_iterator<py::return_value_policy::copy>(self.cbegin(), self.cend()); },
+             py::keep_alive<0, 1>())
+    {% endif %}
+    {% if "Extent" in t.methods_dict %}
+        .def("__len__",[](const {{t.name}}{{template_args(t)}} &self)
+             { return self.Extent(); },
+             )
+    {% endif %}
+    {% if "Size" in t.methods_dict %}
+        .def("__len__",[](const {{t.name}}{{template_args(t)}} &self)
+             { return self.Size(); },
+             )
+    {% endif %}
+    {% if "IsEmpty" in t.methods_dict %}
+        .def("__bool__",[](const {{t.name}}{{template_args(t)}} &self)
+             { return self.IsEmpty(); },
+             )
     {% endif %}
     ;
 };
