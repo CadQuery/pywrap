@@ -77,17 +77,17 @@ void register_template_{{t.name}}(py::object &m, const char *name){
     {% endif %}
     {% if "Extent" in t.methods_dict %}
         .def("__len__",[](const {{t.name}}{{template_args(t)}} &self)
-             { return self.Extent(); },
+             { return self.Extent(); }
              )
     {% endif %}
     {% if "Size" in t.methods_dict %}
         .def("__len__",[](const {{t.name}}{{template_args(t)}} &self)
-             { return self.Size(); },
+             { return self.Size(); }
              )
     {% endif %}
     {% if "IsEmpty" in t.methods_dict %}
         .def("__bool__",[](const {{t.name}}{{template_args(t)}} &self)
-             { return self.IsEmpty(); },
+             { return self.IsEmpty(); }
              )
     {% endif %}
     ;
