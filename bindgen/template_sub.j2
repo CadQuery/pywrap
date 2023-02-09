@@ -202,7 +202,18 @@ py::object klass;
              {% if not is_byref_smart_ptr(m.return_type) and not m.return_type.startswith('const') %}, py::return_value_policy::reference_internal {% endif %}
          )
     {% endif %}
-    {%- endfor -%};
+    {%- endfor -%}
+    // special python methods
+    {% if "IsDone" in c.methods_dict %}
+        .def("__bool__",[](const {{c.name}} &self)
+             { return self.IsDone(); }
+             )
+    {% elif "IsNull" in c.methods_dict %}
+        .def("__bool__",[](const {{c.name}} &self)
+             { return self.IsNull(); }
+             )
+    {% endif %}
+    ;
 {% endif %}{% endfor %}
 
 // functions
