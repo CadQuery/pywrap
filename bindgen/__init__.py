@@ -46,7 +46,7 @@ def read_symbols(p):
     '''
 
     sym = pd.read_csv(p,header=None,names=['name'],delim_whitespace=True,
-                      on_bad_lines=False).dropna()
+                      on_bad_lines='skip').dropna()
     return sym
 
 def remove_undefined_mangled(m,sym):
