@@ -31,6 +31,11 @@ def parse_tu(path,
     for inc in platform_includes:
         args.append(f'-I{inc}')
 
+    # if clang is configured with a system-wide config file, then some additional
+    # unexpected headers might be added by the indexer during parsing and those ones will 
+    # have a None filename location
+    args.append('--no-default-config')
+
     ix = get_index()
 
     with open(path) as f:
