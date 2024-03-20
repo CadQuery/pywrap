@@ -45,8 +45,12 @@ def read_symbols(p):
     This information is used later for flagging undefined symbols
     '''
 
-    sym = pd.read_csv(p,header=None,names=['name'],delim_whitespace=True,
-                      error_bad_lines=False).dropna()
+    if int(pd.__version__.split('.')[0]) >= 2:
+        sym = pd.read_csv(p,header=None,names=['name'],delim_whitespace=True,
+                          on_bad_lines='skip').dropna()
+    else:
+        sym = pd.read_csv(p,header=None,names=['name'],delim_whitespace=True,
+                          error_bad_lines=False).dropna()
     return sym
 
 def remove_undefined_mangled(m,sym):
