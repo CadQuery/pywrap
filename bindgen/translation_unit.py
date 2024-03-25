@@ -41,6 +41,10 @@ def parse_tu(path,
     with open(path) as f:
         src = f.read()
 
+    # skip possible invisible BOM character which would lead to clang error later
+    if src[0] == "\ufeff" :
+        src = src[1:]
+
     dummy_code = f'{parsing_header}\n{platform_parsing_header}\n{tu_parsing_header}\n{src}'
     tr_unit = ix.parse('dummy.cxx',
                        args,
