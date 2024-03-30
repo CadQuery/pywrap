@@ -1,4 +1,5 @@
-from clang.cindex import Config, Index, Cursor
+from clang.cindex import Config, Index, Cursor, _CXString, register_function
+from clang.cindex import conf as confClang
 from ctypes import c_uint
 from path import Path
 from os import getenv
@@ -8,7 +9,7 @@ from .cymbal import monkeypatch_cursor
 
 initialized = False
 ix = None
-
+clangVersion = None
 
 def current_platform():
     
@@ -49,9 +50,18 @@ def get_includes(rv=[]):
     
     return rv
 
+def get_clang_version() :
+
+    global initialized,clangVersion
+
+    if not initialized: init_clang()
+
+    return int(clangVersion.split()[-1].split(".")[0])
+
+
 def init_clang(path=None):
     
-    global initialized,ix
+    global clangVersion,initialized,ix
     
     if not initialized:
         conda_prefix = Path(getenv('CONDA_PREFIX', ''))
@@ -67,6 +77,10 @@ def init_clang(path=None):
         
         Config.set_library_file(path)
         
+        item = ("clang_getClangVersion", [], _CXString, _CXString.from_result)
+        register_function(confClang.lib, item, False)
+        clangVersion = confClang.lib.clang_getClangVersion()
+
         # Monkeypatch clang
         monkeypatch_cursor('is_virtual',
                            'clang_isVirtualBase',

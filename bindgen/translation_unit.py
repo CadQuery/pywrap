@@ -3,7 +3,7 @@ import pybind11
 
 from clang.cindex import TranslationUnit as TU
 
-from .utils import get_index, get_includes
+from .utils import get_index, get_includes, get_clang_version
 
 
 
@@ -34,7 +34,8 @@ def parse_tu(path,
     # if clang is configured with a system-wide config file, then some additional
     # unexpected headers might be added by the indexer during parsing and those ones will 
     # have a None filename location
-    args.append('--no-default-config')
+    if get_clang_version() > 15 :
+        args.append('--no-default-config')
 
     ix = get_index()
 
