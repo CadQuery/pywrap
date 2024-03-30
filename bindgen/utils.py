@@ -56,6 +56,7 @@ def get_clang_version() :
 
     if not initialized: init_clang()
 
+    # clangVersion should be a string like "clang version MAJOR.MINOR.PATCH"
     return int(clangVersion.split()[-1].split(".")[0])
 
 
