@@ -16,6 +16,10 @@ class_schema = Schema({
         Optional('additional_static_methods',default={}) : {str : method_schema}
         })
 
+template_schema = Schema({
+        Optional('exclude_constructors',default=[]) : [int]
+        })
+
 module_schema = Schema({
         Optional('module_parsing_header',default='') : str,
         Optional('parsing_headers',default={}) : {str : str},
@@ -32,6 +36,7 @@ module_schema = Schema({
         Optional('include_header_post',default=None) : str,
         Optional('template_specializations',default=[]) : [str],
         Optional('Classes',default={}) : {str : class_schema},
+        Optional('Templates',default={}) : {str : template_schema},
         Optional('additional_functions',default={}) : {str : function_schema}
         })
 
