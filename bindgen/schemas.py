@@ -33,6 +33,7 @@ module_schema = Schema({
         Optional('exclude_class_template_methods',default=[]) : [str],
         Optional('exclude_typedefs',default=[]) : [str],
         Optional('include_body_post',default=None) : str,
+        Optional('include_body_template_post',default=None) : str,
         Optional('include_header_post',default=None) : str,
         Optional('template_specializations',default=[]) : [str],
         Optional('Classes',default={}) : {str : class_schema},
