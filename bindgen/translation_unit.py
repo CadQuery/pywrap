@@ -21,20 +21,16 @@ def parse_tu(path,
 
     args.append(f'-I{pybind11.get_include()}')
     args.append(f'-I{input_folder}')
-    
+
     if prefix:
         args.append(f'--sysroot={prefix}')
-    
+
     for inc in get_includes():
         args.append(f'-I{inc}')
-    
+
     for inc in platform_includes:
         args.append(f'-I{inc}')
 
-    # if clang is configured with a system-wide config file, then some additional
-    # unexpected headers might be added by the indexer during parsing and those ones will 
-    # have a None filename location
-    args.append('--no-default-config')
 
     ix = get_index()
 
