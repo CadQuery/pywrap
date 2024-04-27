@@ -31,6 +31,8 @@ def parse_tu(path,
     for inc in platform_includes:
         args.append(f'-I{inc}')
 
+    args.append('--no-default-config')
+
 
     ix = get_index()
 
