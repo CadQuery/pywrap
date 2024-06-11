@@ -119,7 +119,7 @@ def _exclude_methods(classes, exclusions):
         for c in (c for c in classes if match(cls_pat,c.name)):
             c.methods = [m for m in c.methods if not match(m_pat,m.name)]
             c.static_methods = [m for m in c.static_methods if not match(m_pat,m.name)]
-
+            c.operators = [m for m in c.operators if not match(m_pat,m.name)]
 
 def transform_module(m,
                      sym,
