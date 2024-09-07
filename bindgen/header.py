@@ -25,12 +25,12 @@ def get_symbols(tu,
     '''
     Symbols defined locally (i.e. without includes) and are not forward declarations
     Search_in allows to explore nested entities as well.
-    
+
     '''
     tu_path = tu.path
-    
+
     def _get_symbols(cursor,kind,ignore_forwards):
-    
+
         for child in cursor.get_children():
             if paths_approximately_equal(Path(child.location.file.name),tu_path) \
             and child.kind == kind:
@@ -47,7 +47,7 @@ def get_symbols(tu,
             and child.kind in search_in:
                 for nested in _get_symbols(child,kind,ignore_forwards):
                     if nested.access_specifier == AccessSpecifier.PUBLIC: yield nested
-    
+
     for child in _get_symbols(tu.cursor, kind, ignore_forwards):
         yield child
 
@@ -195,19 +195,19 @@ def get_inheritance_relations(tu):
 
     for c in all_classes:
         yield c.spelling,get_base_class((c))
-        
+
     all_templates = get_x(tu.cursor,CursorKind.CLASS_TEMPLATE)
 
     for c in all_templates:
         yield c.spelling,get_base_class((c))
-        
+
 def get_public_fields(cls):
     '''Public methods of a given class
     '''
 
     for child in get_xx(cls,CursorKind.FIELD_DECL, AccessSpecifier.PUBLIC):
         yield child
-        
+
 def get_public_enums(cls):
     '''Public enums of a given class
     '''
@@ -317,7 +317,7 @@ def get_free_method_definitions(tu):
 class BaseInfo(object):
     '''Base class for the info objects
     '''
-    
+
     name : str
     comment : str
 
@@ -329,15 +329,15 @@ class BaseInfo(object):
 class FieldInfo(BaseInfo):
     '''Container for field parsing reults
     '''
-    
+
     type : str
     const : bool
     pod : bool
-    
+
     def __init__(self,cur):
 
         super(FieldInfo,self).__init__(cur)
-        
+
         self.type = cur.type.spelling
         self.const = cur.type.is_const_qualified()
         self.pod = cur.type.is_pod()
@@ -345,7 +345,7 @@ class FieldInfo(BaseInfo):
 class EnumInfo(BaseInfo):
     '''Container for enum parsing results
     '''
-    
+
     comment : str
     values : List[str]
     anonymous : bool
@@ -358,16 +358,16 @@ class EnumInfo(BaseInfo):
         self.values = [el.spelling for el in get_enum_values(cur)]
         self.anonymous = False
         self.name = cur.type.spelling
-            
+
         if any(x in self.name for x in ['anonymous', 'unnamed']):
             self.anonymous = True
             self.name = '::'.join(self.name.split('::')[:-1]) #get rid of anonymous
-            
+
 
 class FunctionInfo(BaseInfo):
     '''Container for function parsing results
     '''
-    
+
     full_name : str
     mangled_name : str
     return_type : str
@@ -428,7 +428,7 @@ class FunctionInfo(BaseInfo):
             decl = cur.type.get_declaration()
 
         # if typedef that is not POD
-        if decl.kind == CursorKind.TYPEDEF_DECL and not decl.underlying_typedef_type.is_pod():
+        if decl.kind in (CursorKind.TYPEDEF_DECL, CursorKind.TYPE_ALIAS_DECL) and not decl.underlying_typedef_type.is_pod():
             spelling = decl.underlying_typedef_type.spelling
             if add_qualifiers:
                 rv=const+spelling+ptr+const_ptr
@@ -488,7 +488,7 @@ class DestructorInfo(FunctionInfo):
 class ClassInfo(object):
     '''Container for class parsing results
     '''
-    
+
     name : str
     comment : str
     abstract : bool
@@ -497,7 +497,7 @@ class ClassInfo(object):
     nonpublic_constructors : List[ConstructorInfo]
 
     fields : List[FieldInfo]
-    
+
     enums : List[EnumInfo]
 
     methods : List[MethodInfo]
@@ -515,7 +515,7 @@ class ClassInfo(object):
     nonpublic_destructors : List[DestructorInfo]
 
     ptr : Any #is this needed?
-    
+
     superclass : List[str]
     rootclass : List[str]
     superclasses : List[str]
@@ -542,7 +542,7 @@ class ClassInfo(object):
         self.private_virtual_methods = self.filter_rvalues((MethodInfo(el) for el in get_private_pure_virtual_methods(cur)))
 
         self.static_methods = self.filter_rvalues((MethodInfo(el) for el in get_public_static_methods(cur)))
-        
+
         self.static_methods_byref = []
         self.methods_byref = []
         self.methods_return_byref = []
@@ -586,7 +586,7 @@ class ClassInfo(object):
         self.static_operators += other.static_operators
         self.destructors += other.destructors
         self.nonpublic_destructors +=  other.nonpublic_destructors
-        
+
         self.fields += other.fields
         self.enums += other.enums
 
@@ -595,7 +595,7 @@ class ClassInfo(object):
         self.private_virtual_methods_dict = {**self.protected_virtual_methods_dict,**other.protected_virtual_methods_dict}
 
 class ClassTemplateInfo(ClassInfo):
-  
+
     type_params : List[Tuple[Optional[str],str,str]]
 
     def __init__(self,cur):
@@ -607,7 +607,7 @@ class ClassTemplateInfo(ClassInfo):
                               default) for el,default in get_template_type_params(cur)]
 
 class TypedefInfo(BaseInfo):
-  
+
     type : str
     pod : bool
     template_base : List[str]
@@ -633,7 +633,7 @@ class ForwardInfo(BaseInfo):
 class HeaderInfo(object):
     '''Container for header parsing results
     '''
-    
+
     name : str
     short_name : str
     dependencies : List[str]
@@ -665,20 +665,20 @@ class HeaderInfo(object):
         inheritance = self.inheritance
         superclasses = cls.superclasses
         rootclass = cls.rootclass
-        
+
         cls.superclass = inheritance.get(cls.name,[])
-        
+
         def _resolve_inheritance(node):
             '''Recurisvely traverse the inheritance tree'''
-            
+
             for el in node:
                 superclasses.append(el)
-                
+
                 if el in inheritance:
                     _resolve_inheritance(inheritance[el])
                 else:
                     rootclass.append(el)
-        
+
         _resolve_inheritance(cls.superclass)
 
 
@@ -738,7 +738,7 @@ class HeaderInfo(object):
         #resolve inheritance relations
         for c in self.classes.values():
             self.resolve_inheritance(c)
-            
+
         for c in self.class_templates.values():
             self.resolve_inheritance(c)
 
