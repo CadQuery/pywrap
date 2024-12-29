@@ -199,7 +199,7 @@ py::object klass;
              {{ method_pointer(c,m) }},
              R"#({{m.comment}})#"
              {{argnames(m)}}
-             {% if not is_byref_smart_ptr(m.return_type) and not m.return_type.startswith('const') %}, py::return_value_policy::reference_internal {% endif %}
+             {% if not is_byref_smart_ptr(m.return_type) %}, py::return_value_policy::reference_internal {% endif %}
          )
     {% endif %}
     {%- endfor -%}
