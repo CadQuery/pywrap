@@ -1,6 +1,6 @@
 import sys
 
-from jinja2 import Environment,meta,FileSystemLoader
+from jinja2 import Environment, meta, FileSystemLoader
 from path import Path
 
 
@@ -11,8 +11,9 @@ def get_variables(filename):
 
     return meta.find_undeclared_variables(parsed_content)
 
-if __name__ == '__main__':
-    
+
+if __name__ == "__main__":
+
     env = Environment()
     with open(sys.argv[1]) as template:
         env.parse(template.read())

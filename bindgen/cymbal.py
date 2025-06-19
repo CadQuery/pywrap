@@ -1,4 +1,4 @@
-'''
+"""
 Code from https://github.com/AndrewWalker/cymbal/blob/master/cymbal/clangext.py
 
 Copyright (c) 2016 Andrew Walker
@@ -20,32 +20,38 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-'''
+"""
 import clang.cindex
 from ctypes import *
 
-__all__ = ['monkeypatch_type', 'monkeypatch_cursor', 'CymbalException']
+__all__ = ["monkeypatch_type", "monkeypatch_cursor", "CymbalException"]
+
 
 def find_libclang_function(function):
     return getattr(clang.cindex.conf.lib, function)
+
 
 class CymbalException(Exception):
     def __init__(self, msg):
         super(CymbalException, self).__init__(msg)
 
+
 def monkeypatch_helper(classtype, name, library_function, args, result):
     if hasattr(classtype, name):
-        raise CymbalException('failed to add method, %s is already available' % name) 
+        raise CymbalException("failed to add method, %s is already available" % name)
     f = find_libclang_function(library_function)
     f.argtypes = args
     f.restype = result
+
     def impl(*args):
         return f(*args)
+
     setattr(classtype, name, impl)
+
 
 def monkeypatch_type(method_name, library_function, args, result):
     monkeypatch_helper(clang.cindex.Type, method_name, library_function, args, result)
 
+
 def monkeypatch_cursor(method_name, library_function, args, result):
     monkeypatch_helper(clang.cindex.Cursor, method_name, library_function, args, result)
-

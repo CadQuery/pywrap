@@ -1,7 +1,7 @@
 {# useful macros -#}
 
 {%- macro cls_name(cls) -%}
-    {{ cls.name|replace('<', '_')|replace('>', '') }}
+    {{ cls.name|replace('<', '_')|replace(' ', '_')|replace('>', '') }}
 {%- endmacro -%}
 
 {%- macro pointer(cls) -%}

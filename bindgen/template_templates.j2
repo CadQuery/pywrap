@@ -43,8 +43,10 @@ void preregister_template_{{t.name}}(py::object &m, const char *name){
 template {{template_args_typename(t)}}
 void register_template_{{t.name}}(py::object &m, const char *name){
     static_cast<py::class_<{{t.name}}{{template_args(t)}} {{template_pointer(t)}} {{super(t,all_classes,all_typedefs)}}>>(m.attr(name))
-    {% for con in t.constructors %}
+    {% for i, con in enumerate(t.constructors) %}
+        {% if not i in module_settings['Templates'].get(t.name,{}).get('exclude_constructors',[])  %}
         .def(py::init< {{ argtypes(con) }} >() {{argnames_template(t, con)}} )
+        {% endif %}
     {% endfor %}
     {% for m in t.methods if not references_inner(t.name,m)%}
         .def("{{m.name}}",
@@ -96,6 +98,10 @@ void register_template_{{t.name}}(py::object &m, const char *name){
 
 
 // user-defined post
+{% if module_settings['include_body_template_post'] %}
+{{ module_settings['include_body_template_post'] }}
+{% endif %}
+
 {% if include_post %}
 #include "{{ include_post }}"
 {% endif %}
