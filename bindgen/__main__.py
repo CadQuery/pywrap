@@ -10,100 +10,133 @@ from .utils import get_includes, init_clang
 
 
 @click.group()
-@click.option('-n','--njobs', default=-2,type=int)
-@click.option('-v','--verbose',is_flag=True)
-@click.option('-c','--clean',is_flag=True)
-@click.option('-i', '--include', multiple=True, type=click.Path(True,False,True), default=[], help='additional inlcude paths')
-@click.option('-l', '--libclang',type=click.Path(True,True,False), default=None, help='libclang location')
+@click.option("-n", "--njobs", default=-2, type=int)
+@click.option("-v", "--verbose", is_flag=True)
+@click.option("-c", "--clean", is_flag=True)
+@click.option(
+    "-i",
+    "--include",
+    multiple=True,
+    type=click.Path(True, False, True),
+    default=[],
+    help="additional inlcude paths",
+)
+@click.option(
+    "-l",
+    "--libclang",
+    type=click.Path(True, True, False),
+    default=None,
+    help="libclang location",
+)
 @click.pass_context
-def main(ctx,clean,verbose,njobs,include,libclang):
-    
+def main(ctx, clean, verbose, njobs, include, libclang):
+
     if not verbose:
         logzero.logger.setLevel(logzero.logging.INFO)
-        
+
     if include:
         get_includes.__defaults__ = (include,)
-        
+
     if libclang:
         init_clang.__defaults__ = (libclang,)
-    
-    ctx.obj = SimpleNamespace(verbose=verbose,njobs=njobs,clean=clean)
+
+    ctx.obj = SimpleNamespace(verbose=verbose, njobs=njobs, clean=clean)
+
 
 @main.command()
-@click.argument('configuration')
-@click.argument('output')
-@click.argument('platform', default=None,required=False,type=click.Choice(('Linux','Windows','OSX','FreeBSD')))
+@click.argument("configuration")
+@click.argument("output")
+@click.argument(
+    "platform",
+    default=None,
+    required=False,
+    type=click.Choice(("Linux", "Windows", "OSX", "FreeBSD")),
+)
 @click.pass_obj
-def parse(obj,configuration,output,platform=None):
-    
-    settings,module_mapping,module_settings = read_settings(configuration)
-    result = parse_modules(obj.verbose,obj.njobs,settings,module_mapping,module_settings,platform)
-    
-    with open(output,'wb') as f:
-        pickle.dump(result,f)
-        
+def parse(obj, configuration, output, platform=None):
+
+    settings, module_mapping, module_settings = read_settings(configuration)
+    result = parse_modules(
+        obj.verbose, obj.njobs, settings, module_mapping, module_settings, platform
+    )
+
+    with open(output, "wb") as f:
+        pickle.dump(result, f)
+
+
 @main.command()
-@click.argument('configuration')
-@click.argument('input')
-@click.argument('output')
+@click.argument("configuration")
+@click.argument("input")
+@click.argument("output")
 @click.pass_obj
-def transform(obj,configuration,input,output):
-    
-    with open(input,'rb') as f:
+def transform(obj, configuration, input, output):
+
+    with open(input, "rb") as f:
         modules = pickle.load(f)
-    
-    settings,module_mapping,module_settings = read_settings(configuration)
-    modules,class_dict,enum_dict = transform_modules(obj.verbose,obj.njobs,settings,module_mapping,module_settings,modules)
-    
-    with open(output,'wb') as f:
-        pickle.dump((modules,class_dict,enum_dict),f)
+
+    settings, module_mapping, module_settings = read_settings(configuration)
+    modules, class_dict, enum_dict = transform_modules(
+        obj.verbose, obj.njobs, settings, module_mapping, module_settings, modules
+    )
+
+    with open(output, "wb") as f:
+        pickle.dump((modules, class_dict, enum_dict), f)
 
 
 @main.command()
-@click.argument('configuration')
-@click.argument('input')
+@click.argument("configuration")
+@click.argument("input")
 @click.pass_obj
-def generate(obj,configuration,input):
-    
-    settings,module_mapping,module_settings = read_settings(configuration)
-    out = Path(settings['output_folder'])
-    
+def generate(obj, configuration, input):
+
+    settings, module_mapping, module_settings = read_settings(configuration)
+    out = Path(settings["output_folder"])
+
     if obj.clean:
         out.rmtree_p()
-    
-    with open(input,'rb') as f:
-        modules,class_dict,enum_dict = pickle.load(f)
-        
-    render(settings,module_settings,modules,class_dict)
-    
-    pre = settings['Extras']['include_pre']
-    post = settings['Extras']['include_pre']
-    
-    if pre: Path(pre).copy(out)
-    if post: Path(post).copy(out)
+
+    with open(input, "rb") as f:
+        modules, class_dict, enum_dict = pickle.load(f)
+
+    render(settings, module_settings, modules, class_dict)
+
+    pre = settings["Extras"]["include_pre"]
+    post = settings["Extras"]["include_pre"]
+
+    if pre:
+        Path(pre).copy(out)
+    if post:
+        Path(post).copy(out)
+
 
 @main.command()
-@click.argument('folder')
+@click.argument("folder")
 @click.pass_obj
-def validate(obj,folder):
-    
-    validate_result(obj.verbose,obj.njobs,folder)
-      
+def validate(obj, folder):
+
+    validate_result(obj.verbose, obj.njobs, folder)
+
 
 @main.command()
-@click.argument('configuration')
-@click.argument('platform', default=None,required=False,type=click.Choice(('Linux','Windows','OSX','FreeBSD')))
-@click.argument('tmp_parsed', default = 'tmp.pkl')
-@click.argument('tmp_filtered', default = 'tmp_filtered.pkl')
+@click.argument("configuration")
+@click.argument(
+    "platform",
+    default=None,
+    required=False,
+    type=click.Choice(("Linux", "Windows", "OSX", "FreeBSD")),
+)
+@click.argument("tmp_parsed", default="tmp.pkl")
+@click.argument("tmp_filtered", default="tmp_filtered.pkl")
 @click.pass_context
-def all(ctx,configuration,platform,tmp_parsed,tmp_filtered):
-    
+def all(ctx, configuration, platform, tmp_parsed, tmp_filtered):
+
     ctx.invoke(parse, configuration=configuration, output=tmp_parsed, platform=platform)
-    ctx.invoke(transform,  configuration=configuration, input=tmp_parsed, output=tmp_filtered)
+    ctx.invoke(
+        transform, configuration=configuration, input=tmp_parsed, output=tmp_filtered
+    )
     ctx.invoke(generate, configuration=configuration, input=tmp_filtered)
 
-if __name__ == '__main__':
-    
+
+if __name__ == "__main__":
+
     main()
-    
-    
