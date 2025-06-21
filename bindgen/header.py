@@ -34,7 +34,8 @@ def get_symbols(tu, kind, ignore_forwards=True, search_in=(CursorKind.NAMESPACE,
 
         for child in cursor.get_children():
             if (
-                paths_approximately_equal(Path(child.location.file.name), tu_path)
+                paths_approximately_equal(
+                    Path(child.location.file.name), tu_path)
                 and child.kind == kind
             ):
                 if ignore_forwards:
@@ -49,7 +50,8 @@ def get_symbols(tu, kind, ignore_forwards=True, search_in=(CursorKind.NAMESPACE,
                 else:
                     yield child
             if (
-                paths_approximately_equal(Path(child.location.file.name), tu_path)
+                paths_approximately_equal(
+                    Path(child.location.file.name), tu_path)
                 and child.kind in search_in
             ):
                 for nested in _get_symbols(child, kind, ignore_forwards):
@@ -167,7 +169,8 @@ def get_classes(tu):
     """
 
     return chain(
-        get_symbols(tu, CursorKind.CLASS_DECL), get_symbols(tu, CursorKind.STRUCT_DECL)
+        get_symbols(tu, CursorKind.CLASS_DECL), get_symbols(
+            tu, CursorKind.STRUCT_DECL)
     )
 
 
@@ -211,7 +214,8 @@ def get_template_type_params(cls):
 
     for t in get_x_multi(
         cls,
-        (CursorKind.TEMPLATE_TYPE_PARAMETER, CursorKind.TEMPLATE_NON_TYPE_PARAMETER),
+        (CursorKind.TEMPLATE_TYPE_PARAMETER,
+         CursorKind.TEMPLATE_NON_TYPE_PARAMETER),
     ):
         if len(list(t.get_children())) == 0:
             yield t, None
@@ -468,7 +472,8 @@ class EnumInfo(BaseInfo):
 
         if any(x in self.name for x in ["anonymous", "unnamed"]):
             self.anonymous = True
-            self.name = "::".join(self.name.split("::")[:-1])  # get rid of anonymous
+            self.name = "::".join(self.name.split(
+                "::")[:-1])  # get rid of anonymous
 
 
 class FunctionInfo(BaseInfo):
@@ -567,7 +572,8 @@ class FunctionInfo(BaseInfo):
             decl.kind in (CursorKind.TYPEDEF_DECL, CursorKind.TYPE_ALIAS_DECL)
             and not decl.underlying_typedef_type.is_pod()
         ):
-            spelling = decl.underlying_typedef_type.spelling
+            # underlying_typedef_type.spelling
+            spelling = self._full_spelling(decl)
 
             if add_qualifiers:
                 rv = const + spelling + ptr + const_ptr
@@ -589,9 +595,22 @@ class FunctionInfo(BaseInfo):
         rv = None
         tokens = [t.spelling for t in cur.get_tokens()]
         if "=" in tokens:
-            rv = " ".join(tokens[tokens.index("=") + 1 :])
+            rv = " ".join(tokens[tokens.index("=") + 1:])
 
         return rv
+
+    def _full_spelling(self, decl):
+        """Walk up the semantic parent hierarchy to generate the full name"""
+
+        rv = [decl.spelling]
+
+        cur = decl
+
+        while cur.semantic_parent.kind != CursorKind.TRANSLATION_UNIT:
+            rv.append(cur.semantic_parent.displayname)
+            cur = cur.semantic_parent
+
+        return '::'.join(rv[::-1])
 
 
 class MethodInfo(FunctionInfo):
@@ -722,7 +741,8 @@ class ClassInfo(object):
             MethodInfo(el) for el in get_public_static_operators(cur)
         ]
 
-        self.destructors = [DestructorInfo(el) for el in get_public_destructors(cur)]
+        self.destructors = [DestructorInfo(el)
+                            for el in get_public_destructors(cur)]
         self.nonpublic_destructors = [
             DestructorInfo(el) for el in get_private_destructors(cur)
         ] + [DestructorInfo(el) for el in get_protected_destructors(cur)]
@@ -902,12 +922,14 @@ class HeaderInfo(object):
             platform_includes=settings[current_platform()]["includes"],
             parsing_header=settings["parsing_header"],
             tu_parsing_header=tu_parsing_header,
-            platform_parsing_header=settings[current_platform()]["parsing_header"],
+            platform_parsing_header=settings[current_platform(
+            )]["parsing_header"],
         )
 
         self.name = path
         self.short_name = path.splitpath()[-1]
-        self.dependencies = [el.location.file.name for el in tr_unit.get_includes()]
+        self.dependencies = [
+            el.location.file.name for el in tr_unit.get_includes()]
         self.enums = [EnumInfo(el) for el in get_enums(tr_unit)]
         self.functions = [FunctionInfo(el) for el in get_functions(tr_unit)]
         self.operators = [FunctionInfo(el) for el in get_operators(tr_unit)]
@@ -926,10 +948,12 @@ class HeaderInfo(object):
             el.displayname: ClassTemplateInfo(el) for el in get_class_templates(tr_unit)
         }
         self.class_template_dict = {k: self.name for k in self.class_templates}
-        self.inheritance = {k: v for k, v in get_inheritance_relations(tr_unit) if v}
+        self.inheritance = {k: v for k,
+                            v in get_inheritance_relations(tr_unit) if v}
         self.typedefs = [TypedefInfo(el) for el in get_typedefs(tr_unit)]
         self.typedef_dict = {t.name: self.name for t in self.typedefs}
-        self.forwards = [ForwardInfo(el) for el in get_forward_declarations(tr_unit)]
+        self.forwards = [ForwardInfo(el)
+                         for el in get_forward_declarations(tr_unit)]
 
         # handle freely defined methods
         methods = [el for el in get_free_method_definitions(tr_unit)]
@@ -973,7 +997,8 @@ if __name__ == "__main__":
 
     conda_prefix = Path(getenv("CONDA_PREFIX"))
 
-    gp_Ax1 = process_header(conda_prefix / "include" / "opencascade" / "gp_Ax1.hxx")
+    gp_Ax1 = process_header(conda_prefix / "include" /
+                            "opencascade" / "gp_Ax1.hxx")
 
     for el in gp_Ax1.classes.values():
         print(el.name)
@@ -992,7 +1017,8 @@ if __name__ == "__main__":
         print(el.values)
 
     # try functions
-    gp_Vec2d = process_header(conda_prefix / "include" / "opencascade" / "gp_Vec2d.hxx")
+    gp_Vec2d = process_header(
+        conda_prefix / "include" / "opencascade" / "gp_Vec2d.hxx")
 
     for el in gp_Vec2d.functions:
         print(el.name)
