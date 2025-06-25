@@ -1,7 +1,7 @@
 from typing import List, Tuple, Any, Mapping, Optional
 from itertools import chain
 
-from clang.cindex import CursorKind, TypeKind, AccessSpecifier
+from clang.cindex import CursorKind, TypeKind, AccessSpecifier, Type
 from path import Path
 
 from .type_parser import parse_type
@@ -423,6 +423,22 @@ def get_template_arg_dict(cur) -> dict[str, str]:
     return rv
 
 
+def get_named_type(T: Type) -> Type:
+    """
+    Strips const and &/ptr from Type.
+    """
+
+    rv = T
+
+    if rv.kind in (TypeKind.LVALUEREFERENCE, TypeKind.POINTER):
+        rv = rv.get_pointee()
+
+    if rv.kind == TypeKind.ELABORATED:
+        rv = rv.get_named_type()
+
+    return rv
+
+
 class BaseInfo(object):
     """Base class for the info objects
     """
@@ -502,10 +518,7 @@ class FunctionInfo(BaseInfo):
         self.full_name = cur.displayname
         self.mangled_name = cur.mangled_name
         self.return_type = self._sanitize_type(cur.result_type, cur)
-        if "const_iterator" in self.return_type:
-            from pdbp import set_trace
 
-            # set_trace()
         self.inline = (
             cur.get_definition().is_inline() if cur.get_definition() else False
         )
@@ -596,6 +609,10 @@ class FunctionInfo(BaseInfo):
         tokens = [t.spelling for t in cur.get_tokens()]
         if "=" in tokens:
             rv = " ".join(tokens[tokens.index("=") + 1:])
+
+            # handle default initalization of complex types
+            if '{ }' == rv:
+                rv = f'{get_named_type(cur.type).spelling}{rv}'
 
         return rv
 
