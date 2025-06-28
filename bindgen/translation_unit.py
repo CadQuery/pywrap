@@ -43,7 +43,7 @@ def parse_tu(
         src = f.read()
 
     # skip possible invisible BOM character which would lead to clang error later
-    if src[0] == "\ufeff" :
+    if src[0] == "\ufeff":
         src = src[1:]
 
     dummy_code = (
