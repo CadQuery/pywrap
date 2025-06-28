@@ -21,7 +21,8 @@
 {%- endmacro -%}
 
 {%- macro pybind_overload(c,m) -%}
-    PYBIND11_OVERLOAD_PURE({{m.return_type}},{{c.name}},{{m.name}},{% for n,t,d in m.args %}{{ n }}{{ "," if not loop.last }}{% endfor %})
+    using return_type = {{m.return_type}};
+    PYBIND11_OVERLOAD_PURE(return_type,{{c.name}},{{m.name}},{% for n,t,d in m.args %}{{ n }}{{ "," if not loop.last }}{% endfor %})
 {%- endmacro -%}
 
 {%- macro argtypes(f) -%}
