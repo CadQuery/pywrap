@@ -28,7 +28,8 @@ def read_settings(p):
     settings = global_schema.validate(settings)
 
     # extract and compile the module name extraction callable
-    code = compile("func={}".format(settings.pop("module_mapping")), "<tmp>", "exec")
+    code = compile("func={}".format(
+        settings.pop("module_mapping")), "<tmp>", "exec")
     tmp = {"Path": Path}
     exec(code, tmp, tmp)
     module_mapping = tmp["func"]
@@ -172,7 +173,8 @@ def _exclude_methods(classes, exclusions):
         cls_pat, m_pat = pat.split("::")
         for c in (c for c in classes if match(cls_pat, c.name)):
             c.methods = [m for m in c.methods if not match(m_pat, m.name)]
-            c.static_methods = [m for m in c.static_methods if not match(m_pat, m.name)]
+            c.static_methods = [
+                m for m in c.static_methods if not match(m_pat, m.name)]
             c.operators = [m for m in c.operators if not match(m_pat, m.name)]
 
 
@@ -193,7 +195,8 @@ def transform_module(m, sym, settings, settings_per_module):
 
     if s:
         # exclude classes
-        m.classes = [c for c in m.classes if c.name not in s["exclude_classes"]]
+        m.classes = [
+            c for c in m.classes if c.name not in s["exclude_classes"]]
         m.class_dict = {
             k: v for k, v, in m.class_dict.items() if k not in s["exclude_classes"]
         }
@@ -210,19 +213,23 @@ def transform_module(m, sym, settings, settings_per_module):
 
         # exclude methods (including static methods)
         _exclude_methods(m.classes, s["exclude_methods"])
-        _exclude_methods(m.class_templates, s["exclude_class_template_methods"])
+        _exclude_methods(m.class_templates,
+                         s["exclude_class_template_methods"])
 
         # exclude functions
-        m.functions = [f for f in m.functions if f.name not in s["exclude_functions"]]
+        m.functions = [
+            f for f in m.functions if f.name not in s["exclude_functions"]]
         for h in m.headers:
             h.functions = [
                 f for f in h.functions if f.name not in s["exclude_functions"]
             ]
 
         # exclude typedefs
-        m.typedefs = [t for t in m.typedefs if t.name not in s["exclude_typedefs"]]
+        m.typedefs = [
+            t for t in m.typedefs if t.name not in s["exclude_typedefs"]]
         for h in m.headers:
-            h.typedefs = [t for t in h.typedefs if t.name not in s["exclude_typedefs"]]
+            h.typedefs = [
+                t for t in h.typedefs if t.name not in s["exclude_typedefs"]]
 
     # collect methods and static methods using byref i.s.o. return
     byref_types = settings["byref_types"] + settings["byref_types_smart_ptr"]
@@ -230,7 +237,8 @@ def transform_module(m, sym, settings, settings_per_module):
     if byref_types:
         for c in m.classes:
 
-            c.methods_byref = [met for met in c.methods if is_byref(met, byref_types)]
+            c.methods_byref = [
+                met for met in c.methods if is_byref(met, byref_types)]
             c.methods_return_byref = [
                 met
                 for met in c.methods
@@ -434,7 +442,7 @@ def toposort_modules(modules):
     return toposort_flatten(deps)
 
 
-def render(settings, module_settings, modules, class_dict):
+def render(settings, module_settings, modules, class_dict, prefix=Path('')):
 
     name = settings["name"]
     module_names = [m.name for m in modules]
@@ -457,7 +465,8 @@ def render(settings, module_settings, modules, class_dict):
 
     def proper_delete_operator(cls):
 
-        del_ops = [op for op in cls.static_operators if op.name == "operator delete"]
+        del_ops = [op for op in cls.static_operators if op.name ==
+                   "operator delete"]
 
         if not del_ops:
             return True
@@ -556,7 +565,8 @@ def render(settings, module_settings, modules, class_dict):
                 typedefs,
             )
 
-            classes_typedefs = {el.name: el for el in (m.classes + list(typedefs))}
+            classes_typedefs = {el.name: el for el in (
+                m.classes + list(typedefs))}
 
             dag = {}
             for el in classes_typedefs.values():
@@ -604,7 +614,7 @@ def render(settings, module_settings, modules, class_dict):
             f.write(template_cmake.render({"name": name}))
 
     for p in settings["additional_files"]:
-        Path(p).copy(output_path)
+        (prefix / Path(p)).copy(output_path)
 
 
 def validate_result(verbose, n_jobs, folder):
