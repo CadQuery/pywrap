@@ -41,8 +41,7 @@ def get_symbols(tu, kind, ignore_forwards=True, search_in=(CursorKind.NAMESPACE,
 
         for child in cursor.get_children():
             if (
-                paths_approximately_equal(
-                    Path(child.location.file.name), tu_path)
+                paths_approximately_equal(Path(child.location.file.name), tu_path)
                 and child.kind == kind
             ):
                 if ignore_forwards:
@@ -57,8 +56,7 @@ def get_symbols(tu, kind, ignore_forwards=True, search_in=(CursorKind.NAMESPACE,
                 else:
                     yield child
             if (
-                paths_approximately_equal(
-                    Path(child.location.file.name), tu_path)
+                paths_approximately_equal(Path(child.location.file.name), tu_path)
                 and child.kind in search_in
             ):
                 for nested in _get_symbols(child, kind, ignore_forwards):
@@ -155,7 +153,7 @@ def get_enums(tu):
     return get_symbols(tu, CursorKind.ENUM_DECL)
 
 
-def get_enum_values(cur):
+def get_enum_values(cur: Cursor):
     """Gets enum values
     """
 
@@ -176,8 +174,7 @@ def get_classes(tu):
     """
 
     return chain(
-        get_symbols(tu, CursorKind.CLASS_DECL), get_symbols(
-            tu, CursorKind.STRUCT_DECL)
+        get_symbols(tu, CursorKind.CLASS_DECL), get_symbols(tu, CursorKind.STRUCT_DECL)
     )
 
 
@@ -221,8 +218,7 @@ def get_template_type_params(cls):
 
     for t in get_x_multi(
         cls,
-        (CursorKind.TEMPLATE_TYPE_PARAMETER,
-         CursorKind.TEMPLATE_NON_TYPE_PARAMETER),
+        (CursorKind.TEMPLATE_TYPE_PARAMETER, CursorKind.TEMPLATE_NON_TYPE_PARAMETER),
     ):
         if len(list(t.get_children())) == 0:
             yield t, None
@@ -453,7 +449,7 @@ class BaseInfo(object):
     name: str
     comment: str
 
-    def __init__(self, cur):
+    def __init__(self, cur: Cursor):
 
         self.name = cur.spelling
         self.comment = cur.brief_comment
@@ -467,7 +463,7 @@ class FieldInfo(BaseInfo):
     const: bool
     pod: bool
 
-    def __init__(self, cur):
+    def __init__(self, cur: Cursor):
 
         super(FieldInfo, self).__init__(cur)
 
@@ -484,7 +480,7 @@ class EnumInfo(BaseInfo):
     values: List[str]
     anonymous: bool
 
-    def __init__(self, cur):
+    def __init__(self, cur: Cursor):
 
         super(EnumInfo, self).__init__(cur)
 
@@ -495,8 +491,7 @@ class EnumInfo(BaseInfo):
 
         if any(x in self.name for x in ["anonymous", "unnamed"]):
             self.anonymous = True
-            self.name = "::".join(self.name.split(
-                "::")[:-1])  # get rid of anonymous
+            self.name = "::".join(self.name.split("::")[:-1])  # get rid of anonymous
 
 
 class FunctionInfo(BaseInfo):
@@ -517,14 +512,14 @@ class FunctionInfo(BaseInfo):
         TypeKind.POINTER: " *",
     }
 
-    def __init__(self, cur):
+    def __init__(self, cur: Cursor):
 
         super(FunctionInfo, self).__init__(cur)
 
         self.comment = cur.brief_comment
         self.full_name = cur.displayname
         self.mangled_name = cur.mangled_name
-        self.return_type = self._sanitize_type(cur.result_type, cur)
+        self.return_type = self._underlying_type(cur.result_type, cur)
 
         self.inline = (
             cur.get_definition().is_inline() if cur.get_definition() else False
@@ -542,7 +537,7 @@ class FunctionInfo(BaseInfo):
             if self._default_value(el)
         ]
 
-    def _pointer_by_ref(self, cur):
+    def _pointer_by_ref(self, cur: Cursor) -> bool:
         """Check is type is a Pointer passed by reference
         """
 
@@ -558,19 +553,9 @@ class FunctionInfo(BaseInfo):
 
         return rv
 
-    def _sanitize_type(self, cur, ctx):
-        """
-        Return the canonical type or spelling in the case of template params.
-        """
-
-        rv = cur.get_canonical().spelling
-
-        if "type-parameter-" in rv:
-            rv = cur.spelling
-
-        return rv
-
-    def _underlying_type(self, cur: Cursor | Type, ctx: Cursor, add_qualifiers=True):
+    def _underlying_type(
+        self, cur: Cursor | Type, ctx: Cursor, add_qualifiers=True
+    ) -> str:
         """Tries to resolve the underlying type. Needed for typedefed templates.
         """
 
@@ -612,11 +597,26 @@ class FunctionInfo(BaseInfo):
             if decl.semantic_parent.kind != CursorKind.TRANSLATION_UNIT:
                 rv = "typename " + rv
 
-        # handle missing std::
+        # additional postprocessing related to templates
         if typ.kind == TypeKind.UNEXPOSED:
             typ_can = typ.get_canonical().spelling
+
+            # handle missing std::
             if typ_can.startswith("std::") and not rv.startswith("std::"):
                 rv = "std::" + rv
+
+            # expand template argument names if needed
+            n_args = typ.get_num_template_arguments()
+            if n_args != -1:
+                # construct a short:long name dict
+                args = {}
+                for ix in range(n_args):
+                    arg = typ.get_template_argument_type(ix)
+                    args[arg.spelling] = self._underlying_type(arg, ctx)
+
+                # transform the result
+                for k, v in args.items():
+                    rv = rv.replace(k, v)
 
         if add_qualifiers:
             rv = const + rv + ptr + const_ptr
@@ -627,33 +627,20 @@ class FunctionInfo(BaseInfo):
 
         return rv
 
-    def _default_value(self, cur):
+    def _default_value(self, cur: Cursor) -> Optional[str]:
         """Tries to extract default value
         """
 
         rv = None
         tokens = [t.spelling for t in cur.get_tokens()]
         if "=" in tokens:
-            rv = " ".join(tokens[tokens.index("=") + 1:])
+            rv = " ".join(tokens[tokens.index("=") + 1 :])
 
             # handle default initalization of complex types
             if "{ }" == rv:
                 rv = f"{get_named_type(cur.type).spelling}{rv}"
 
         return rv
-
-    def _full_spelling(self, decl):
-        """Walk up the semantic parent hierarchy to generate the full name"""
-
-        rv = [decl.spelling]
-
-        cur = decl
-
-        while cur.semantic_parent.kind != CursorKind.TRANSLATION_UNIT:
-            rv.append(cur.semantic_parent.displayname)
-            cur = cur.semantic_parent
-
-        return "::".join(rv[::-1])
 
 
 class MethodInfo(FunctionInfo):
@@ -664,32 +651,13 @@ class MethodInfo(FunctionInfo):
     virtual: bool
     pure_virtual: bool
 
-    def __init__(self, cur):
+    def __init__(self, cur: Cursor):
 
         super(MethodInfo, self).__init__(cur)
 
         self.const = cur.is_const_method()
         self.virtual = cur.is_virtual_method()
         self.pure_virtual = cur.is_pure_virtual_method()
-
-    def _sanitize_type(self, cur, ctx):
-        """
-        Return the canonical type or spelling in the case of template params.
-        """
-
-        rv = cur.get_canonical().spelling
-
-        parent = ctx.semantic_parent
-
-        # collect template args names
-        if parent.kind == CursorKind.CLASS_TEMPLATE:
-            args = get_template_arg_dict(parent)
-
-            # replace canoncial args with names
-            for k, v in args.items():
-                rv = rv.replace(k, v)
-
-        return rv
 
 
 class ConstructorInfo(MethodInfo):
@@ -745,7 +713,7 @@ class ClassInfo(object):
     protected_virtual_methods_dict: Mapping[str, MethodInfo]
     private_virtual_methods_dict: Mapping[str, MethodInfo]
 
-    def __init__(self, cur):
+    def __init__(self, cur: Cursor):
 
         self.name = cur.type.spelling
         self.comment = cur.brief_comment
@@ -784,8 +752,7 @@ class ClassInfo(object):
             MethodInfo(el) for el in get_public_static_operators(cur)
         ]
 
-        self.destructors = [DestructorInfo(el)
-                            for el in get_public_destructors(cur)]
+        self.destructors = [DestructorInfo(el) for el in get_public_destructors(cur)]
         self.nonpublic_destructors = [
             DestructorInfo(el) for el in get_private_destructors(cur)
         ] + [DestructorInfo(el) for el in get_protected_destructors(cur)]
@@ -845,7 +812,7 @@ class ClassTemplateInfo(ClassInfo):
 
     type_params: List[Tuple[Optional[str], str, str]]
 
-    def __init__(self, cur):
+    def __init__(self, cur: Cursor):
         super(ClassTemplateInfo, self).__init__(cur)
         self.name = cur.spelling
         self.type_params = [
@@ -865,7 +832,7 @@ class TypedefInfo(BaseInfo):
     template_base: List[str]
     template_args: List[str]
 
-    def __init__(self, cur):
+    def __init__(self, cur: Cursor):
 
         super(TypedefInfo, self).__init__(cur)
 
@@ -964,14 +931,12 @@ class HeaderInfo(object):
             platform_includes=settings[current_platform()]["includes"],
             parsing_header=settings["parsing_header"],
             tu_parsing_header=tu_parsing_header,
-            platform_parsing_header=settings[current_platform(
-            )]["parsing_header"],
+            platform_parsing_header=settings[current_platform()]["parsing_header"],
         )
 
         self.name = path
         self.short_name = path.splitpath()[-1]
-        self.dependencies = [
-            el.location.file.name for el in tr_unit.get_includes()]
+        self.dependencies = [el.location.file.name for el in tr_unit.get_includes()]
         self.enums = [EnumInfo(el) for el in get_enums(tr_unit)]
         self.functions = [FunctionInfo(el) for el in get_functions(tr_unit)]
         self.operators = [FunctionInfo(el) for el in get_operators(tr_unit)]
@@ -990,12 +955,10 @@ class HeaderInfo(object):
             el.displayname: ClassTemplateInfo(el) for el in get_class_templates(tr_unit)
         }
         self.class_template_dict = {k: self.name for k in self.class_templates}
-        self.inheritance = {k: v for k,
-                            v in get_inheritance_relations(tr_unit) if v}
+        self.inheritance = {k: v for k, v in get_inheritance_relations(tr_unit) if v}
         self.typedefs = [TypedefInfo(el) for el in get_typedefs(tr_unit)]
         self.typedef_dict = {t.name: self.name for t in self.typedefs}
-        self.forwards = [ForwardInfo(el)
-                         for el in get_forward_declarations(tr_unit)]
+        self.forwards = [ForwardInfo(el) for el in get_forward_declarations(tr_unit)]
 
         # handle freely defined methods
         methods = [el for el in get_free_method_definitions(tr_unit)]
@@ -1039,8 +1002,7 @@ if __name__ == "__main__":
 
     conda_prefix = Path(getenv("CONDA_PREFIX"))
 
-    gp_Ax1 = process_header(conda_prefix / "include" /
-                            "opencascade" / "gp_Ax1.hxx")
+    gp_Ax1 = process_header(conda_prefix / "include" / "opencascade" / "gp_Ax1.hxx")
 
     for el in gp_Ax1.classes.values():
         print(el.name)
@@ -1059,8 +1021,7 @@ if __name__ == "__main__":
         print(el.values)
 
     # try functions
-    gp_Vec2d = process_header(
-        conda_prefix / "include" / "opencascade" / "gp_Vec2d.hxx")
+    gp_Vec2d = process_header(conda_prefix / "include" / "opencascade" / "gp_Vec2d.hxx")
 
     for el in gp_Vec2d.functions:
         print(el.name)

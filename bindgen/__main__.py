@@ -11,7 +11,13 @@ from .utils import get_includes, init_clang
 
 @click.group()
 @click.option("-n", "--njobs", default=-2, type=int)
-@click.option("-p", "--prefix", default=None, type=click.Path(False, False, True), help="Source prefix")
+@click.option(
+    "-p",
+    "--prefix",
+    default=None,
+    type=click.Path(False, False, True),
+    help="Source prefix",
+)
 @click.option("-v", "--verbose", is_flag=True)
 @click.option("-c", "--clean", is_flag=True)
 @click.option(
@@ -42,7 +48,8 @@ def main(ctx, clean, verbose, njobs, include, prefix, libclang):
         init_clang.__defaults__ = (libclang,)
 
     ctx.obj = SimpleNamespace(
-        verbose=verbose, njobs=njobs, clean=clean, prefix=Path(prefix))
+        verbose=verbose, njobs=njobs, clean=clean, prefix=Path(prefix)
+    )
 
 
 @main.command()
@@ -134,8 +141,7 @@ def validate(obj, folder):
 @click.pass_context
 def all(ctx, configuration, platform, tmp_parsed, tmp_filtered):
 
-    ctx.invoke(parse, configuration=configuration,
-               output=tmp_parsed, platform=platform)
+    ctx.invoke(parse, configuration=configuration, output=tmp_parsed, platform=platform)
     ctx.invoke(
         transform, configuration=configuration, input=tmp_parsed, output=tmp_filtered
     )
