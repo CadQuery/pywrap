@@ -37,6 +37,8 @@ class ModuleInfo(object):
     dependencies: Set[Any]
     dependencies_headers: Set[str]
 
+    namespaces: Set[str]
+
     def get_module_name(self, x):
 
         return Path(x).splitpath()[-1].split(".")[0].split("_")[0]
@@ -65,6 +67,7 @@ class ModuleInfo(object):
         self.exceptions = []
         self.dependencies = set()
         self.dependencies_headers = set()
+        self.namespaces = set()
 
         for h in self.headers:
             self.classes.extend(h.classes.values())
@@ -77,6 +80,7 @@ class ModuleInfo(object):
             self.class_template_dict.update(h.class_template_dict)
             self.typedef_dict.update(h.typedef_dict)
             self.dependencies_headers.update(h.dependencies)
+            self.namespaces.update(h.namespaces)
 
         # clean up dependencies
         dependencies_clean = set()

@@ -14,7 +14,7 @@ from .utils import get_includes, init_clang
 @click.option(
     "-p",
     "--prefix",
-    default=None,
+    default=".",
     type=click.Path(False, False, True),
     help="Source prefix",
 )

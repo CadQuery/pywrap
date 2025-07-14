@@ -94,7 +94,7 @@
 {%- endmacro -%}
 
 {%- macro function_pointer(f) -%}
-    ({{f.return_type}} (*)({% for _,t,d in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}))  static_cast<{{f.return_type}} (*)({% for _,t,_ in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %})>(&{{f.name}})
+    ({{f.return_type}} (*)({% for _,t,d in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %}))  static_cast<{{f.return_type}} (*)({% for _,t,_ in f.args %} {{t}} {{ "," if not loop.last }} {% endfor %})>(&{% if f.namespace %}{{f.namespace}}::{% endif %}{{f.name}})
 {%- endmacro -%}
 
 {%- macro template_args_typename(t) -%}

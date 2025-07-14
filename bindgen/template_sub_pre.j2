@@ -63,6 +63,11 @@ void register_{{module.name}}_enums(py::module &main_module) {
 
 py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#");
 
+// add namespaces as submodules
+{% for ns in module.namespaces %}
+m.def_submodule("{{ns}}");
+{% endfor %}
+
 // user-defined inclusion per module in the body
 {% if module_settings['include_body_pre'] %}
 {{ module_settings['include_body_pre'] }}

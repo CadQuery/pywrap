@@ -210,10 +210,14 @@ py::object klass;
 {% endif %}{% endfor %}
 
 // functions
+{% for ns in module.namespaces %}
+auto m{{ns}} = static_cast<py::module>(m.attr("{{ns}}"));
+{% endfor %}
+
 {% for h in module.headers %}
 // {{h.name}}
 {% for f in h.functions %}
-    m.def("{{f.name}}",
+    {{ "m" + (f.namespace or "") }}.def("{{f.name}}",
           {{ function_pointer(f) }},
           R"#({{ f.comment }})#" {{argnames(f)}}
           );
@@ -221,6 +225,7 @@ py::object klass;
 {% endfor %}
 
 // Additional functions
+
 {% for name,m in module_settings['additional_functions'].items() %}
     m.def("{{name}}",
           {{ m['body']}},
