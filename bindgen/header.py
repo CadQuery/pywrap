@@ -16,6 +16,8 @@ from .type_parser import parse_type
 from .translation_unit import parse_tu
 from .utils import current_platform
 
+EXCLUDE_NS: List[str] = []
+
 
 def paths_approximately_equal(p1: str, p2: str):
     """Approximate path equality. This is due to
@@ -35,7 +37,7 @@ def get_symbols(
     kind,
     ignore_forwards=True,
     search_in=(CursorKind.NAMESPACE,),
-    ignore=("opencascade", "IMeshData", "IVtkTools"),
+    exclude_ns: List[str] = [],
 ):
     """
     Symbols defined locally (i.e. without includes) and are not forward declarations
@@ -67,7 +69,7 @@ def get_symbols(
                 paths_approximately_equal(
                     Path(child.location.file.name), tu_path)
                 and child.kind in search_in
-                and child.spelling not in ignore
+                and child.spelling not in exclude_ns
             ):
                 for nested in _get_symbols(child, kind):
                     if nested.access_specifier in (
@@ -198,12 +200,12 @@ def get_class_templates(tu):
     return get_symbols(tu, CursorKind.CLASS_TEMPLATE)
 
 
-def get_namespaces(tu):
+def get_namespaces(tu, ignore_ns=[]):
     """Namepspaces defined locally (i.e. without includes).
     """
 
     for el in get_symbols(tu, CursorKind.NAMESPACE):
-        if el.spelling not in ("std", ""):
+        if el.spelling not in ignore_ns+[""]:
             yield el
 
 

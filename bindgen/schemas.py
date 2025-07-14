@@ -67,6 +67,7 @@ global_schema = Schema(
         Optional("exceptions", default=[]): [str],
         Optional("additional_files", default=[]): [str],
         Optional("template_path", default=None): str,
+        Optional("exclude_namespaces", default=[]): [str],
         "module_mapping": str,
         "Operators": {str: [str]},
         "Extras": {

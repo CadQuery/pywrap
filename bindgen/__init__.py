@@ -16,7 +16,7 @@ from jinja2 import Environment, FileSystemLoader
 from toposort import toposort_flatten
 
 from .module import ModuleInfo
-from .header import parse_tu, ClassInfo
+from .header import parse_tu, ClassInfo, get_symbols, get_namespaces
 from .utils import current_platform, get_includes, init_clang
 from .schemas import global_schema, module_schema
 
@@ -311,6 +311,7 @@ def parse_modules(
     file_pats = settings["pats"]
     file_exc = settings["exclude"]
     module_names = settings["modules"]
+    exclude_ns = settings["exclude_namespaces"]
 
     if target_platform is None:
         module_names += settings[current_platform()]["modules"]
@@ -333,6 +334,12 @@ def parse_modules(
         # loky based workaround
         get_includes.__defaults__ = includes
         init_clang.__defaults__ = clang_location
+
+        # inject excluded namespaces
+        get_symbols.__defaults__ = get_symbols.__defaults__[
+            :-1] + (exclude_ns,)
+        get_namespaces.__defaults__ = get_namespaces.__defaults__[
+            :-1] + (exclude_ns,)
 
         if not verbose:
             logzero.logger.setLevel(logzero.logging.INFO)
