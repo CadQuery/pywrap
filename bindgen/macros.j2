@@ -34,7 +34,7 @@
 {%- endmacro -%}
 
 {%- macro argtypes_names_not_byref(f) -%}
-    {% for arg,t,_ in f.args if not is_byref(t) %}{{ t.replace('opencascade::handle<','')[:-3]+'&' if is_byref_smart_ptr(t) else t }} {{ arg }}{{ "," if not loop.last }}{% endfor %}
+    {% for arg,t,_ in f.args if not is_byref(t) %}{{ type_from_byref_smart_ptr(t)+'&' if is_byref_smart_ptr(t) else t }} {{ arg }}{{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
 
 {%- macro init_outputs_byref(f) -%}
