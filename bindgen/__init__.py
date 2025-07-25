@@ -188,10 +188,10 @@ def _exclude_methods(classes, exclusions):
             c.operators = [m for m in c.operators if not match(m_pat, m.name)]
 
 
-def transform_module(m, sym, settings, settings_per_module):
+def transform_module(m, sym, settings, settings_per_module, platform=None):
 
     s = settings_per_module.get(m.name, None)
-    global_excludes = settings[current_platform()]["exclude_classes"]
+    global_excludes = settings[platform if platform else current_platform()]["exclude_classes"]
 
     # handle global excludes
     m.classes = [
@@ -360,10 +360,10 @@ def parse_modules(
 
 
 def transform_modules(
-    verbose, n_jobs, settings, module_mapping, settings_per_module, modules
+    verbose, n_jobs, settings, module_mapping, settings_per_module, modules, platform=None
 ):
 
-    sym = read_symbols(settings[current_platform()]["symbols"])
+    sym = read_symbols(settings[platform if platform else current_platform()]["symbols"])
 
     # ignore functions and classes based on settings and update the global class_dict
     def _filter_module(m):
@@ -459,7 +459,7 @@ def toposort_modules(modules):
     return toposort_flatten(deps)
 
 
-def render(settings, module_settings, modules, class_dict, prefix=Path("")):
+def render(settings, module_settings, modules, class_dict, prefix=Path(""), platform=None):
 
     name = settings["name"]
     module_names = [m.name for m in modules]
@@ -525,7 +525,7 @@ def render(settings, module_settings, modules, class_dict, prefix=Path("")):
                 arg for arg, t, _ in f.args if is_byref_arg(t, settings["byref_types"])
             ],
             "enumerate": enumerate,
-            "platform": platform,
+            "platform": platform if platform else current_platform(),
             "class_dict": class_dict,
             "all_classes": all_classes,
             "all_enums": all_enums,
