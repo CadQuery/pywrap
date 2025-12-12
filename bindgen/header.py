@@ -19,7 +19,7 @@ from .utils import current_platform
 EXCLUDE_NS: List[str] = []
 
 
-KWORDS = ("def")
+KWORDS = ("def",)
 
 
 def paths_approximately_equal(p1: str, p2: str):
@@ -564,7 +564,7 @@ class FunctionInfo(BaseInfo):
         )
         self.args = [
             (
-                f"{el.spelling}" if el.spelling in KWORDS else el.spelling,
+                f"{el.spelling}_" if el.spelling in KWORDS else el.spelling,
                 self._underlying_type(el, cur),
                 self._default_value(el)
             )
