@@ -19,6 +19,9 @@ from .utils import current_platform
 EXCLUDE_NS: List[str] = []
 
 
+KWORDS = ("def")
+
+
 def paths_approximately_equal(p1: str, p2: str):
     """Approximate path equality. This is due to
     """
@@ -560,7 +563,11 @@ class FunctionInfo(BaseInfo):
             self._pointer_by_ref(el) for el in cur.get_arguments()
         )
         self.args = [
-            (el.spelling, self._underlying_type(el, cur), self._default_value(el))
+            (
+                f"{el.spelling}" if el.spelling in KWORDS else el.spelling,
+                self._underlying_type(el, cur),
+                self._default_value(el)
+            )
             for el in cur.get_arguments()
         ]
         self.default_value_types = [
