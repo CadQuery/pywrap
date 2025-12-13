@@ -1,6 +1,7 @@
 from typing import List, Tuple, Any, Mapping, Optional
 from itertools import chain
 from dataclasses import dataclass
+from keyword import kwlist
 
 from clang.cindex import (
     CursorKind,
@@ -19,7 +20,7 @@ from .utils import current_platform
 EXCLUDE_NS: List[str] = []
 
 
-KWORDS = ("def",)
+KWORDS = kwlist 
 
 
 def paths_approximately_equal(p1: str, p2: str):
