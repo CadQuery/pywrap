@@ -5,7 +5,7 @@ from sys import platform
 from typing import List
 
 import logzero
-import toml as toml
+import tomli
 import pandas as pd
 import pyparsing as pp
 
@@ -23,8 +23,8 @@ from .schemas import global_schema, module_schema
 
 def read_settings(p):
 
-    with open(p) as f:
-        settings = toml.load(f)
+    with open(p, 'rb') as f:
+        settings = tomli.load(f)
 
     # validate
     settings = global_schema.validate(settings)

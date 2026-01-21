@@ -11,7 +11,7 @@ setup(
         "logzero",
         "path",
         "clang",
-        "toml",
+        "tomli",
         "pandas",
         "joblib",
         "tqdm",
