@@ -34,7 +34,7 @@
 {%- endmacro -%}
 
 {%- macro argtypes_names_not_byref(f) -%}
-    {% for arg,t,_ in f.args if not is_byref(t) %}{{ type_from_byref_smart_ptr(t)+'&' if is_byref_smart_ptr(t) else t }} {{ arg }}{{ "," if not loop.last }}{% endfor %}
+    {% for arg,t,_ in f.args if not (is_byref(t)) %}{{ type_from_byref_smart_ptr(t)+'&' if is_byref_smart_ptr(t) else t }} {{ arg }}{{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
 
 {%- macro init_outputs_byref(f) -%}
@@ -51,6 +51,10 @@
 
 {%- macro argnames_byref(f) -%}
     {% for arg,t,_ in f.args if is_byref(t) %}{{ arg }}{{ "," if not loop.last }}{% endfor %}
+{%- endmacro -%}
+
+{%- macro argnames_byref_with_smart_ptr(f) -%}
+    {% for arg,t,_ in f.args if is_byref(t) or is_byref_smart_ptr(t) %}{% if is_byref_smart_ptr(t) %}{{ arg }}_ptr{% else %}{{ arg }}{% endif %}{{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
 
 {%- macro argnames(f) -%}
@@ -76,7 +80,7 @@
 {%- endmacro -%}
 
 {%- macro argnames_not_byref(f) -%}
-    {% for ix, (arg,t,d) in enumerate(f.args) if not is_byref(t) %} {{ "," if loop.first }} py::arg("{{arg if arg!='' else 'arg{}'.format(ix) }}"){% if d %}=static_cast<{{t}}>({{d}}){% endif %}{{ "," if not loop.last }}{% endfor %}
+    {% for ix, (arg,t,d) in enumerate(f.args) if not (is_byref(t)) %} {{ "," if loop.first }} py::arg("{{arg if arg!='' else 'arg{}'.format(ix) }}"){% if d %}=static_cast<{{t}}>({{d}}){% endif %}{{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
 
 {%- macro handle_results_ptr_byref(f) -%}

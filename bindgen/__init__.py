@@ -7,7 +7,19 @@ from typing import List
 import logzero
 import toml as toml
 import pandas as pd
-import pyparsing as pp
+
+from pyparsing import (
+    Word,
+    alphanums,
+    Optional,
+    Literal,
+    delimitedList,
+    Forward,
+    ZeroOrMore,
+    Or,
+    Suppress,
+    Combine
+)
 
 from joblib import Parallel, delayed
 from path import Path
@@ -38,11 +50,11 @@ def read_settings(p):
 
     # get module specific settings if defined
     if "Modules" in settings:
-        modules = settings.pop("Modules")
+        module_settings = settings.pop("Modules")
     else:
-        modules = None
+        module_settings = None
 
-    return settings, module_mapping, modules
+    return settings, module_mapping, module_settings
 
 
 def read_symbols(p):
@@ -169,10 +181,26 @@ def is_byref(met, byref_types):
     return rv
 
 
+name = Word(alphanums + "_")
+cpp_type = (
+    (Literal("long ") | Literal("unsigned "))[0, 1]
+    + Literal("long")[0, 1]
+    + name[0, 1]
+    + ZeroOrMore(Literal("::") + name)
+)
+open_bracket = Literal("<")
+close_bracket = Literal(">")
+
+cpp_expr = Forward()
+cpp_expr << cpp_type + Optional(
+    open_bracket + delimitedList(cpp_expr) + close_bracket
+)
+
+
 def type_form_byref_smart_ptr(t: str, ptr_types: List[str]) -> str:
 
-    expr = (pp.Suppress(pp.Or(map(pp.Literal, ptr_types)) + pp.Literal('<'))
-            + pp.Word(pp.alphanums+'_') + pp.Suppress(pp.Literal('>') + pp.Literal('&')))
+    expr = (Suppress(Or(map(Literal, ptr_types)) + open_bracket)
+            + Combine(cpp_expr) + Suppress(close_bracket + Literal('&')))
 
     return expr.parse_string(t)[0]
 
@@ -433,7 +461,7 @@ def transform_modules(
     return modules, class_dict, enum_dict
 
 
-def toposort_modules(modules):
+def toposort_modules(modules, module_settings):
 
     deps = {}
 
@@ -449,12 +477,16 @@ def toposort_modules(modules):
                     if t.template_base[0] in tmpl_dict:
                         typedefs.append(tmpl_dict[t.template_base[0]])
 
+        # get custom deps
+        custom_deps = set(module_settings[m.name]["custom_deps"]) if m.name in module_settings else set()
+
+        # iterate over all classes, templates and typedefs
         deps[m.name] = set(
             cls_dict[s]
             for c in m.classes + m.class_templates + typedefs
             for s in c.superclass
             if s in cls_dict
-        ) - {m.name}
+        ) | custom_deps - {m.name}
 
     return toposort_flatten(deps)
 
@@ -539,7 +571,7 @@ def render(settings, module_settings, modules, class_dict, prefix=Path(""), plat
             "proper_new_operator": proper_new_operator,
             "proper_delete_operator": proper_delete_operator,
             "module_names": module_names,
-            "sorted_modules": toposort_modules(modules),
+            "sorted_modules": toposort_modules(modules, module_settings),
             "settings": settings,
         }
     )

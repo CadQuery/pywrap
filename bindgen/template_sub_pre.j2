@@ -110,6 +110,11 @@ m.def_submodule("{{ns}}");
 {% endif %}
 {% endfor %}
 
+// user-defined post-inclusion per module in the body
+{% if module_settings['preregister_include_body_post'] %}
+{{ module_settings['preregister_include_body_post'] }}
+{% endif %}
+
 };
 
 // user-defined post-inclusion per module
