@@ -93,7 +93,13 @@ def transform(obj, configuration, platform, input, output):
 
     settings, module_mapping, module_settings = read_settings(configuration)
     modules, class_dict, enum_dict = transform_modules(
-        obj.verbose, obj.njobs, settings, module_mapping, module_settings, modules, platform=platform
+        obj.verbose,
+        obj.njobs,
+        settings,
+        module_mapping,
+        module_settings,
+        modules,
+        platform=platform,
     )
 
     with open(output, "wb") as f:
@@ -121,7 +127,9 @@ def generate(obj, configuration, platform, input):
     with open(input, "rb") as f:
         modules, class_dict, enum_dict = pickle.load(f)
 
-    render(settings, module_settings, modules, class_dict, obj.prefix, platform=platform)
+    render(
+        settings, module_settings, modules, class_dict, obj.prefix, platform=platform
+    )
 
     pre = settings["Extras"]["include_pre"]
     post = settings["Extras"]["include_pre"]
@@ -155,9 +163,15 @@ def all(ctx, configuration, platform, tmp_parsed, tmp_filtered):
 
     ctx.invoke(parse, configuration=configuration, output=tmp_parsed, platform=platform)
     ctx.invoke(
-        transform, configuration=configuration, input=tmp_parsed, output=tmp_filtered, platform=platform
+        transform,
+        configuration=configuration,
+        input=tmp_parsed,
+        output=tmp_filtered,
+        platform=platform,
     )
-    ctx.invoke(generate, configuration=configuration, input=tmp_filtered, platform=platform)
+    ctx.invoke(
+        generate, configuration=configuration, input=tmp_filtered, platform=platform
+    )
 
 
 if __name__ == "__main__":

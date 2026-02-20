@@ -20,12 +20,11 @@ from .utils import current_platform
 EXCLUDE_NS: List[str] = []
 
 
-KWORDS = kwlist 
+KWORDS = kwlist
 
 
 def paths_approximately_equal(p1: str, p2: str):
-    """Approximate path equality. This is due to
-    """
+    """Approximate path equality. This is due to"""
     return any([Path(p1).name.split(".")[0] == Path(p).name.split(".")[0] for p in p2])
 
 
@@ -54,8 +53,7 @@ def get_symbols(
 
         for child in cursor.get_children():
             if (
-                paths_approximately_equal(
-                    Path(child.location.file.name), tu_path)
+                paths_approximately_equal(Path(child.location.file.name), tu_path)
                 and child.kind == kind
             ):
                 if ignore_forwards:
@@ -70,8 +68,7 @@ def get_symbols(
                 else:
                     yield child
             if (
-                paths_approximately_equal(
-                    Path(child.location.file.name), tu_path)
+                paths_approximately_equal(Path(child.location.file.name), tu_path)
                 and child.kind in search_in
                 and child.spelling not in exclude_ns
             ):
@@ -96,8 +93,7 @@ def get_forward_declarations(tu):
 
 
 def get_all_symbols(tu, kind):
-    """All defined symbols of given kind
-    """
+    """All defined symbols of given kind"""
     tu_path = tu.path
 
     for child in tu.cursor.get_children():
@@ -109,8 +105,7 @@ def get_all_symbols(tu, kind):
 
 
 def get_all_symbols_multi(tu, kinds):
-    """All defined symbols of given kinds
-    """
+    """All defined symbols of given kinds"""
     tu_path = tu.path
 
     for child in tu.cursor.get_children():
@@ -121,8 +116,7 @@ def get_all_symbols_multi(tu, kinds):
 
 
 def get_functions(tu):
-    """Functions defined locally (i.e. without includes)
-    """
+    """Functions defined locally (i.e. without includes)"""
 
     return (
         f
@@ -132,8 +126,7 @@ def get_functions(tu):
 
 
 def get_function_templates(tu):
-    """Function templates defined locally (i.e. without includes)
-    """
+    """Function templates defined locally (i.e. without includes)"""
 
     return (
         f
@@ -143,8 +136,7 @@ def get_function_templates(tu):
 
 
 def get_operators(tu):
-    """Functions defined locally (i.e. without includes)
-    """
+    """Functions defined locally (i.e. without includes)"""
 
     return (
         f
@@ -154,8 +146,7 @@ def get_operators(tu):
 
 
 def get_operator_templates(tu):
-    """Operator templates defined locally (i.e. without includes)
-    """
+    """Operator templates defined locally (i.e. without includes)"""
 
     return (
         f
@@ -165,15 +156,13 @@ def get_operator_templates(tu):
 
 
 def get_enums(tu):
-    """Enums defined locally (i.e. without includes)
-    """
+    """Enums defined locally (i.e. without includes)"""
 
     return get_symbols(tu, CursorKind.ENUM_DECL)
 
 
 def get_enum_values(cur: Cursor):
-    """Gets enum values
-    """
+    """Gets enum values"""
 
     for child in cur.get_children():
         if child.kind is CursorKind.ENUM_CONSTANT_DECL:
@@ -181,41 +170,35 @@ def get_enum_values(cur: Cursor):
 
 
 def get_typedefs(tu):
-    """Typedefs defined locally (i.e. without includes)
-    """
+    """Typedefs defined locally (i.e. without includes)"""
 
     return get_symbols(tu, CursorKind.TYPEDEF_DECL)
 
 
 def get_classes(tu):
-    """Classes defined locally (i.e. without includes)
-    """
+    """Classes defined locally (i.e. without includes)"""
 
     return chain(
-        get_symbols(tu, CursorKind.CLASS_DECL), get_symbols(
-            tu, CursorKind.STRUCT_DECL)
+        get_symbols(tu, CursorKind.CLASS_DECL), get_symbols(tu, CursorKind.STRUCT_DECL)
     )
 
 
 def get_class_templates(tu):
-    """Class templates defined locally (i.e. without includes)
-    """
+    """Class templates defined locally (i.e. without includes)"""
 
     return get_symbols(tu, CursorKind.CLASS_TEMPLATE)
 
 
 def get_namespaces(tu, ignore_ns=[]):
-    """Namepspaces defined locally (i.e. without includes).
-    """
+    """Namepspaces defined locally (i.e. without includes)."""
 
     for el in get_symbols(tu, CursorKind.NAMESPACE):
-        if el.spelling not in ignore_ns+[""]:
+        if el.spelling not in ignore_ns + [""]:
             yield el
 
 
 def get_x(cls, kind):
-    """Get children entities of the specified type excluding forward declataions
-    """
+    """Get children entities of the specified type excluding forward declataions"""
 
     for child in cls.get_children():
         if child.kind is kind and child.get_definition():
@@ -223,8 +206,7 @@ def get_x(cls, kind):
 
 
 def get_x_multi(cls, kinds):
-    """Get children entities of the specified types excluding forward declataions
-    """
+    """Get children entities of the specified types excluding forward declataions"""
 
     for child in cls.get_children():
         if any((child.kind is kind for kind in kinds)) and child.get_definition():
@@ -232,8 +214,7 @@ def get_x_multi(cls, kinds):
 
 
 def get_xx(cls, kind, access):
-    """Get children entities of the specified type with given access specifier
-    """
+    """Get children entities of the specified type with given access specifier"""
 
     for child in cls.get_children():
         if child.kind is kind and child.access_specifier is access:
@@ -241,13 +222,11 @@ def get_xx(cls, kind, access):
 
 
 def get_template_type_params(cls):
-    """Get all template type params
-    """
+    """Get all template type params"""
 
     for t in get_x_multi(
         cls,
-        (CursorKind.TEMPLATE_TYPE_PARAMETER,
-         CursorKind.TEMPLATE_NON_TYPE_PARAMETER),
+        (CursorKind.TEMPLATE_TYPE_PARAMETER, CursorKind.TEMPLATE_NON_TYPE_PARAMETER),
     ):
         if len(list(t.get_children())) == 0:
             yield t, None
@@ -263,8 +242,7 @@ def get_template_type_params(cls):
 
 
 def get_base_class(c):
-    """Get all class-baseclass pairs with public or protected inheritance
-    """
+    """Get all class-baseclass pairs with public or protected inheritance"""
 
     if c.get_definition():
         rv = [
@@ -288,8 +266,7 @@ def get_base_class(c):
 
 
 def get_inheritance_relations(tu):
-    """Inheritance relations pairs
-    """
+    """Inheritance relations pairs"""
 
     all_classes = get_x(tu.cursor, CursorKind.CLASS_DECL)
 
@@ -303,24 +280,21 @@ def get_inheritance_relations(tu):
 
 
 def get_public_fields(cls):
-    """Public methods of a given class
-    """
+    """Public methods of a given class"""
 
     for child in get_xx(cls, CursorKind.FIELD_DECL, AccessSpecifier.PUBLIC):
         yield child
 
 
 def get_public_enums(cls):
-    """Public enums of a given class
-    """
+    """Public enums of a given class"""
 
     for child in get_xx(cls, CursorKind.ENUM_DECL, AccessSpecifier.PUBLIC):
         yield child
 
 
 def get_public_methods(cls):
-    """Public methods of a given class
-    """
+    """Public methods of a given class"""
 
     for child in get_xx(cls, CursorKind.CXX_METHOD, AccessSpecifier.PUBLIC):
         if not child.is_static_method() and not child.spelling.startswith("operator"):
@@ -328,8 +302,7 @@ def get_public_methods(cls):
 
 
 def get_protected_pure_virtual_methods(cls):
-    """Protected pure virtual methods of a given class
-    """
+    """Protected pure virtual methods of a given class"""
 
     for child in get_xx(cls, CursorKind.CXX_METHOD, AccessSpecifier.PROTECTED):
         if (
@@ -341,8 +314,7 @@ def get_protected_pure_virtual_methods(cls):
 
 
 def get_private_pure_virtual_methods(cls):
-    """Private pure virtual methods of a given class
-    """
+    """Private pure virtual methods of a given class"""
 
     for child in get_xx(cls, CursorKind.CXX_METHOD, AccessSpecifier.PRIVATE):
         if (
@@ -354,8 +326,7 @@ def get_private_pure_virtual_methods(cls):
 
 
 def get_public_static_methods(cls):
-    """Public static methods of a given class
-    """
+    """Public static methods of a given class"""
 
     for child in get_xx(cls, CursorKind.CXX_METHOD, AccessSpecifier.PUBLIC):
         if child.is_static_method() and not child.spelling.startswith("operator"):
@@ -363,8 +334,7 @@ def get_public_static_methods(cls):
 
 
 def get_public_operators(cls):
-    """Public operators of a given class
-    """
+    """Public operators of a given class"""
 
     for child in get_xx(cls, CursorKind.CXX_METHOD, AccessSpecifier.PUBLIC):
         if not child.is_static_method() and child.spelling.startswith("operator"):
@@ -372,8 +342,7 @@ def get_public_operators(cls):
 
 
 def get_public_static_operators(cls):
-    """Public static operators of a given class
-    """
+    """Public static operators of a given class"""
 
     for child in get_xx(cls, CursorKind.CXX_METHOD, AccessSpecifier.PUBLIC):
         if child.is_static_method() and child.spelling.startswith("operator"):
@@ -381,56 +350,49 @@ def get_public_static_operators(cls):
 
 
 def get_public_constructors(cls):
-    """Public constructors of a given class
-    """
+    """Public constructors of a given class"""
 
     for child in get_xx(cls, CursorKind.CONSTRUCTOR, AccessSpecifier.PUBLIC):
         yield child
 
 
 def get_private_constructors(cls):
-    """Private constructors of a given class
-    """
+    """Private constructors of a given class"""
 
     for child in get_xx(cls, CursorKind.CONSTRUCTOR, AccessSpecifier.PRIVATE):
         yield child
 
 
 def get_protected_constructors(cls):
-    """Protected constructors of a given class
-    """
+    """Protected constructors of a given class"""
 
     for child in get_xx(cls, CursorKind.CONSTRUCTOR, AccessSpecifier.PROTECTED):
         yield child
 
 
 def get_public_destructors(cls):
-    """Public destructors of a given class
-    """
+    """Public destructors of a given class"""
 
     for child in get_xx(cls, CursorKind.DESTRUCTOR, AccessSpecifier.PUBLIC):
         yield child
 
 
 def get_private_destructors(cls):
-    """Private destructors of a given class
-    """
+    """Private destructors of a given class"""
 
     for child in get_xx(cls, CursorKind.DESTRUCTOR, AccessSpecifier.PRIVATE):
         yield child
 
 
 def get_protected_destructors(cls):
-    """Private destructors of a given class
-    """
+    """Private destructors of a given class"""
 
     for child in get_xx(cls, CursorKind.DESTRUCTOR, AccessSpecifier.PROTECTED):
         yield child
 
 
 def get_free_method_definitions(tu):
-    """Free method definitions
-    """
+    """Free method definitions"""
 
     return (
         el
@@ -472,8 +434,7 @@ def get_named_type(T: Type) -> Type:
 
 
 class BaseInfo(object):
-    """Base class for the info objects
-    """
+    """Base class for the info objects"""
 
     name: str
     comment: str
@@ -485,8 +446,7 @@ class BaseInfo(object):
 
 
 class FieldInfo(BaseInfo):
-    """Container for field parsing reults
-    """
+    """Container for field parsing reults"""
 
     type: str
     const: bool
@@ -502,8 +462,7 @@ class FieldInfo(BaseInfo):
 
 
 class EnumInfo(BaseInfo):
-    """Container for enum parsing results
-    """
+    """Container for enum parsing results"""
 
     comment: str
     values: List[str]
@@ -520,13 +479,11 @@ class EnumInfo(BaseInfo):
 
         if any(x in self.name for x in ["anonymous", "unnamed"]):
             self.anonymous = True
-            self.name = "::".join(self.name.split(
-                "::")[:-1])  # get rid of anonymous
+            self.name = "::".join(self.name.split("::")[:-1])  # get rid of anonymous
 
 
 class FunctionInfo(BaseInfo):
-    """Container for function parsing results
-    """
+    """Container for function parsing results"""
 
     namespace: Optional[str]
     full_name: str
@@ -567,7 +524,7 @@ class FunctionInfo(BaseInfo):
             (
                 f"{el.spelling}_" if el.spelling in KWORDS else el.spelling,
                 self._underlying_type(el, cur),
-                self._default_value(el)
+                self._default_value(el),
             )
             for el in cur.get_arguments()
         ]
@@ -578,8 +535,7 @@ class FunctionInfo(BaseInfo):
         ]
 
     def _pointer_by_ref(self, cur: Cursor) -> bool:
-        """Check is type is a Pointer passed by reference
-        """
+        """Check is type is a Pointer passed by reference"""
 
         rv = False
         t = cur.type
@@ -596,8 +552,7 @@ class FunctionInfo(BaseInfo):
     def _underlying_type(
         self, cur: Cursor | Type, ctx: Cursor, add_qualifiers=True
     ) -> str:
-        """Tries to resolve the underlying type. Needed for typedefed templates.
-        """
+        """Tries to resolve the underlying type. Needed for typedefed templates."""
 
         T = cur.type if isinstance(cur, Cursor) else cur
 
@@ -668,13 +623,12 @@ class FunctionInfo(BaseInfo):
         return rv
 
     def _default_value(self, cur: Cursor) -> Optional[str]:
-        """Tries to extract default value
-        """
+        """Tries to extract default value"""
 
         rv = None
         tokens = [t.spelling for t in cur.get_tokens()]
         if "=" in tokens:
-            rv = " ".join(tokens[tokens.index("=") + 1:])
+            rv = " ".join(tokens[tokens.index("=") + 1 :])
 
             # handle default initalization of complex types
             if "{ }" == rv:
@@ -684,8 +638,7 @@ class FunctionInfo(BaseInfo):
 
 
 class MethodInfo(FunctionInfo):
-    """Container for method parsing results
-    """
+    """Container for method parsing results"""
 
     const: bool
     virtual: bool
@@ -701,22 +654,19 @@ class MethodInfo(FunctionInfo):
 
 
 class ConstructorInfo(MethodInfo):
-    """Container for constructor parsing results
-    """
+    """Container for constructor parsing results"""
 
     pass
 
 
 class DestructorInfo(FunctionInfo):
-    """Container for destructor parsing results
-    """
+    """Container for destructor parsing results"""
 
     pass
 
 
 class ClassInfo(object):
-    """Container for class parsing results
-    """
+    """Container for class parsing results"""
 
     name: str
     comment: str
@@ -792,8 +742,7 @@ class ClassInfo(object):
             MethodInfo(el) for el in get_public_static_operators(cur)
         ]
 
-        self.destructors = [DestructorInfo(el)
-                            for el in get_public_destructors(cur)]
+        self.destructors = [DestructorInfo(el) for el in get_public_destructors(cur)]
         self.nonpublic_destructors = [
             DestructorInfo(el) for el in get_private_destructors(cur)
         ] + [DestructorInfo(el) for el in get_protected_destructors(cur)]
@@ -901,8 +850,7 @@ class ForwardInfo(BaseInfo):
 
 
 class HeaderInfo(object):
-    """Container for header parsing results
-    """
+    """Container for header parsing results"""
 
     name: str
     short_name: str
@@ -978,15 +926,13 @@ class HeaderInfo(object):
             platform_includes=settings[current_platform()]["includes"],
             parsing_header=settings["parsing_header"],
             tu_parsing_header=tu_parsing_header,
-            platform_parsing_header=settings[current_platform(
-            )]["parsing_header"],
-            target_platform = target_platform,
+            platform_parsing_header=settings[current_platform()]["parsing_header"],
+            target_platform=target_platform,
         )
 
         self.name = path
         self.short_name = path.splitpath()[-1]
-        self.dependencies = [
-            el.location.file.name for el in tr_unit.get_includes()]
+        self.dependencies = [el.location.file.name for el in tr_unit.get_includes()]
         self.enums = [EnumInfo(el) for el in get_enums(tr_unit)]
         self.functions = [FunctionInfo(el) for el in get_functions(tr_unit)]
         self.operators = [FunctionInfo(el) for el in get_operators(tr_unit)]
@@ -1005,12 +951,10 @@ class HeaderInfo(object):
             el.displayname: ClassTemplateInfo(el) for el in get_class_templates(tr_unit)
         }
         self.class_template_dict = {k: self.name for k in self.class_templates}
-        self.inheritance = {k: v for k,
-                            v in get_inheritance_relations(tr_unit) if v}
+        self.inheritance = {k: v for k, v in get_inheritance_relations(tr_unit) if v}
         self.typedefs = [TypedefInfo(el) for el in get_typedefs(tr_unit)]
         self.typedef_dict = {t.name: self.name for t in self.typedefs}
-        self.forwards = [ForwardInfo(el)
-                         for el in get_forward_declarations(tr_unit)]
+        self.forwards = [ForwardInfo(el) for el in get_forward_declarations(tr_unit)]
 
         self.namespaces = [el.spelling for el in get_namespaces(tr_unit)]
 
@@ -1034,8 +978,7 @@ class HeaderInfo(object):
 
 
 def process_header(path, input_folder, settings, module_name, target_platform):
-    """Main function from this module
-    """
+    """Main function from this module"""
 
     hi = HeaderInfo()
     hi.parse(path, input_folder, settings, module_name, target_platform)
@@ -1056,8 +999,7 @@ if __name__ == "__main__":
 
     conda_prefix = Path(getenv("CONDA_PREFIX"))
 
-    gp_Ax1 = process_header(conda_prefix / "include" /
-                            "opencascade" / "gp_Ax1.hxx")
+    gp_Ax1 = process_header(conda_prefix / "include" / "opencascade" / "gp_Ax1.hxx")
 
     for el in gp_Ax1.classes.values():
         print(el.name)
@@ -1076,8 +1018,7 @@ if __name__ == "__main__":
         print(el.values)
 
     # try functions
-    gp_Vec2d = process_header(
-        conda_prefix / "include" / "opencascade" / "gp_Vec2d.hxx")
+    gp_Vec2d = process_header(conda_prefix / "include" / "opencascade" / "gp_Vec2d.hxx")
 
     for el in gp_Vec2d.functions:
         print(el.name)

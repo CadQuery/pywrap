@@ -79,6 +79,7 @@ global_schema = Schema(
         Optional("byref_types", default=[]): [str],
         Optional("byref_types_smart_ptr", default=[]): [str],
         Optional("parsing_header", default=""): str,
+        Optional("collection_pattern", default=None): str,
         Optional("Linux", default=None): platform_settings,
         Optional("Windows", default=None): platform_settings,
         Optional("OSX", default=None): platform_settings,

@@ -16,8 +16,7 @@ from path import Path
 
 
 class ModuleInfo(object):
-    """Container for the whole module
-    """
+    """Container for the whole module"""
 
     prefix: str
     name: str
@@ -53,8 +52,9 @@ class ModuleInfo(object):
 
         for p in paths:
             logger.debug(p)
-            self.headers.append(process_header(
-                p, prefix, settings, name, target_platform))
+            self.headers.append(
+                process_header(p, prefix, settings, name, target_platform)
+            )
 
         self.classes = []
         self.class_dict = {}

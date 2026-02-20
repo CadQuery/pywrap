@@ -1,4 +1,5 @@
 from functools import reduce
+from itertools import chain
 from operator import add
 from re import match
 from sys import platform
@@ -18,7 +19,7 @@ from pyparsing import (
     ZeroOrMore,
     Or,
     Suppress,
-    Combine
+    Combine,
 )
 
 from joblib import Parallel, delayed
@@ -42,8 +43,7 @@ def read_settings(p):
     settings = global_schema.validate(settings)
 
     # extract and compile the module name extraction callable
-    code = compile("func={}".format(
-        settings.pop("module_mapping")), "<tmp>", "exec")
+    code = compile("func={}".format(settings.pop("module_mapping")), "<tmp>", "exec")
     tmp = {"Path": Path}
     exec(code, tmp, tmp)
     module_mapping = tmp["func"]
@@ -192,15 +192,16 @@ open_bracket = Literal("<")
 close_bracket = Literal(">")
 
 cpp_expr = Forward()
-cpp_expr << cpp_type + Optional(
-    open_bracket + delimitedList(cpp_expr) + close_bracket
-)
+cpp_expr << cpp_type + Optional(open_bracket + delimitedList(cpp_expr) + close_bracket)
 
 
 def type_form_byref_smart_ptr(t: str, ptr_types: List[str]) -> str:
 
-    expr = (Suppress(Or(map(Literal, ptr_types)) + open_bracket)
-            + Combine(cpp_expr) + Suppress(close_bracket + Literal('&')))
+    expr = (
+        Suppress(Or(map(Literal, ptr_types)) + open_bracket)
+        + Combine(cpp_expr)
+        + Suppress(close_bracket + Literal("&"))
+    )
 
     return expr.parse_string(t)[0]
 
@@ -211,15 +212,16 @@ def _exclude_methods(classes, exclusions):
         cls_pat, m_pat = pat.split("::")
         for c in (c for c in classes if match(cls_pat, c.name)):
             c.methods = [m for m in c.methods if not match(m_pat, m.name)]
-            c.static_methods = [
-                m for m in c.static_methods if not match(m_pat, m.name)]
+            c.static_methods = [m for m in c.static_methods if not match(m_pat, m.name)]
             c.operators = [m for m in c.operators if not match(m_pat, m.name)]
 
 
 def transform_module(m, sym, settings, settings_per_module, platform=None):
 
     s = settings_per_module.get(m.name, None)
-    global_excludes = settings[platform if platform else current_platform()]["exclude_classes"]
+    global_excludes = settings[platform if platform else current_platform()][
+        "exclude_classes"
+    ]
 
     # handle global excludes
     m.classes = [
@@ -233,8 +235,7 @@ def transform_module(m, sym, settings, settings_per_module, platform=None):
 
     if s:
         # exclude classes
-        m.classes = [
-            c for c in m.classes if c.name not in s["exclude_classes"]]
+        m.classes = [c for c in m.classes if c.name not in s["exclude_classes"]]
         m.class_dict = {
             k: v for k, v, in m.class_dict.items() if k not in s["exclude_classes"]
         }
@@ -251,23 +252,19 @@ def transform_module(m, sym, settings, settings_per_module, platform=None):
 
         # exclude methods (including static methods)
         _exclude_methods(m.classes, s["exclude_methods"])
-        _exclude_methods(m.class_templates,
-                         s["exclude_class_template_methods"])
+        _exclude_methods(m.class_templates, s["exclude_class_template_methods"])
 
         # exclude functions
-        m.functions = [
-            f for f in m.functions if f.name not in s["exclude_functions"]]
+        m.functions = [f for f in m.functions if f.name not in s["exclude_functions"]]
         for h in m.headers:
             h.functions = [
                 f for f in h.functions if f.name not in s["exclude_functions"]
             ]
 
         # exclude typedefs
-        m.typedefs = [
-            t for t in m.typedefs if t.name not in s["exclude_typedefs"]]
+        m.typedefs = [t for t in m.typedefs if t.name not in s["exclude_typedefs"]]
         for h in m.headers:
-            h.typedefs = [
-                t for t in h.typedefs if t.name not in s["exclude_typedefs"]]
+            h.typedefs = [t for t in h.typedefs if t.name not in s["exclude_typedefs"]]
 
     # collect methods and static methods using byref i.s.o. return
     byref_types = settings["byref_types"] + settings["byref_types_smart_ptr"]
@@ -275,8 +272,7 @@ def transform_module(m, sym, settings, settings_per_module, platform=None):
     if byref_types:
         for c in m.classes:
 
-            c.methods_byref = [
-                met for met in c.methods if is_byref(met, byref_types)]
+            c.methods_byref = [met for met in c.methods if is_byref(met, byref_types)]
             c.methods_return_byref = [
                 met
                 for met in c.methods
@@ -364,10 +360,8 @@ def parse_modules(
         init_clang.__defaults__ = clang_location
 
         # inject excluded namespaces
-        get_symbols.__defaults__ = get_symbols.__defaults__[
-            :-1] + (exclude_ns,)
-        get_namespaces.__defaults__ = get_namespaces.__defaults__[
-            :-1] + (exclude_ns,)
+        get_symbols.__defaults__ = get_symbols.__defaults__[:-1] + (exclude_ns,)
+        get_namespaces.__defaults__ = get_namespaces.__defaults__[:-1] + (exclude_ns,)
 
         if not verbose:
             logzero.logger.setLevel(logzero.logging.INFO)
@@ -388,10 +382,18 @@ def parse_modules(
 
 
 def transform_modules(
-    verbose, n_jobs, settings, module_mapping, settings_per_module, modules, platform=None
-):
+    verbose,
+    n_jobs,
+    settings,
+    module_mapping,
+    settings_per_module,
+    modules,
+    platform=None,
+) -> tuple[list, dict, dict, list]:
 
-    sym = read_symbols(settings[platform if platform else current_platform()]["symbols"])
+    sym = read_symbols(
+        settings[platform if platform else current_platform()]["symbols"]
+    )
 
     # ignore functions and classes based on settings and update the global class_dict
     def _filter_module(m):
@@ -442,7 +444,7 @@ def transform_modules(
             #    m.dependencies.add(enum_dict[t])
 
     # remove duplicate typedefs
-    logzero.logger.info("removing duplicate typedefs")
+    logzero.logger.info("Removing duplicate typedefs")
 
     typedefs_dict = {}
     for m in modules:
@@ -458,7 +460,26 @@ def transform_modules(
             for t in to_remove:
                 h.typedefs.remove(t)
 
-    return modules, class_dict, enum_dict
+    # collect all collection
+    logzero.logger.info("Collecting used collection template specializations")
+
+    collections: list[CollectionTypedef] = []
+    collections_tmp: set[str] = set()
+    collection_pat = settings["collection_pat"]
+
+    for m in modules:
+        for cls in m.classes:
+            for met in chain(
+                cls.methods,
+                cls.methods_byref,
+                cls.static_methods,
+                cls.static_methods_byref,
+            ):
+                collections_tmp |= set(t for _, t, v in met.args if collection_pat in t)
+
+    # convert to CollectionTypedef objects
+
+    return modules, class_dict, enum_dict, collections
 
 
 def toposort_modules(modules, module_settings):
@@ -478,7 +499,11 @@ def toposort_modules(modules, module_settings):
                         typedefs.append(tmpl_dict[t.template_base[0]])
 
         # get custom deps
-        custom_deps = set(module_settings[m.name]["custom_deps"]) if m.name in module_settings else set()
+        custom_deps = (
+            set(module_settings[m.name]["custom_deps"])
+            if m.name in module_settings
+            else set()
+        )
 
         # iterate over all classes, templates and typedefs
         deps[m.name] = set(
@@ -491,7 +516,9 @@ def toposort_modules(modules, module_settings):
     return toposort_flatten(deps)
 
 
-def render(settings, module_settings, modules, class_dict, prefix=Path(""), platform=None):
+def render(
+    settings, module_settings, modules, class_dict, prefix=Path(""), platform=None
+):
 
     name = settings["name"]
     module_names = [m.name for m in modules]
@@ -514,8 +541,7 @@ def render(settings, module_settings, modules, class_dict, prefix=Path(""), plat
 
     def proper_delete_operator(cls):
 
-        del_ops = [op for op in cls.static_operators if op.name ==
-                   "operator delete"]
+        del_ops = [op for op in cls.static_operators if op.name == "operator delete"]
 
         if not del_ops:
             return True
@@ -526,7 +552,11 @@ def render(settings, module_settings, modules, class_dict, prefix=Path(""), plat
 
     default_path = [Path(__file__).dirname()]
     additional_path = (
-        [Path(settings["template_path"]),] if settings["template_path"] else []
+        [
+            Path(settings["template_path"]),
+        ]
+        if settings["template_path"]
+        else []
     )
     template_paths = additional_path + default_path
 
@@ -552,7 +582,9 @@ def render(settings, module_settings, modules, class_dict, prefix=Path(""), plat
             "is_byref_smart_ptr": lambda t: is_byref_arg(
                 t, settings["byref_types_smart_ptr"]
             ),
-            "type_from_byref_smart_ptr": lambda t: type_form_byref_smart_ptr(t, settings["byref_types_smart_ptr"]),
+            "type_from_byref_smart_ptr": lambda t: type_form_byref_smart_ptr(
+                t, settings["byref_types_smart_ptr"]
+            ),
             "args_byref": lambda f: [
                 arg for arg, t, _ in f.args if is_byref_arg(t, settings["byref_types"])
             ],
@@ -615,8 +647,7 @@ def render(settings, module_settings, modules, class_dict, prefix=Path(""), plat
                 typedefs,
             )
 
-            classes_typedefs = {el.name: el for el in (
-                m.classes + list(typedefs))}
+            classes_typedefs = {el.name: el for el in (m.classes + list(typedefs))}
 
             dag = {}
             for el in classes_typedefs.values():
