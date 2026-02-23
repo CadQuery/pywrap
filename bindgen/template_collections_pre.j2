@@ -1,0 +1,50 @@
+{% from "macros.j2" import cls_name,pointer,super,argtypes,argnames,method_pointer,
+static_method_pointer,function_pointer,template_args_typename,template_args,
+template_method_pointer,template_static_method_pointer, template_pointer,
+prototype, pybind_overload, trampoline_class %}
+
+// pybind 11 related includes
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+
+namespace py = pybind11;
+
+{% if platform.startswith('win') %}
+// Windows specific
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+{% endif %}
+
+// Standard Handle
+#include <Standard_Handle.hxx>
+
+// template related includes
+{% for arg in  collection_types %}
+{% if arg in class_dict %}
+#include <{{ class_dict[arg].split('opencascade')[1][1:] }}>
+{% endif %}
+{% endfor %}
+
+#include "NCollection_tmpl.hxx"
+
+
+// user-defined pre
+{% if include_pre %}
+#include "{{ include_pre }}"
+{% endif %}
+
+
+// Module definiiton
+void register_collections(py::module &m) {
+
+    // register typdefs
+{% for el in collections %}
+    preregister_template_{{ el.full_type() }}(m,"{{el.name() }}");
+{% endfor %}
+
+}
+
+// user-defined post
+{% if include_post %}
+#include "{{ include_post }}"
+{% endif %}

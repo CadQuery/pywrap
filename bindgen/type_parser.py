@@ -108,10 +108,36 @@ class TemplateSpecialization(NamedTuple):
             rv = self.template_base
 
         return rv
+    
+    def leaf_args(self) -> list[str]:
+
+        rv = []
+
+        for arg in self.template_args:
+            if isinstance(arg, str):
+                rv.append(arg)
+            else:
+                rv.extend(arg.leaf_args())
+
+        return rv
+
+    def full_type(self) -> str:
+
+        rv = []
+        rv.append(self.template_base)
+
+        for arg in self.template_args:
+            if isinstance(arg, str):
+                rv.append(arg)
+            else:
+                rv.append(arg.full_type())
+
+        return '{}<{}>'.format(rv[0], ','.join(rv[1:])) 
 
 
-IGNORE = ("TopTools_ShapeMapHasher",)
-COLLECTION = "NCollection"
+class config:
+    IGNORE = ("TopTools_ShapeMapHasher",)
+    COLLECTION = "NCollection"
 
 
 class CollectionTypedef(NamedTuple):
@@ -124,11 +150,11 @@ class CollectionTypedef(NamedTuple):
 
         base = res[0]
         args = []
-
+        
         for el in res[1:]:
             if len(el) == 1:
                 args.append(el[0])
-            elif el[0].startswith(COLLECTION):
+            elif el[0].startswith(config.COLLECTION):
                 args.append(CollectionTypedef.make(el))
             else:
                 args.append(TemplateSpecialization.make(el))
@@ -136,13 +162,43 @@ class CollectionTypedef(NamedTuple):
         return cls(res[0], tuple(args))
 
     def name(self):
-
+        """
+        Generate a name to bind the class.
+        """
         arg_names = []
 
         for arg in self.template_args:
-            if isinstance(arg, str) and not arg in IGNORE:
+            if isinstance(arg, str) and not arg in config.IGNORE:
                 arg_names.append(arg)
             elif not isinstance(arg, str):
                 arg_names.append(arg.name())
 
         return self.template_base.split("_")[-1] + "_" + "_".join(arg_names)
+
+    def leaf_args(self) -> list[str]:
+        """
+        Return all leaf (i.e. not nested) types.
+        """
+        rv = []
+
+        for arg in self.template_args:
+            if isinstance(arg, str):
+                rv.append(arg)
+            else:
+                rv.extend(arg.leaf_args())
+
+        return rv
+
+    def full_type(self) -> str:
+
+        rv = []
+        rv.append(self.template_base)
+
+        for arg in self.template_args:
+            if isinstance(arg, str):
+                rv.append(arg)
+            else:
+                rv.append(arg.full_type())
+
+        return '{}<{}>'.format(rv[0], ','.join(rv[1:])) 
+

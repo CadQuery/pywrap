@@ -19,6 +19,10 @@ void register_{{mod}}_enums(py::module&);
 void register_{{mod}}(py::module&);
 {% endfor %}
 
+// forward declaration of collection registration functions
+void pregister_collections(py::module&);
+void register_collections(py::module&);
+
 // main module definiiton
 PYBIND11_MODULE({{name}}, m) {
 
@@ -37,5 +41,9 @@ PYBIND11_MODULE({{name}}, m) {
 {% for k,v in settings['Attributes'].items() %}
     m.attr("{{k}}") = py::cast("{{v}}");
 {% endfor %}
+
+// Register collection types
+pregister_collections(m);
+register_collections(m);
 
 }

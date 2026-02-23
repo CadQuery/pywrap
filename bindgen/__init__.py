@@ -29,9 +29,10 @@ from jinja2 import Environment, FileSystemLoader
 from toposort import toposort_flatten
 
 from .module import ModuleInfo
-from .header import parse_tu, ClassInfo, get_symbols, get_namespaces
+from .header import parse_tu, ClassInfo, get_symbols, get_namespaces, TypedefInfo
 from .utils import current_platform, get_includes, init_clang
 from .schemas import global_schema, module_schema
+from .type_parser import CollectionTypedef, arg_type_expr, config as collection_config
 
 
 def read_settings(p):
@@ -446,7 +447,7 @@ def transform_modules(
     # remove duplicate typedefs
     logzero.logger.info("Removing duplicate typedefs")
 
-    typedefs_dict = {}
+    typedefs_dict: dict[str, list[TypedefInfo]] = {}
     for m in modules:
         for h in m.headers:
             to_remove = []
@@ -460,12 +461,14 @@ def transform_modules(
             for t in to_remove:
                 h.typedefs.remove(t)
 
-    # collect all collection
+    # collect all used collection types
     logzero.logger.info("Collecting used collection template specializations")
 
-    collections: list[CollectionTypedef] = []
-    collections_tmp: set[str] = set()
-    collection_pat = settings["collection_pat"]
+    collections_tmp: set[CollectionTypedef] = set()
+    collection_pat = 'NCollection' #settings["collection_pat"]
+
+    # set the collection pattern in the parser
+    collection_config.COLLECTION = collection_pat
 
     for m in modules:
         for cls in m.classes:
@@ -475,10 +478,11 @@ def transform_modules(
                 cls.static_methods,
                 cls.static_methods_byref,
             ):
-                collections_tmp |= set(t for _, t, v in met.args if collection_pat in t)
+                collections_tmp |= set(CollectionTypedef.make(arg_type_expr.parse_string(t)) for _, t, v in met.args if collection_pat in t)
 
     # convert to CollectionTypedef objects
-
+    collections = [el for el in collections_tmp if len(el.template_args) > 0]
+    
     return modules, class_dict, enum_dict, collections
 
 
@@ -517,7 +521,7 @@ def toposort_modules(modules, module_settings):
 
 
 def render(
-    settings, module_settings, modules, class_dict, prefix=Path(""), platform=None
+    settings, module_settings, modules, class_dict, prefix=Path(""), collections=(), platform=None
 ):
 
     name = settings["name"]
@@ -570,6 +574,11 @@ def render(
     all_classes = {c.name: c for m in modules for c in m.classes}
     all_enums = {e.name: e for m in modules for e in m.enums}
     all_typedefs = {t.name: t for m in modules for t in m.typedefs}
+    
+    # collect all types needed for collections
+    collection_types = set()
+    for c in collections:
+        collection_types |= set(c.leaf_args())
 
     jinja_env.globals.update(
         {
@@ -605,6 +614,8 @@ def render(
             "module_names": module_names,
             "sorted_modules": toposort_modules(modules, module_settings),
             "settings": settings,
+            "collections": collections,
+            "collection_types": collection_types,
         }
     )
 
@@ -612,6 +623,8 @@ def render(
 
     template_sub = jinja_env.get_template("template_sub.j2")
     template_sub_pre = jinja_env.get_template("template_sub_pre.j2")
+    template_collections = jinja_env.get_template("template_collections.j2")
+    template_collections_pre = jinja_env.get_template("template_collections_pre.j2")
     template_tmpl = jinja_env.get_template("template_templates.j2")
     template_main = jinja_env.get_template("template_main.j2")
     template_cmake = jinja_env.get_template("CMakeLists.j2")
@@ -688,6 +701,12 @@ def render(
             with open(f"{m.name}_tmpl.hxx", "w") as f:
                 f.write(template_tmpl.render({"module": m}))
 
+        with open(f"collections_pre.cpp", "w") as f:
+            f.write(template_collections_pre.render())
+
+        with open(f"collections.cpp", "w") as f:
+            f.write(template_collections.render())
+ 
         with open(f"{name}.cpp", "w") as f:
             f.write(template_main.render({"name": name}))
 
