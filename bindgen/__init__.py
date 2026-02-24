@@ -528,6 +528,7 @@ def render(
     module_names = [m.name for m in modules]
     output_path = Path(settings["output_folder"])
     operator_dict = settings["Operators"]
+    exclude_collections = settings["exclude_collections"]
 
     pre = settings["Extras"]["include_pre"]
     post = settings["Extras"]["include_post"]
@@ -616,6 +617,7 @@ def render(
             "settings": settings,
             "collections": collections,
             "collection_types": collection_types,
+            "exclude_collections": exclude_collections,
         }
     )
 

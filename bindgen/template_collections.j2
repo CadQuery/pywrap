@@ -39,7 +39,10 @@ void register_collections(py::module &m) {
 
     // register typdefs
 {% for el in collections %}
-    register_template_{{ el.full_type() }}(m,"{{el.name() }}");
+{% set name = el.name() %}
+{% if name not in exclude_collections and '::' not in name %}
+    register_template_{{ el.full_type() }}(m,"{{name}}");
+{% endif %}
 {% endfor %}
 
 }

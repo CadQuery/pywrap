@@ -20,7 +20,11 @@ class_schema = Schema(
     }
 )
 
-template_schema = Schema({Optional("exclude_constructors", default=[]): [int]})
+template_schema = Schema(
+    {
+        Optional("exclude_constructors", default=[]): [int],
+        Optional("exclude_methods", default=[]): [str],
+    })
 
 module_schema = Schema(
     {
@@ -80,6 +84,7 @@ global_schema = Schema(
         Optional("byref_types_smart_ptr", default=[]): [str],
         Optional("parsing_header", default=""): str,
         Optional("collection_pattern", default=None): str,
+        Optional("exclude_collection", default=[]): [str],
         Optional("Linux", default=None): platform_settings,
         Optional("Windows", default=None): platform_settings,
         Optional("OSX", default=None): platform_settings,
