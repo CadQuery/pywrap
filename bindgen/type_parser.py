@@ -93,7 +93,7 @@ class TemplateSpecialization(NamedTuple):
             else:
                 args.append(cls.make(el))
 
-        return cls("".join(base), tuple(args))
+        return cls(" ".join(base), tuple(args))
 
     def name(self):
 
