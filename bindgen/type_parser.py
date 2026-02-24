@@ -83,12 +83,15 @@ class TemplateSpecialization(NamedTuple):
         args = []
 
         for el in arg:
-            # base typ element
+            # base type element
             if isinstance(el, str):
                 base.append(el)
             # simple argument
             elif len(el) == 1:
                 args.append(el[0])
+            # simple argment with multiple tokens
+            elif all(isinstance(el_i, str) for el_i in el):
+                args.append(' '.join(el))
             # complex argument - recurse
             else:
                 args.append(cls.make(el))
@@ -154,6 +157,8 @@ class CollectionTypedef(NamedTuple):
         for el in res[1:]:
             if len(el) == 1:
                 args.append(el[0])
+            elif all(isinstance(el_i, str) for el_i in el):
+                args.append(' '.join(el))
             elif el[0].startswith(config.COLLECTION):
                 args.append(CollectionTypedef.make(el))
             else:
@@ -190,6 +195,9 @@ class CollectionTypedef(NamedTuple):
         return rv
 
     def full_type(self) -> str:
+        """
+        C++ name of the type.
+        """
 
         rv = []
         rv.append(self.template_base)
