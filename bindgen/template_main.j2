@@ -20,7 +20,7 @@ void register_{{mod}}(py::module&);
 {% endfor %}
 
 // forward declaration of collection registration functions
-void pregister_collections(py::module&);
+void register_collections_pre(py::module&);
 void register_collections(py::module&);
 
 // main module definiiton
@@ -43,7 +43,7 @@ PYBIND11_MODULE({{name}}, m) {
 {% endfor %}
 
 // Register collection types
-pregister_collections(m);
+register_collections_pre(m);
 register_collections(m);
 
 }

@@ -49,7 +49,7 @@ void register_template_{{t.name}}(py::object &m, const char *name){
         {% endif %}
     {% endfor %}
     {% for m in t.methods if not references_inner(t.name,m)%}
-        {% if not m.name module_settings['Templates'].get(t.name,{}).get('exclude_methods',[])  %}
+        {% if not m.name in module_settings['Templates'].get(t.name,{}).get('exclude_methods',[])  %}
         .def("{{m.name}}",
              {{ template_method_pointer(t,m) }},
              R"#({{m.comment}})#" {{argnames_template(t, m)}})
