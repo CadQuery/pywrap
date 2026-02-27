@@ -37,12 +37,14 @@ from pyparsing import (
 )
 
 name = Word(alphanums + "_")
-cpp_type = (
+cpp_type = Combine(
     Literal("const")[0, 1]
     + (Literal("long ") | Literal("unsigned "))[0, 1]
     + Literal("long")[0, 1]
     + name[0, 1]
-    + ZeroOrMore(Literal("::") + name)
+    + ZeroOrMore(Literal("::") + name),
+    adjacent=False,
+   join_string=' ', 
 )
 open_bracket = Literal("<")
 close_bracket = Literal(">")
@@ -52,7 +54,6 @@ cpp_expr << cpp_type + Optional(
     Suppress(open_bracket)
     + delimitedList(Group(cpp_expr) + Suppress(Literal("*")[0, 1]), combine=False)
     + Suppress(close_bracket)
-    + Optional(cpp_type)
 )
 
 ptr_types = ["handle"]
