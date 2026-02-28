@@ -23,12 +23,13 @@ class ModuleInfo(object):
     headers: List[HeaderInfo]
 
     classes: List[ClassInfo]
-    class_dict: Mapping[str, ClassInfo]
+    class_dict: Mapping[str, str]
     class_templates: List[ClassTemplateInfo]
-    class_template_dict: Mapping[str, ClassTemplateInfo]
+    class_template_dict: Mapping[str, str]
     typedefs: List[TypedefInfo]
-    typedef_dict: Mapping[str, TypedefInfo]
+    typedef_dict: Mapping[str, str]
     enums: List[EnumInfo]
+    enum_dict: Mapping[str, str]
     functions: List[FunctionInfo]
     operators: List[FunctionInfo]
     exceptions: List[Any]
@@ -63,6 +64,7 @@ class ModuleInfo(object):
         self.typedefs = []
         self.typedef_dict = {}
         self.enums = []
+        self.enum_dict = {}
         self.functions = []
         self.operators = []
         self.exceptions = []
@@ -75,6 +77,7 @@ class ModuleInfo(object):
             self.class_templates.extend(h.class_templates.values())
             self.typedefs.extend(h.typedefs)
             self.enums.extend(h.enums)
+            self.enum_dict.update(h.enum_dict)
             self.functions.extend(h.functions)
             self.operators.extend(h.operators)
             self.class_dict.update(h.class_dict)

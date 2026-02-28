@@ -20,8 +20,8 @@ namespace py = pybind11;
 
 // template related includes
 {% for arg in collection_types %}
-{% if arg in class_dict %}
-#include <{{ class_dict[arg].split('opencascade')[1][1:] }}>
+{% if arg in symbol_dict %}
+#include <{{ symbol_dict[arg].split('opencascade')[1][1:] }}>
 {% endif %}
 {% endfor %}
 
@@ -40,7 +40,7 @@ void register_collections_pre(py::module &m) {
 // register typdefs
 {% for el in collections %}
 {% set name = el.name() %}
-{% if name not in exclude_collections and ": :" not in name %}
+{% if (name not in exclude_collections) and not (': :' in name) %}
     preregister_template_{{ el.full_type() }}(m,"{{name}}");
 {% endif %}
 {% endfor %}

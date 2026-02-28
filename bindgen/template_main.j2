@@ -32,6 +32,10 @@ PYBIND11_MODULE({{name}}, m) {
     register_{{mod}}_enums(m);
 {% endfor %}
 
+// preregister collections
+register_collections_pre(m);
+
+// register modules
 {% for mod in sorted_modules %}
     register_{{mod}}(m);
 {% endfor %}
@@ -42,8 +46,7 @@ PYBIND11_MODULE({{name}}, m) {
     m.attr("{{k}}") = py::cast("{{v}}");
 {% endfor %}
 
-// Register collection types
-register_collections_pre(m);
+// register collection types
 register_collections(m);
 
 }

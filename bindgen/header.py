@@ -857,9 +857,11 @@ class HeaderInfo(object):
     dependencies: List[str]
     classes: Mapping[str, ClassInfo]
     class_templates: Mapping[str, ClassTemplateInfo]
+    class_dict: Mapping[str, str]
     functions: List[FunctionInfo]
     operators: List[FunctionInfo]
     enums: List[EnumInfo]
+    enum_dict: Mapping[str, str]
     methods: List[MethodInfo]
     inheritance: Mapping[str, str]
     typedefs: List[TypedefInfo]
@@ -947,6 +949,7 @@ class HeaderInfo(object):
                 self.classes[ci.name] = ci
 
         self.class_dict = {k: self.name for k in self.classes}
+        self.enum_dict = {e.name: self.name for e in self.enums}
         self.class_templates = {
             el.displayname: ClassTemplateInfo(el) for el in get_class_templates(tr_unit)
         }

@@ -390,7 +390,7 @@ def transform_modules(
     settings_per_module,
     modules,
     platform=None,
-) -> tuple[list, dict, dict, list]:
+) -> tuple[list, dict, dict, dict, list]:
 
     sym = read_symbols(
         settings[platform if platform else current_platform()]["symbols"]
@@ -413,6 +413,13 @@ def transform_modules(
     class_dict = {}
     for m in modules:
         class_dict.update(m.class_dict)
+
+    # construct global class dictionary
+    symbol_dict = {}
+    for m in modules:
+        symbol_dict.update(m.class_dict)
+        symbol_dict.update(m.typedef_dict)
+        symbol_dict.update(m.enum_dict)
 
     # sort modules
     logzero.logger.info("sorting")
@@ -466,11 +473,13 @@ def transform_modules(
 
     collections_tmp: set[CollectionTypedef] = set()
     collection_pat = 'NCollection' #settings["collection_pat"]
+    existing_typedefs: list[str] = []
 
     # set the collection pattern in the parser
     collection_config.COLLECTION = collection_pat
 
     for m in modules:
+        # collect templated argument types
         for cls in m.classes:
             for met in chain(
                 cls.methods,
@@ -478,12 +487,19 @@ def transform_modules(
                 cls.static_methods,
                 cls.static_methods_byref,
             ):
-                collections_tmp |= set(CollectionTypedef.make(arg_type_expr.parse_string(t)) for _, t, v in met.args if collection_pat in t)
+                collections_tmp |= set(CollectionTypedef.make(arg_type_expr.parse_string(t)) for _, t, _ in met.args if collection_pat in t)
 
-    # convert to CollectionTypedef objects
-    collections = [el for el in collections_tmp if len(el.template_args) > 0]
+        # collect related existing typedefs
+        for t in m.typedefs:
+            if t.type.startswith(collection_pat):
+                existing_typedefs.append(
+                    CollectionTypedef.make(arg_type_expr.parse_string(t.type)).name()
+                )
+
+    # Remove existing typedefs and typedefs without args. A dict is used for additional deduplication.
+    collections = {el.name(): el for el in collections_tmp if len(el.template_args) > 0 and el.name() not in existing_typedefs}
     
-    return modules, class_dict, enum_dict, collections
+    return modules, class_dict, enum_dict, symbol_dict, list(collections.values())
 
 
 def toposort_modules(modules, module_settings):
@@ -521,7 +537,7 @@ def toposort_modules(modules, module_settings):
 
 
 def render(
-    settings, module_settings, modules, class_dict, prefix=Path(""), collections=(), platform=None
+    settings, module_settings, modules, class_dict, symbol_dict, prefix=Path(""), collections=(), platform=None
 ):
 
     name = settings["name"]
@@ -601,6 +617,7 @@ def render(
             "enumerate": enumerate,
             "platform": platform if platform else current_platform(),
             "class_dict": class_dict,
+            "symbol_dict": symbol_dict,
             "all_classes": all_classes,
             "all_enums": all_enums,
             "all_typedefs": all_typedefs,

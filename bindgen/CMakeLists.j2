@@ -15,6 +15,7 @@ find_package( VTK REQUIRED
 )
 find_package( pybind11 REQUIRED )
 find_package( OpenCASCADE REQUIRED )
+find_package( fmt REQUIRED )
 
 include_directories( ${PROJECT_SOURCE_DIR} )
 file( GLOB CPP_FILES ${PROJECT_SOURCE_DIR}/*.cpp )
@@ -28,7 +29,8 @@ target_link_libraries( {{ name }} PRIVATE
   VTK::RenderingCore
   VTK::CommonDataModel
   VTK::CommonExecutionModel
-  )
+  fmt::fmt
+)
 set_target_properties( {{ name }}
                        PROPERTIES
                        CXX_STANDARD 17
