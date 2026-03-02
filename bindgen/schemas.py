@@ -24,6 +24,7 @@ template_schema = Schema(
     {
         Optional("exclude_constructors", default=[]): [int],
         Optional("exclude_methods", default=[]): [str],
+        Optional("additional_methods", default={}): {str: method_schema},
     })
 
 module_schema = Schema(

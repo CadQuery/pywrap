@@ -13,7 +13,7 @@
 {%- endmacro -%}
 
 {%- macro super(cls,classes,typedefs) -%}
-    {% for super in cls.superclass if super in classes or super in typedefs %}, {{super}} {% endfor %}
+    {% for super in cls.superclass if super in classes or super in typedefs or (super.startswith(collection_pat) and collection_pat in cls.name and not (collection_pat +"_Base" in cls.name)) %}, {{super}} {% endfor %}
 {%- endmacro -%}
 
 {%- macro prototype(f) -%}

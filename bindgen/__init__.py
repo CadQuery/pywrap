@@ -472,7 +472,7 @@ def transform_modules(
     logzero.logger.info("Collecting used collection template specializations")
 
     collections_tmp: set[CollectionTypedef] = set()
-    collection_pat = 'NCollection' #settings["collection_pat"]
+    collection_pat = settings["collection_pattern"]
     existing_typedefs: list[str] = []
 
     # set the collection pattern in the parser
@@ -632,9 +632,9 @@ def render(
             "module_names": module_names,
             "sorted_modules": toposort_modules(modules, module_settings),
             "settings": settings,
-            "collections": collections,
             "collection_types": collection_types,
             "exclude_collections": exclude_collections,
+            "collection_pat": settings["collection_pattern"],
         }
     )
 
@@ -647,6 +647,42 @@ def render(
     template_tmpl = jinja_env.get_template("template_templates.j2")
     template_main = jinja_env.get_template("template_main.j2")
     template_cmake = jinja_env.get_template("CMakeLists.j2")
+
+    # toposort collections - for now regarding the H* - * correspondence
+    coll_pat = settings["collection_pattern"]
+    colls_super = {el.name: el.superclasses for m in modules for el in m.class_templates if el.name.startswith(coll_pat)} 
+    coll_names = {c.name(): c for c in collections}
+
+    # add missing parents
+    missing = dict()
+
+    for cname, coll in coll_names.items():
+        if coll.template_base in colls_super:
+            for sup in colls_super[coll.template_base]:
+                if sup.startswith(coll_pat):
+                    missing_el =  CollectionTypedef(sup.split('<')[0], coll.template_args)
+                    missing[missing_el.name()] = missing_el
+                    
+                    # add transative deps
+                    for sup in colls_super.get(missing_el.template_base, ()):
+                        if sup.startswith(coll_pat):
+                            missing_el =  CollectionTypedef(sup.split('<')[0], coll.template_args)
+                            missing[missing_el.name()] = missing_el
+
+    coll_names.update({k:v for k,v in missing.items() if not "_Base" in v.template_base})
+
+    # construct a dag for sorting
+    dag = {}
+    for cname, coll in coll_names.items():
+        supers = colls_super.get(coll.template_base)
+
+        if supers is None:
+            dag[cname] = set()
+        else:
+            dag[cname] = set(CollectionTypedef(sup.split('<')[0], coll.template_args).name() for sup in supers if not "_Base" in sup and sup.startswith(coll_pat))
+        
+        
+    sorted_collections = [coll_names[k] for k in toposort_flatten(dag)]
 
     output_path.mkdir_p()
     with output_path:
@@ -681,6 +717,7 @@ def render(
 
             classes_typedefs = {el.name: el for el in (m.classes + list(typedefs))}
 
+            # toposort classes
             dag = {}
             for el in classes_typedefs.values():
                 if isinstance(el, ClassInfo):
@@ -721,10 +758,10 @@ def render(
                 f.write(template_tmpl.render({"module": m}))
 
         with open(f"collections_pre.cpp", "w") as f:
-            f.write(template_collections_pre.render())
+            f.write(template_collections_pre.render({"collections" : sorted_collections}))
 
         with open(f"collections.cpp", "w") as f:
-            f.write(template_collections.render())
+            f.write(template_collections.render({"collections" : sorted_collections}))
  
         with open(f"{name}.cpp", "w") as f:
             f.write(template_main.render({"name": name}))
