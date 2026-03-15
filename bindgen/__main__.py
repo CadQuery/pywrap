@@ -1,5 +1,5 @@
 import click
-import logzero
+import logging
 import pickle
 
 from types import SimpleNamespace
@@ -8,6 +8,7 @@ from path import Path
 from . import read_settings, parse_modules, transform_modules, render, validate_result
 from .utils import get_includes, init_clang
 
+logger = logging.getLogger(__name__)
 
 @click.group()
 @click.option("-n", "--njobs", default=-2, type=int)
@@ -39,7 +40,7 @@ from .utils import get_includes, init_clang
 def main(ctx, clean, verbose, njobs, include, prefix, libclang):
 
     if not verbose:
-        logzero.logger.setLevel(logzero.logging.INFO)
+        logger.setLevel(logging.INFO)
 
     if include:
         get_includes.__defaults__ = (include,)

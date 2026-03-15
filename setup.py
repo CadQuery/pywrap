@@ -8,7 +8,6 @@ setup(
     include_package_data=True,
     install_requires=[
         "click",
-        "logzero",
         "path",
         "clang",
         "toml",

@@ -1,10 +1,11 @@
-import logzero
+import logging
 import pybind11
 
 from clang.cindex import TranslationUnit as TU
 
 from .utils import get_index, get_includes
 
+logger = logging.getLogger(__name__)
 
 def parse_tu(
     path,
@@ -65,9 +66,9 @@ def parse_tu(
 
     diag = list(tr_unit.diagnostics)
     if diag:
-        logzero.logger.warning(path)
+        logger.warning(path)
         for d in diag:
-            logzero.logger.warning(d)
+            logger.warning(d)
 
     tr_unit.path = ("dummy.cxx", path.name)
 

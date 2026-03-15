@@ -4,7 +4,7 @@ from re import match
 from sys import platform
 from typing import List
 
-import logzero
+import logging
 import toml as toml
 import pandas as pd
 import pyparsing as pp
@@ -20,6 +20,7 @@ from .header import parse_tu, ClassInfo, get_symbols, get_namespaces
 from .utils import current_platform, get_includes, init_clang
 from .schemas import global_schema, module_schema
 
+logger = logging.getLogger(__name__)
 
 def read_settings(p):
 
@@ -342,7 +343,7 @@ def parse_modules(
             :-1] + (exclude_ns,)
 
         if not verbose:
-            logzero.logger.setLevel(logzero.logging.INFO)
+            logger.setLevel(logging.INFO)
         return ModuleInfo(name, path, files, module_names, settings, target_platform)
 
     modules = Parallel(prefer="processes", n_jobs=n_jobs)(
@@ -368,8 +369,8 @@ def transform_modules(
     # ignore functions and classes based on settings and update the global class_dict
     def _filter_module(m):
         if not verbose:
-            logzero.logger.setLevel(logzero.logging.INFO)
-        logzero.logger.debug(m.name)
+            logger.setLevel(logging.INFO)
+        logger.debug(m.name)
         transform_module(m, sym, settings, settings_per_module)
 
         return m
@@ -384,7 +385,7 @@ def transform_modules(
         class_dict.update(m.class_dict)
 
     # sort modules
-    logzero.logger.info("sorting")
+    logger.info("sorting")
 
     cls_dict = {c.name: m.name for m in modules for c in m.classes}
     enum_dict = {e.name: m.name for m in modules for e in m.enums}
@@ -414,7 +415,7 @@ def transform_modules(
             #    m.dependencies.add(enum_dict[t])
 
     # remove duplicate typedefs
-    logzero.logger.info("removing duplicate typedefs")
+    logger.info("removing duplicate typedefs")
 
     typedefs_dict = {}
     for m in modules:
@@ -640,12 +641,12 @@ def validate_result(verbose, n_jobs, folder):
 
         tu = parse_tu(f, pre_includes="")
         if len([d for d in tu.diagnostics if d.severity > 2]):
-            logzero.logger.error("Validation {}: NOK".format(f))
+            logger.error("Validation {}: NOK".format(f))
             if verbose:
                 for d in tu.diagnostics:
-                    logzero.logger.warning(d)
+                    logger.warning(d)
         else:
-            logzero.logger.info("Validation {}: OK".format(f))
+            logger.info("Validation {}: OK".format(f))
 
     result = Parallel(prefer="processes", n_jobs=n_jobs)(
         delayed(_validate)(n) for n in Path(folder).files("*.cpp")

@@ -9,10 +9,12 @@ from .header import (
     FunctionInfo,
     EnumInfo,
 )
-from logzero import logger
+import logging
 from toposort import toposort_flatten
 
 from path import Path
+
+logger = logging.getLogger(__name__)
 
 
 class ModuleInfo(object):
