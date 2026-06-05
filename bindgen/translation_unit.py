@@ -17,6 +17,7 @@ def parse_tu(
         "-std=c++17",
         "-D__CODE_GENERATOR__",
         "-Wno-deprecated-declarations",
+        "-Wno-#pragma-messages",
     ],
     parsing_header="",
     tu_parsing_header="",
