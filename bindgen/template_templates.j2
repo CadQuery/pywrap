@@ -3,6 +3,9 @@ static_method_pointer,function_pointer,template_args_typename,template_args,
 template_method_pointer,template_static_method_pointer, template_pointer, argnames_template %}
 #pragma once
 
+#include <initializer_list>
+using std::initializer_list;
+
 // pybind 11 related includes
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
