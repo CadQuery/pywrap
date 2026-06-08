@@ -122,7 +122,7 @@ def remove_undefined_mangled(m, sym):
         ]
         c.constructors = [
             el
-            for el in c.constructors
+            for el in sorted(c.constructors, key=lambda el: el.full_name)
             if sym.name.str.endswith(el.mangled_name).any()
             or el.inline
             or el.pure_virtual
