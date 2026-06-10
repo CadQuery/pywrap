@@ -433,6 +433,16 @@ def get_named_type(T: Type) -> Type:
     return rv
 
 
+def full_name(cur: Cursor) -> str:
+    """
+    Full name including semantic parent (e.g. namespace) spelling.
+    """
+    if cur.semantic_parent.kind == CursorKind.TRANSLATION_UNIT:
+        return cur.spelling
+    else:
+        return full_name(cur.semantic_parent)+"::"+cur.spelling
+
+
 class BaseInfo(object):
     """Base class for the info objects"""
 
@@ -798,13 +808,16 @@ class ClassInfo(object):
         }
 
 
+
 class ClassTemplateInfo(ClassInfo):
 
     type_params: List[Tuple[Optional[str], str, str]]
 
     def __init__(self, cur: Cursor):
         super(ClassTemplateInfo, self).__init__(cur)
-        self.name = cur.spelling
+
+        self.name = full_name(cur)
+
         self.type_params = [
             (
                 None if el.spelling == el.type.spelling else el.type.spelling,

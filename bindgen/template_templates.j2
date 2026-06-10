@@ -39,12 +39,12 @@ namespace py = pybind11;
 {% for t in module.class_templates %}
 
 template {{template_args_typename(t)}}
-void preregister_template_{{t.name}}(py::object &m, const char *name){
+void preregister_template_{{t.name.replace("::","__")}}(py::object &m, const char *name){
     py::class_<{{t.name}}{{template_args(t)}} {{template_pointer(t)}} {{super(t,all_classes,all_typedefs)}}>(m,name,R"#({{t.comment}})#");
 }
 
 template {{template_args_typename(t)}}
-void register_template_{{t.name}}(py::object &m, const char *name){
+void register_template_{{t.name.replace("::","__")}}(py::object &m, const char *name){
     static_cast<py::class_<{{t.name}}{{template_args(t)}} {{template_pointer(t)}} {{super(t,all_classes,all_typedefs)}}>>(m.attr(name))
     {% for i, con in enumerate(t.constructors) %}
         {% if not i in module_settings['Templates'].get(t.name,{}).get('exclude_constructors',[])  %}
