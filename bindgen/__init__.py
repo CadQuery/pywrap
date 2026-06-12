@@ -599,6 +599,7 @@ def render(
 
     jinja_env.globals.update(
         {
+            "contains_string": lambda s,pats: any(pat in s for pat in pats if isinstance(pat, str)),
             "parent_has_nonpublic_destructor": lambda c: any(
                 all_classes[p].nonpublic_destructors
                 for p in c.superclasses

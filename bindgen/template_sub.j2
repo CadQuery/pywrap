@@ -96,8 +96,10 @@ py::object klass;
     static_cast<py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,class_dict,module.typedef_dict)}}>>(klass)
     // constructors
     {% for i,con in enumerate(c.constructors) %}
+    {% set con_excludes = module_settings['Classes'].get(c.name,{}).get('exclude_constructors',[]) %}
     {% if (not con.pointer_by_ref) and
-          (not i in module_settings['Classes'].get(c.name,{}).get('exclude_constructors',[]))  %}
+          (not i in con_excludes) and
+          (not contains_string(con.full_name, con_excludes)) %}
         .def(py::init< {{ argtypes(con) }} >() {{argnames(con)}} )
     {% endif %}
     {% endfor %}

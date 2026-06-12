@@ -1,4 +1,4 @@
-from schema import Schema, Optional
+from schema import Schema, Optional, Or
 
 method_schema = Schema(
     {
@@ -13,7 +13,7 @@ function_schema = method_schema
 
 class_schema = Schema(
     {
-        Optional("exclude_constructors", default=[]): [int],
+        Optional("exclude_constructors", default=[]): [Or(int, str)],
         Optional("additional_constructors", default=[]): [method_schema],
         Optional("additional_methods", default={}): {str: method_schema},
         Optional("additional_static_methods", default={}): {str: method_schema},
