@@ -86,6 +86,7 @@ global_schema = Schema(
         Optional("parsing_header", default=""): str,
         Optional("collection_pattern", default=None): str,
         Optional("exclude_collection", default=[]): [str],
+        Optional("collection_include_header_pre", default=None): str,
         Optional("Linux", default=None): platform_settings,
         Optional("Windows", default=None): platform_settings,
         Optional("OSX", default=None): platform_settings,

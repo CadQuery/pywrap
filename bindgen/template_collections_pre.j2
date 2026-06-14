@@ -32,6 +32,11 @@ namespace py = pybind11;
 #include "{{ include_pre }}"
 {% endif %}
 
+// collection specific preinclusion
+{% if collection_include_header_pre %}
+{{ collection_include_header_pre }}
+{% endif %}
+
 
 // Module definiiton
 void register_collections_pre(py::module &m) {

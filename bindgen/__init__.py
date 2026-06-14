@@ -636,6 +636,7 @@ def render(
             "collection_types": collection_types,
             "exclude_collections": exclude_collections,
             "collection_pat": settings["collection_pattern"],
+            "collection_include_header_pre": settings["collection_include_header_pre"],
         }
     )
 
