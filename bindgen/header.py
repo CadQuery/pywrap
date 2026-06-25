@@ -525,7 +525,7 @@ class ArgInfo:
 
     arg_name: str
     arg_type: str
-    arg_defualt: str
+    arg_default: str
     arg_py_name: str = field(init=False)
 
     def __post_init__(self):
@@ -648,7 +648,34 @@ class FunctionInfo(BaseInfo):
             )
 
             if decl.semantic_parent.kind != CursorKind.TRANSLATION_UNIT:
-                rv = "typename " + rv
+                # Add class prefix if it is missing from rv (e.g. spelling gives bare name)
+                parent = decl.semantic_parent.displayname or decl.semantic_parent.spelling
+                if parent and '::' not in rv:
+                    rv = parent + '::' + rv
+                # Strip misplaced typename from middle (e.g. X<T>::typename X<T>::Y)
+                rv = rv.replace('::typename ', '::')
+                if not rv.startswith("typename "):
+                    rv = "typename " + rv
+
+        # handle nested POD typedefs (e.g. function pointer typedefs inside a class)
+        elif typ.kind == TypeKind.TYPEDEF and typ.is_pod():
+            decl = typ.get_declaration()
+            if decl and decl.semantic_parent.kind not in (
+                CursorKind.TRANSLATION_UNIT, CursorKind.NAMESPACE
+            ):
+                parent = decl.semantic_parent.displayname or decl.semantic_parent.spelling
+                if parent and '::' not in rv:
+                    rv = parent + '::' + rv
+
+        # handle nested ENUMs and RECORDs (structs/classes defined inside a class)
+        elif typ.kind in (TypeKind.ENUM, TypeKind.RECORD):
+            decl = typ.get_declaration()
+            if decl and decl.semantic_parent.kind not in (
+                CursorKind.TRANSLATION_UNIT, CursorKind.NAMESPACE
+            ):
+                parent = decl.semantic_parent.displayname or decl.semantic_parent.spelling
+                if parent and '::' not in rv:
+                    rv = parent + '::' + rv
 
         # additional postprocessing related to templates
         if typ.kind == TypeKind.UNEXPOSED:
@@ -691,7 +718,10 @@ class FunctionInfo(BaseInfo):
 
             # handle default initalization of complex types
             if "{ }" == rv:
-                rv = f"{get_named_type(cur.type).spelling}{rv}"
+                type_name = get_named_type(cur.type).spelling
+                if type_name.startswith("const "):
+                    type_name = type_name[len("const "):]
+                rv = f"{type_name}{rv}"
 
         return rv
 

@@ -29,6 +29,10 @@
     {% for arg in f.args %}{{ arg.arg_type }}{{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
 
+{%- macro argtypes_for_template(template, f) -%}
+    {% for arg in f.args %}{{- arg_type_with_template_params(template, arg.arg_type) -}}{{ "," if not loop.last }}{% endfor %}
+{%- endmacro -%}
+
 {%- macro argtypes_names(f) -%}
     {% for arg in f.args %}{{ arg.arg_type }} {{ arg.arg_name }}{{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
@@ -41,7 +45,7 @@
     {% for arg in f.args if is_byref(arg.arg_type) %}{{ arg.arg_type[:-1] }} {{ arg.arg_name }};
     {% endfor %}
     {% for arg in f.args if is_byref_smart_ptr(arg.arg_type) -%}
-    {{ arg.arg_type[:-1] }} {{ arg.name }}_ptr; {{ arg.name }}_ptr = &{{arg.name}};
+    {{ arg.arg_type[:-1] }} {{ arg.arg_name }}_ptr; {{ arg.arg_name }}_ptr = &{{arg.arg_name}};
     {% endfor %}
 {%- endmacro -%}
 
@@ -53,30 +57,42 @@
     {% for arg in f.args if is_byref(arg.arg_type) %}{{ arg.arg_name }}{{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
 
+{%- macro default_value(arg_type, arg_default) -%}
+    {%- if arg_default in ('NULL', '0', 'nullptr') and '*' in arg_type -%}
+        py::none()
+    {%- else -%}
+        static_cast<{{arg_type}}>({{arg_default}})
+    {%- endif -%}
+{%- endmacro -%}
+
 {%- macro argnames(f) -%}
-    {% for arg in f.args %} {{ "," if loop.first }} py::arg("{{arg.arg_py_name if arg.arg_py_name!='' else 'arg'}}"){% if d %}=static_cast<{{arg.arg_type}}>({{arg.arg_default}}){% endif %}{{ "," if not loop.last }}{% endfor %}
+    {% for arg in f.args %} {{ "," if loop.first }} py::arg("{{arg.arg_py_name if arg.arg_py_name!='' else 'arg'}}"){% if arg.arg_default %}={{ default_value(arg.arg_type, arg.arg_default) }}{% endif %}{{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
 
 {%- macro argnames_template(template, f) -%}
-    {%- for arg in f.args -%} {{ "," if loop.first }}
-    {%- set ns = namespace(t=arg.arg_type) -%}
-    {%- if arg.arg_type.startswith(template.name) -%}
-        {% set ns.t = template.name + '<' +  template.type_params|map('get',1)|join(', ') + '>' + arg.arg_type.split(template.name)[-1] %}
-    {%- endif -%}
-    py::arg("{{arg.arg_py_name if arg.arg_py_name != '' else 'arg'}}"){% if arg.arg_default %}=static_cast<{{arg_type_with_template_params(template, arg.arg_type)}}>({{arg.arg_default}}){% endif %}{{ ", " if not loop.last }}
+    {%- for arg in f.args -%}
+        {{ "," if loop.first }} py::arg("{{arg.arg_py_name if arg.arg_py_name != '' else 'arg'}}")
+        {%- if arg.arg_default -%}
+            ={{ default_value(arg_type_with_template_params(template, arg.arg_type), arg.arg_default) }}
+        {%- endif -%}
+        {{ ", " if not loop.last }}
     {%- endfor -%}
 {%- endmacro -%}
 
 {%- macro arg_type_with_template_params(template, t) -%}
     {%- set ns = namespace(t=t) -%}
-    {%- if t.startswith(template.name+'::') -%}
-        {% set ns.t = 'typename ' + template.name + '<' +  template.type_params|map('get',1)|join(', ') + '>' + t.split(template.name)[-1] %}
+    {%- set targs = '<' + template.type_params|map('get',1)|join(', ') + '>' -%}
+    {%- set qualified = template.name + targs -%}
+    {%- if ns.t.startswith(template.name+'::') -%}
+        {%- set ns.t = 'typename ' + qualified + ns.t[template.name|length:] -%}
+    {%- elif template.name+'<' in ns.t and '::' in ns.t.split(template.name, 1)[1] and 'typename' not in ns.t -%}
+        {%- set ns.t = ns.t.replace(template.name+'<', 'typename '+template.name+'<', 1) -%}
     {%- endif -%}
     {{ ns.t }}
 {%- endmacro -%}
 
 {%- macro argnames_not_byref(f) -%}
-    {% for arg in f.args if not is_byref(arg.arg_type) %} {{ "," if loop.first }} py::arg("{{arg.arg_py_name if arg.arg_py_name != '' else 'arg'}}"){% if arg.arg_default %}=static_cast<{{arg.arg_type}}>({{arg.arg_default}}){% endif %}{{ "," if not loop.last }}{% endfor %}
+    {% for arg in f.args if not is_byref(arg.arg_type) %} {{ "," if loop.first }} py::arg("{{arg.arg_py_name if arg.arg_py_name != '' else 'arg'}}"){% if arg.arg_default %}={{ default_value(arg.arg_type, arg.arg_default) }}{% endif %}{{ "," if not loop.last }}{% endfor %}
 {%- endmacro -%}
 
 {%- macro handle_results_ptr_byref(f) -%}
@@ -106,7 +122,14 @@
 {%- endmacro -%}
 
 {%- macro template_return_type(cls,f) -%}
-    {% if f.return_type.startswith(cls.name+'::') %}typename {{cls.name}}{{ template_args(cls) }}::{{ f.return_type.split('::')[1]}}{% else %}{{f.return_type}}{% endif %}
+    {%- set rt = f.return_type -%}
+    {%- if rt.startswith(cls.name+'::') -%}
+        typename {{cls.name}}{{ template_args(cls) }}::{{ rt.split('::')[1] }}
+    {%- elif cls.name+'<' in rt and '::' in rt.split(cls.name, 1)[1] and 'typename' not in rt -%}
+        {{ rt.replace(cls.name+'<', 'typename '+cls.name+'<', 1) }}
+    {%- else -%}
+        {{ rt }}
+    {%- endif -%}
 {%- endmacro -%}
 
 {%- macro template_method_pointer(cls,f) -%}
@@ -139,7 +162,7 @@
 
         {% for super in c.superclasses %}
         {% set p = all_classes.get(super,None) %}{% if p %}
-        {% for m in p.methods %}{% if m.pure_virtual and m.name not in c.methods_dict and not m.full_name in methods %}
+        {% for m in p.methods %}{% if m.pure_virtual and not m.full_name in methods %}
         {{ prototype(m) }} override { {{pybind_overload(p,m)}} };
         {% do methods.append(m.full_name) %}
         {% endif %}{% endfor %}
@@ -154,7 +177,7 @@
 
         {% for super in c.superclasses %}
         {% set p = all_classes.get(super,None) %}{% if p %}
-        {% for m in p.protected_virtual_methods %}{% if m.name not in c.protected_virtual_methods_dict and not m.full_name in methods %}
+        {% for m in p.protected_virtual_methods %}{% if not m.full_name in methods %}
         {{ prototype(m) }} override { {{pybind_overload(p,m)}} };
         {% do methods.append(m.full_name) %}
         {% endif %}{% endfor %}
@@ -164,11 +187,12 @@
         // private pure virtual
         {% for m in c.private_virtual_methods %}
         {{ prototype(m) }} override { {{pybind_overload(c,m)}} };
+        {% do methods.append(m.full_name) %}
         {% endfor %}
 
         {% for super in c.superclasses %}
         {% set p = all_classes.get(super,None) %}{% if p %}
-        {% for m in p.private_virtual_methods %}{% if m.name not in c.private_virtual_methods_dict and not m.full_name in methods %}
+        {% for m in p.private_virtual_methods %}{% if not m.full_name in methods %}
         {{ prototype(m) }} override { {{pybind_overload(p,m)}} };
         {% do methods.append(m.full_name) %}
         {% endif %}{% endfor %}

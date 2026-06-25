@@ -1,9 +1,15 @@
-cmake_minimum_required( VERSION 3.16 )
+cmake_minimum_required( VERSION 3.17 )
 project( {{ name }}
          LANGUAGES CXX )
 
+# Required if the platform's VTK links against MPI (cmake needs MPI::MPI_C)
+enable_language( C )
 
-find_package( Python REQUIRED COMPONENTS Development Interpreter)
+find_package( Python REQUIRED COMPONENTS Development Interpreter )
+message( STATUS "Python lib: ${Python_LIBRARIES}" )
+
+find_package( fmt REQUIRED )
+find_package( MPI QUIET )
 find_package( VTK REQUIRED
   COMPONENTS
     WrappingPythonCore
@@ -13,6 +19,7 @@ find_package( VTK REQUIRED
     CommonExecutionModel
     freetype
 )
+message(STATUS "VTK ${VTK_VERSION} found")
 find_package( pybind11 REQUIRED )
 find_package( OpenCASCADE REQUIRED )
 
@@ -20,14 +27,15 @@ include_directories( ${PROJECT_SOURCE_DIR} )
 file( GLOB CPP_FILES ${PROJECT_SOURCE_DIR}/*.cpp )
 
 add_library( {{ name }} MODULE ${CPP_FILES} )
-target_link_libraries( {{ name }} PRIVATE 
+target_link_libraries( {{ name }} PRIVATE
   ${OpenCASCADE_LIBRARIES}
   Python::Module
-  pybind11::pybind11 
+  pybind11::pybind11
   VTK::WrappingPythonCore
   VTK::RenderingCore
   VTK::CommonDataModel
   VTK::CommonExecutionModel
+  fmt::fmt
   )
 set_target_properties( {{ name }}
                        PROPERTIES
@@ -38,7 +46,7 @@ set_target_properties( {{ name }}
 
 if(WIN32)
   target_compile_options( {{ name }} PRIVATE /bigobj )
-  target_compile_definitions( {{ name }} PRIVATE 
+  target_compile_definitions( {{ name }} PRIVATE
                               "Standard_EXPORT="
                               "Standard_EXPORTEXTERN="
                               "Standard_EXPORTEXTERNC=extern \"C\""

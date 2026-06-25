@@ -1,4 +1,4 @@
-{% from "macros.j2" import cls_name,pointer,super,argtypes,argnames,method_pointer,
+{% from "macros.j2" import cls_name,pointer,super,argtypes_for_template,argnames,method_pointer,
 static_method_pointer,function_pointer,template_args_typename,template_args,
 template_method_pointer,template_static_method_pointer, template_pointer, argnames_template %}
 #pragma once
@@ -45,7 +45,7 @@ void register_template_{{t.name}}(py::object &m, const char *name){
     static_cast<py::class_<{{t.name}}{{template_args(t)}} {{template_pointer(t)}} {{super(t,all_classes,all_typedefs)}}>>(m.attr(name))
     {% for i, con in enumerate(t.constructors) %}
         {% if not i in module_settings['Templates'].get(t.name,{}).get('exclude_constructors',[])  %}
-        .def(py::init< {{ argtypes(con) }} >() {{argnames_template(t, con)}} )
+        .def(py::init< {{ argtypes_for_template(t, con) }} >() {{argnames_template(t, con)}} )
         {% endif %}
     {% endfor %}
     {% for m in t.methods if not references_inner(t.name,m)%}
