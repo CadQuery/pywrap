@@ -53,9 +53,17 @@ def parse_tu(
         src = src[1:]
 
     dummy_code = (
-        f"{parsing_header}\n{platform_parsing_header}\n{
-            tu_parsing_header}\n{src}"
+        f"{parsing_header}\n{platform_parsing_header}\n{tu_parsing_header}\n{src}"
     )
+
+    # On FreeBSD, libclang's internal path guessing picks wrong system headers.
+    # Disable it and use -isystem with the paths from ocp.toml [FreeBSD] includes.
+    if target_platform == "FreeBSD":
+        system_dirs = {inc.rstrip('/') for inc in platform_includes}
+        clean_args = [a for a in args if not (a.startswith('-I') and a[2:].rstrip('/') in system_dirs)]
+        isystem_args = [flag for inc in platform_includes for flag in ("-isystem", inc)]
+        args = ["-nostdinc", "-nostdinc++"] + isystem_args + clean_args
+
     tr_unit = ix.parse(
         "dummy.cxx",
         args,
