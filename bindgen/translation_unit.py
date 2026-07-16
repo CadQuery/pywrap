@@ -38,7 +38,7 @@ def parse_tu(
         args.append(f"--sysroot={prefix}")
 
     for inc in get_includes():
-        args.append(f"-I{inc}")
+        args.extend(["-idirafter", inc])
 
     for inc in platform_includes:
         args.append(f"-I{inc}")
