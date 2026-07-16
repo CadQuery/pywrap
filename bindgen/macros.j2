@@ -41,7 +41,7 @@
     {% for arg in f.args if is_byref(arg.arg_type) %}{{ arg.arg_type[:-1] }} {{ arg.arg_name }};
     {% endfor %}
     {% for arg in f.args if is_byref_smart_ptr(arg.arg_type) -%}
-    {{ arg.arg_type[:-1] }} {{ arg.name }}_ptr; {{ arg.name }}_ptr = &{{arg.name}};
+    {{ arg.arg_type[:-1] }} {{ arg.arg_name }}_ptr; {{ arg.arg_name }}_ptr = &{{arg.arg_name}};
     {% endfor %}
 {%- endmacro -%}
 
