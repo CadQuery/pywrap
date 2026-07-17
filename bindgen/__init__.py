@@ -414,7 +414,12 @@ def transform_modules(
     for m in modules:
         class_dict.update(m.class_dict)
 
-    # construct global class dictionary
+    # construct global class template dictionary
+    class_template_dict = {}
+    for m in modules:
+        class_template_dict.update(m.class_template_dict)
+
+    # construct global symbol dictionary
     symbol_dict = {}
     for m in modules:
         symbol_dict.update(m.class_dict)
@@ -489,6 +494,10 @@ def transform_modules(
             ):
                 collections_tmp |= set(CollectionTypedef.make(arg_type_expr.parse_string(t)) for _, t, _ in met.args if collection_pat in t)
 
+        # same for functions 
+        for fun in m.functions:
+                collections_tmp |= set(CollectionTypedef.make(arg_type_expr.parse_string(t)) for _, t, _ in fun.args if collection_pat in t)
+
         # collect related existing typedefs
         for t in m.typedefs:
             if t.type.startswith(collection_pat):
@@ -497,7 +506,7 @@ def transform_modules(
                 )
 
     # Remove existing typedefs and typedefs without args. A dict is used for additional deduplication.
-    collections = {el.name(): el for el in collections_tmp if len(el.template_args) > 0 and el.name() not in existing_typedefs}
+    collections = {el.name(): el for el in collections_tmp if len(el.template_args) > 0 } #and el.name() not in existing_typedefs}
     
     return modules, class_dict, enum_dict, symbol_dict, list(collections.values())
 
