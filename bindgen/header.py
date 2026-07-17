@@ -1,4 +1,4 @@
-from typing import List, Tuple, Any, Mapping, Optional
+from typing import List, Tuple, Any, Mapping, Optional, NamedTuple
 from itertools import chain
 from dataclasses import dataclass
 from keyword import kwlist
@@ -808,10 +808,18 @@ class ClassInfo(object):
         }
 
 
+class TemplateParam(NamedTuple):
+    """
+    Helper used in ClassTemplateInof
+    """
+    type: str|None
+    name: str
+    default: str|None
+
 
 class ClassTemplateInfo(ClassInfo):
 
-    type_params: List[Tuple[Optional[str], str, str]]
+    type_params: List[TemplateParam]
 
     def __init__(self, cur: Cursor):
         super(ClassTemplateInfo, self).__init__(cur)
@@ -819,7 +827,7 @@ class ClassTemplateInfo(ClassInfo):
         self.name = full_name(cur)
 
         self.type_params = [
-            (
+            TemplateParam(
                 None if el.spelling == el.type.spelling else el.type.spelling,
                 el.spelling,
                 default,
