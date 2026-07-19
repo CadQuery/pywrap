@@ -20,8 +20,10 @@ void register_{{mod}}(py::module&);
 {% endfor %}
 
 // forward declaration of collection registration functions
-void register_collections_pre(py::module&);
-void register_collections(py::module&);
+{% for i_coll in range(N_coll_chunks) %}
+void register_collections_pre_{{i_coll}}(py::module&);
+void register_collections_{{i_coll}}(py::module&);
+{% endfor %}
 
 // main module definiiton
 PYBIND11_MODULE({{name}}, m) {
@@ -33,7 +35,9 @@ PYBIND11_MODULE({{name}}, m) {
 {% endfor %}
 
 // preregister collections
-register_collections_pre(m);
+{% for i_coll in range(N_coll_chunks) %}
+register_collections_pre_{{i_coll}}(m);
+{% endfor %}
 
 // register modules
 {% for mod in sorted_modules %}
@@ -47,6 +51,8 @@ register_collections_pre(m);
 {% endfor %}
 
 // register collection types
-register_collections(m);
+{% for i_coll in range(N_coll_chunks) %}
+register_collections_{{i_coll}}(m);
+{% endfor %}
 
 }

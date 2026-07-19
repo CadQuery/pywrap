@@ -4,6 +4,7 @@ from operator import add
 from re import match
 from sys import platform
 from typing import List
+from math import ceil
 
 import logzero
 import toml as toml
@@ -583,7 +584,7 @@ def render(
     default_path = [Path(__file__).dirname()]
     additional_path = (
         [
-            Path(settings["template_path"]),
+            prefix / Path(settings["template_path"]),
         ]
         if settings["template_path"]
         else []
@@ -768,17 +769,25 @@ def render(
             with open(f"{m.name}_tmpl.hxx", "w") as f:
                 f.write(template_tmpl.render({"module": m}))
 
-        with open(f"collections_pre.cpp", "w") as f:
-            f.write(template_collections_pre.render({"collections" : sorted_collections}))
+        # split collection registration into multiple TUs due to OOM
+        N_coll = len(sorted_collections)
+        coll_chunk_size = 100
+        N_chunks = ceil(N_coll/coll_chunk_size)
 
-        with open(f"collections.cpp", "w") as f:
-            f.write(template_collections.render({"collections" : sorted_collections}))
+        for i in range(N_chunks):
+
+            with open(f"collections_pre_{i}.cpp", "w") as f:
+                f.write(template_collections_pre.render({"collections" : sorted_collections[i*coll_chunk_size:(i+1)*coll_chunk_size], "i_slice": i}))
+
+            with open(f"collections_{i}.cpp", "w") as f:
+                f.write(template_collections.render({"collections" : sorted_collections[i*coll_chunk_size:(i+1)*coll_chunk_size], "i_slice": i}))
  
+        # render entry point and CMakeLists
         with open(f"{name}.cpp", "w") as f:
-            f.write(template_main.render({"name": name}))
+            f.write(template_main.render({"name": name, "N_coll_chunks": N_chunks}))
 
         with open("CMakeLists.txt", "w") as f:
-            f.write(template_cmake.render({"name": name}))
+            f.write(template_cmake.render({"name": name, "N_coll_chunks": N_chunks}))
 
     for p in settings["additional_files"]:
         (prefix / Path(p)).copy(output_path)
