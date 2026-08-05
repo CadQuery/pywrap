@@ -76,7 +76,7 @@ global_schema = Schema(
         Optional("template_path", default=None): str,
         Optional("exclude_namespaces", default=[]): [str],
         "module_mapping": str,
-        "Operators": {str: [str]},
+        "Operators": {str: {str: [str]}},
         "Extras": {
             Optional("include_pre", default=None): str,
             Optional("include_post", default=None): str,

@@ -153,7 +153,7 @@ py::object klass;
     // operators
     {% for op in c.operators %}
     {% if op.name in operator_dict %}
-    {% for py_op in operator_dict[op.name] %}
+    {% for py_op in operator_dict[op.name][str(len(op.args))] %}
         .def("{{py_op}}",
              {{ method_pointer(c,op) }},
              py::is_operator(),
@@ -238,7 +238,7 @@ auto m{{ns}} = static_cast<py::module>(m.attr("{{ns}}"));
 // operators
 {% for op in module.operators %}
 {% if op.name in operator_dict %}
-{% for py_op in operator_dict[op.name] %}
+{% for py_op in operator_dict[op.name][str(len(op.args))] %}
     m.def("{{py_op}}",
           {{ function_pointer(op) }},
           py::is_operator(),
