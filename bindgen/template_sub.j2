@@ -93,12 +93,12 @@ auto {{ns}} = static_cast<py::module>(m.attr("{{ns}}"));
     {% for enum in c.enums %}
     {% if enum.anonymous %}
         {% for val in enum.values %}
-        klass.attr("{{ val }}") = py::cast(int({{ enum.name+"::" if enum.name}}{{ val }}));
+        klass.attr("{{ val | replace("None", "None_")}}") = py::cast(int({{ enum.name+"::" if enum.name}}{{ val }}));
         {% endfor %}
     {% else %}
         py::enum_<{{enum.name}}>(klass, "{{ enum.name.split('::')[-1] + '_e' }}", R"#({{enum.comment}})#")
         {% for val in enum.values %}
-            .value("{{val}}", {{enum.name}}::{{val}}){{ ";" if loop.last }}
+            .value("{{val | replace("None", "None_")}}", {{enum.name}}::{{val}}){{ ";" if loop.last }}
         {% endfor %}
     {% endif %}
     {% endfor %}
