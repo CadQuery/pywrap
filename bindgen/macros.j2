@@ -1,7 +1,8 @@
 {# useful macros -#}
 
 {%- macro cls_name(cls) -%}
-    {{ cls.name|replace('<', '_')|replace(' ', '_')|replace('>', '') }}
+    {%- set name = cls.name if not cls.namespaces else cls.short_name -%}
+    {{ name|replace('<', '_')|replace(' ', '_')|replace('>', '')|replace('None', 'None_') }}
 {%- endmacro -%}
 
 {%- macro pointer(cls) -%}

@@ -63,6 +63,11 @@ void register_{{module.name}}(py::module &main_module) {
 py::module m = static_cast<py::module>(main_module.attr("{{module.name}}"));
 py::object klass;
 
+// get namespaces as submodules
+{% for ns in module.namespaces %}
+auto {{ns}} = static_cast<py::module>(m.attr("{{ns}}"));
+{% endfor %}
+
 //Python trampoline classes
 {% for c in module.classes %}{% if c.abstract %}
     {{ trampoline_class(c) }}
@@ -72,11 +77,16 @@ py::object klass;
 {% for c in module.classes %}{% if (proper_new_operator(c) and proper_delete_operator(c)) or 'Standard_Transient' in  c.rootclass %}
 
     // Class {{c.name}} from {{ module.class_dict[c.name] }}
-    klass = m.attr("{{cls_name(c)}}");
+    {% if c.namespaces %}
+    {% set mod=c.namespaces[0] %}
+    {% else %}
+    {% set mod="m" %}
+    {% endif %}
+    klass = {{mod}}.attr("{{cls_name(c)}}");
 
     {% if not c.constructors_unfiltered and not c.nonpublic_constructors and not c.abstract %}
     // default constructor
-    register_default_constructor<{{c.name}} {{pointer(c)}}>(m,"{{cls_name(c)}}");
+    register_default_constructor<{{c.name}} {{pointer(c)}}>({{mod}},"{{cls_name(c)}}");
     {% endif %}
 
     // nested enums

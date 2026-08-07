@@ -443,6 +443,19 @@ def full_name(cur: Cursor) -> str:
         return full_name(cur.semantic_parent)+"::"+cur.spelling
 
 
+def namespaces(cur: Cursor) -> tuple[str]:
+    """
+    Return all namespaces.
+    """
+
+    parent = cur.semantic_parent
+
+    if parent.kind == CursorKind.NAMESPACE:
+        return (*namespaces(parent), parent.spelling)
+
+    return ()
+
+
 class BaseInfo(object):
     """Base class for the info objects"""
 
@@ -679,6 +692,8 @@ class ClassInfo(object):
     """Container for class parsing results"""
 
     name: str
+    short_name: str
+    namespaces: tuple[str]
     comment: str
     abstract: bool
 
@@ -716,6 +731,9 @@ class ClassInfo(object):
     def __init__(self, cur: Cursor):
 
         self.name = cur.type.spelling
+        self.short_name = cur.spelling
+        self.namespaces = namespaces(cur)
+
         self.comment = cur.brief_comment
         self.abstract = cur.is_abstract_record()
 
