@@ -125,9 +125,10 @@ def remove_undefined_mangled(m, sym):
             el
             for el in sorted(c.constructors, key=lambda el: el.full_name)
             if sym.name.str.endswith(el.mangled_name).any()
-            or el.inline
+            or (el.inline and not el.deleted)
             or el.pure_virtual
             or el.virtual
+            or el.default
         ]
 
     # exclude functions
@@ -485,7 +486,7 @@ def transform_modules(
     collection_config.COLLECTION = collection_pat
 
     for m in modules:
-        # collect templated argument types
+        # collect templated argument and return types
         for cls in m.classes:
             for met in chain(
                 cls.methods,
@@ -495,9 +496,16 @@ def transform_modules(
             ):
                 collections_tmp |= set(CollectionTypedef.make(arg_type_expr.parse_string(t)) for _, t, _ in met.args if collection_pat in t)
 
+                if collection_pat in met.return_type:
+                    collections_tmp |= set((CollectionTypedef.make(arg_type_expr.parse_string(met.return_type)),))
+
+
         # same for functions 
         for fun in m.functions:
                 collections_tmp |= set(CollectionTypedef.make(arg_type_expr.parse_string(t)) for _, t, _ in fun.args if collection_pat in t)
+
+                if collection_pat in fun.return_type:
+                    collections_tmp |= set((CollectionTypedef.make(arg_type_expr.parse_string(fun.return_type)),))
 
         # collect related existing typedefs
         for t in m.typedefs:

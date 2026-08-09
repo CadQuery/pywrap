@@ -538,7 +538,7 @@ class FunctionInfo(BaseInfo):
             self.namespace = None
 
         self.inline = (
-            cur.get_definition().is_inline() if cur.get_definition() else False
+            cur.get_definition().is_inline() if cur.get_definition() else cur.is_inline()
         )
         self.pointer_by_ref = any(
             self._pointer_by_ref(el) for el in cur.get_arguments()
@@ -666,6 +666,8 @@ class MethodInfo(FunctionInfo):
     const: bool
     virtual: bool
     pure_virtual: bool
+    default: bool
+    deleted: bool
 
     def __init__(self, cur: Cursor):
 
@@ -674,6 +676,8 @@ class MethodInfo(FunctionInfo):
         self.const = cur.is_const_method()
         self.virtual = cur.is_virtual_method()
         self.pure_virtual = cur.is_pure_virtual_method()
+        self.default = cur.is_default_method()
+        self.deleted = cur.is_deleted_method()
 
 
 class ConstructorInfo(MethodInfo):

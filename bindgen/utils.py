@@ -1,5 +1,5 @@
 from clang.cindex import Config, Index, Cursor
-from ctypes import c_uint
+from ctypes import c_bool, c_uint
 from path import Path
 from os import getenv
 from sys import platform, prefix
@@ -71,10 +71,10 @@ def init_clang(path=None):
         Config.set_library_file(path)
 
         # Monkeypatch clang
-        monkeypatch_cursor("is_virtual", "clang_isVirtualBase", [Cursor], c_uint)
+        monkeypatch_cursor("is_virtual", "clang_isVirtualBase", [Cursor], c_bool)
 
         monkeypatch_cursor(
-            "is_inline", "clang_Cursor_isFunctionInlined", [Cursor], c_uint
+            "is_inline", "clang_Cursor_isFunctionInlined", [Cursor], c_bool
         )
 
         monkeypatch_cursor(
