@@ -515,7 +515,7 @@ def transform_modules(
                 )
 
     # Remove existing typedefs and typedefs without args. A dict is used for additional deduplication.
-    collections = {el.name(): el for el in collections_tmp if len(el.template_args) > 0 } #and el.name() not in existing_typedefs}
+    collections = {el.name(): el for el in collections_tmp if (len(el.template_args) > 0) and el.template_base.startswith(collection_pat) } #and el.name() not in existing_typedefs}
     
     return modules, class_dict, enum_dict, symbol_dict, list(collections.values())
 
