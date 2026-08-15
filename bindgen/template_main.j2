@@ -34,9 +34,12 @@ PYBIND11_MODULE({{name}}, m) {
     register_{{mod}}_enums(m);
 {% endfor %}
 
+// define the collections module
+py::module m_coll = m.def_submodule("collections", R"#(Artifical module with instantiated collection types)#");
+
 // preregister collections
 {% for i_coll in range(N_coll_chunks) %}
-register_collections_pre_{{i_coll}}(m);
+register_collections_pre_{{i_coll}}(m_coll);
 {% endfor %}
 
 // register modules
@@ -52,7 +55,7 @@ register_collections_pre_{{i_coll}}(m);
 
 // register collection types
 {% for i_coll in range(N_coll_chunks) %}
-register_collections_{{i_coll}}(m);
+register_collections_{{i_coll}}(m_coll);
 {% endfor %}
 
 }
