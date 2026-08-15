@@ -1,10 +1,10 @@
-from clang.cindex import Config, Index, Cursor
+from clang.cindex import Config, Index, Cursor, Type
 from ctypes import c_bool, c_uint
 from path import Path
 from os import getenv
 from sys import platform, prefix
 
-from .cymbal import monkeypatch_cursor
+from .cymbal import monkeypatch_cursor, monkeypatch_type
 
 initialized = False
 ix = None
@@ -87,6 +87,10 @@ def init_clang(path=None):
 
         monkeypatch_cursor(
             "get_num_overloaded_decl", "clang_getNumOverloadedDecls", [Cursor], c_uint
+        )
+
+        monkeypatch_type(
+            "get_unqualified", "clang_getUnqualifiedType", [Type], Type
         )
 
         initialized = True

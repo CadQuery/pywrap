@@ -516,6 +516,8 @@ class FunctionInfo(BaseInfo):
     pointer_by_ref: bool
     args: List[Tuple[str, str, str]]
     default_value_types: List[str]
+    unqualified_return_type : str
+    unqualified_args: List[str]
 
     KIND_DICT = {
         TypeKind.LVALUEREFERENCE: " &",
@@ -556,6 +558,9 @@ class FunctionInfo(BaseInfo):
             for el in cur.get_arguments()
             if self._default_value(el)
         ]
+
+        self.unqualified_return_type = cur.result_type.get_unqualified().spelling
+        self.unqualified_args = [(el.type if isinstance(el, Cursor) else el).get_unqualified().spelling for el in cur.get_arguments()]
 
     def _pointer_by_ref(self, cur: Cursor) -> bool:
         """Check is type is a Pointer passed by reference"""
