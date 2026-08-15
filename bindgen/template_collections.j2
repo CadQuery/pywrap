@@ -18,6 +18,11 @@ namespace py = pybind11;
 // Standard Handle
 #include <Standard_Handle.hxx>
 
+// collection specific top preinclusion
+{% if collection_include_header_pre_top %}
+{{ collection_include_header_pre_top }}
+{% endif %}
+
 // template related includes
 {% for arg in  collection_types %}
 {% if arg in symbol_dict %}
