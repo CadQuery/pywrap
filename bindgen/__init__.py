@@ -384,6 +384,53 @@ def parse_modules(
     return modules
 
 
+def collect_collections(modules: list[ModuleInfo], settings) -> dict[str, CollectionTypedef]:
+
+    # collect all used collection types
+    logzero.logger.info("Collecting used collection template specializations")
+
+    collections_tmp: set[CollectionTypedef] = set()
+    collection_pat = settings["collection_pattern"]
+    existing_typedefs: list[str] = []
+
+    # set the collection pattern in the parser
+    collection_config.COLLECTION = collection_pat
+
+    for m in modules:
+        # collect templated argument and return types
+        for cls in m.classes:
+            for met in chain(
+                cls.methods,
+                cls.methods_byref,
+                cls.static_methods,
+                cls.static_methods_byref,
+            ):
+                collections_tmp |= set(CollectionTypedef.make(arg_type_expr.parse_string(t)) for _, t, _ in met.args if collection_pat in t)
+
+                if collection_pat in met.return_type:
+                    collections_tmp |= set((CollectionTypedef.make(arg_type_expr.parse_string(met.return_type)),))
+
+
+        # same for functions 
+        for fun in m.functions:
+                collections_tmp |= set(CollectionTypedef.make(arg_type_expr.parse_string(t)) for _, t, _ in fun.args if collection_pat in t)
+
+                if collection_pat in fun.return_type:
+                    collections_tmp |= set((CollectionTypedef.make(arg_type_expr.parse_string(fun.return_type)),))
+
+        # collect related existing typedefs
+        for t in m.typedefs:
+            if t.type.startswith(collection_pat):
+                existing_typedefs.append(
+                    CollectionTypedef.make(arg_type_expr.parse_string(t.type)).name()
+                )
+
+    # Remove existing typedefs and typedefs without args. A dict is used for additional deduplication.
+    collections = {el.name(): el for el in collections_tmp if (len(el.template_args) > 0) and el.template_base.startswith(collection_pat) } #and el.name() not in existing_typedefs}
+
+    return collections
+
+
 def transform_modules(
     verbose,
     n_jobs,
@@ -397,6 +444,9 @@ def transform_modules(
     sym = read_symbols(
         settings[platform if platform else current_platform()]["symbols"]
     )
+
+    # collect collections *before* filtering
+    collections = collect_collections(modules, settings)
 
     # ignore functions and classes based on settings and update the global class_dict
     def _filter_module(m):
@@ -475,47 +525,6 @@ def transform_modules(
             for t in to_remove:
                 h.typedefs.remove(t)
 
-    # collect all used collection types
-    logzero.logger.info("Collecting used collection template specializations")
-
-    collections_tmp: set[CollectionTypedef] = set()
-    collection_pat = settings["collection_pattern"]
-    existing_typedefs: list[str] = []
-
-    # set the collection pattern in the parser
-    collection_config.COLLECTION = collection_pat
-
-    for m in modules:
-        # collect templated argument and return types
-        for cls in m.classes:
-            for met in chain(
-                cls.methods,
-                cls.methods_byref,
-                cls.static_methods,
-                cls.static_methods_byref,
-            ):
-                collections_tmp |= set(CollectionTypedef.make(arg_type_expr.parse_string(t)) for _, t, _ in met.args if collection_pat in t)
-
-                if collection_pat in met.return_type:
-                    collections_tmp |= set((CollectionTypedef.make(arg_type_expr.parse_string(met.return_type)),))
-
-
-        # same for functions 
-        for fun in m.functions:
-                collections_tmp |= set(CollectionTypedef.make(arg_type_expr.parse_string(t)) for _, t, _ in fun.args if collection_pat in t)
-
-                if collection_pat in fun.return_type:
-                    collections_tmp |= set((CollectionTypedef.make(arg_type_expr.parse_string(fun.return_type)),))
-
-        # collect related existing typedefs
-        for t in m.typedefs:
-            if t.type.startswith(collection_pat):
-                existing_typedefs.append(
-                    CollectionTypedef.make(arg_type_expr.parse_string(t.type)).name()
-                )
-
-    # Remove existing typedefs and typedefs without args. A dict is used for additional deduplication.
-    collections = {el.name(): el for el in collections_tmp if (len(el.template_args) > 0) and el.template_base.startswith(collection_pat) } #and el.name() not in existing_typedefs}
     
     return modules, class_dict, enum_dict, symbol_dict, list(collections.values())
 
