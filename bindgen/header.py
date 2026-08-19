@@ -37,7 +37,7 @@ def is_public(el):
 
 def get_symbols(
     tu,
-    kind,
+    kind: CursorKind,
     ignore_forwards=True,
     search_in=(CursorKind.NAMESPACE,),
     exclude_ns: List[str] = [],
@@ -55,6 +55,53 @@ def get_symbols(
             if (
                 paths_approximately_equal(Path(child.location.file.name), tu_path)
                 and child.kind == kind
+            ):
+                if ignore_forwards:
+                    if child.get_definition() is None:
+                        pass  # forward declaration
+                    elif not paths_approximately_equal(
+                        Path(child.get_definition().location.file.name), tu_path
+                    ):
+                        pass  # forward declaration but declared in an include
+                    else:
+                        yield child  # legitimate
+                else:
+                    yield child
+            if (
+                paths_approximately_equal(Path(child.location.file.name), tu_path)
+                and child.kind in search_in
+                and child.spelling not in exclude_ns
+            ):
+                for nested in _get_symbols(child, kind):
+                    if nested.access_specifier in (
+                        AccessSpecifier.PUBLIC,
+                        AccessSpecifier.INVALID,
+                    ):
+                        yield nested
+
+    yield from _get_symbols(tu.cursor, kind)
+
+
+def get_symbols_multi(
+    tu,
+    kind: tuple[CursorKind, ...],
+    ignore_forwards=True,
+    search_in=(CursorKind.NAMESPACE,),
+    exclude_ns: List[str] = [],
+):
+    """
+    Symbols defined locally (i.e. without includes) and are not forward declarations
+    Search_in allows to explore nested entities as well.
+
+    """
+    tu_path = tu.path
+
+    def _get_symbols(cursor, kind):
+
+        for child in cursor.get_children():
+            if (
+                paths_approximately_equal(Path(child.location.file.name), tu_path)
+                and child.kind in kind
             ):
                 if ignore_forwards:
                     if child.get_definition() is None:
@@ -172,7 +219,7 @@ def get_enum_values(cur: Cursor):
 def get_typedefs(tu):
     """Typedefs defined locally (i.e. without includes)"""
 
-    return get_symbols(tu, CursorKind.TYPEDEF_DECL)
+    return get_symbols_multi(tu, (CursorKind.TYPEDEF_DECL, CursorKind.TYPE_ALIAS_DECL))
 
 
 def get_classes(tu):
@@ -443,7 +490,7 @@ def full_name(cur: Cursor) -> str:
         return full_name(cur.semantic_parent)+"::"+cur.spelling
 
 
-def namespaces(cur: Cursor) -> tuple[str]:
+def namespaces(cur: Cursor) -> tuple[str, ...]:
     """
     Return all namespaces.
     """
@@ -702,7 +749,7 @@ class ClassInfo(object):
 
     name: str
     short_name: str
-    namespaces: tuple[str]
+    namespaces: tuple[str, ...]
     comment: str
     abstract: bool
 
@@ -848,6 +895,19 @@ class ClassTemplateInfo(ClassInfo):
 
     type_params: List[TemplateParam]
 
+    def _replace_type_args(self, met: MethodInfo):
+        """
+        Workaround for <T> naming when type param is not specified
+        """
+        
+        new_args = []
+
+        for n,t,d in met.args:
+            new_args.append((n, t.replace('<T>', f'<{self.type_params[0].name}>'), d))
+
+        met.args = new_args
+        met.return_type = met.return_type.replace('<T>', f'<{self.type_params[0].name}>')
+
     def __init__(self, cur: Cursor):
         super(ClassTemplateInfo, self).__init__(cur)
 
@@ -861,6 +921,10 @@ class ClassTemplateInfo(ClassInfo):
             )
             for el, default in get_template_type_params(cur)
         ]
+
+        # replace <T> type params with proper names in methods
+        for met in chain(self.methods, self.constructors, self.operators):
+            self._replace_type_args(met)
 
 
 class TypedefInfo(BaseInfo):
