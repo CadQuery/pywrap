@@ -219,7 +219,7 @@ def _exclude_methods(classes, exclusions):
             c.operators = [m for m in c.operators if not match(m_pat, m.name)]
 
 
-def transform_module(m, sym, settings, settings_per_module, platform=None):
+def transform_module(m, sym, collections, settings, settings_per_module, platform=None):
 
     s = settings_per_module.get(m.name, None)
     global_excludes = settings[platform if platform else current_platform()][
@@ -264,10 +264,10 @@ def transform_module(m, sym, settings, settings_per_module, platform=None):
                 f for f in h.functions if f.name not in s["exclude_functions"]
             ]
 
-        # exclude typedefs
-        m.typedefs = [t for t in m.typedefs if t.name not in s["exclude_typedefs"]]
+        # exclude typedefs based on settings and existing collections
+        m.typedefs = [t for t in m.typedefs if t.name not in s["exclude_typedefs"] and CollectionTypedef.make(arg_type_expr.parse_string(t.type)).name() not in collections ]
         for h in m.headers:
-            h.typedefs = [t for t in h.typedefs if t.name not in s["exclude_typedefs"]]
+            h.typedefs = [t for t in h.typedefs if t.name not in s["exclude_typedefs"] and CollectionTypedef.make(arg_type_expr.parse_string(t.type)).name() not in collections ]
 
     # collect methods and static methods using byref i.s.o. return
     byref_types = settings["byref_types"] + settings["byref_types_smart_ptr"]
@@ -453,7 +453,7 @@ def transform_modules(
         if not verbose:
             logzero.logger.setLevel(logzero.logging.INFO)
         logzero.logger.debug(m.name)
-        transform_module(m, sym, settings, settings_per_module)
+        transform_module(m, sym, collections, settings, settings_per_module)
 
         return m
 
