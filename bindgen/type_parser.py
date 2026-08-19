@@ -41,8 +41,7 @@ cpp_type = Combine(
     Literal("const")[0, 1]
     + (Literal("long ") | Literal("unsigned "))[0, 1]
     + Literal("long")[0, 1]
-    + name[0, 1]
-    + ZeroOrMore(Literal("::") + name),
+    + Combine(name[0, 1]+ZeroOrMore(Literal("::") + name)),
     adjacent=False,
    join_string=' ', 
 )
@@ -56,7 +55,7 @@ cpp_expr << cpp_type + Optional(
     + Suppress(close_bracket)
 )
 
-ptr_types = ["handle"]
+ptr_types = ["handle", "occ::handle"]
 
 # final expresion for arg type parsing
 arg_type_expr = (
