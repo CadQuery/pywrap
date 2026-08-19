@@ -86,6 +86,19 @@ class ModuleInfo(object):
             self.dependencies_headers.update(h.dependencies)
             self.namespaces.update(h.namespaces)
 
+        # deduplicate typedefs
+        all_typedefs = {t.type : t for t in self.typedefs}
+        self.typedefs = list(all_typedefs.values())
+
+        # deduplicate per header too
+        for h in self.headers:
+            header_typedefs = {}
+
+            for t in h.typedefs:
+                header_typedefs[t.type] = t
+
+            h.typedefs = list(header_typedefs.values())
+
         # clean up dependencies
         dependencies_clean = set()
         for d in self.dependencies_headers:
