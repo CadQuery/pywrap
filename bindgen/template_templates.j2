@@ -65,7 +65,7 @@ void register_template_{{t.name.replace("::","__")}}(py::object &m, const char *
     {% endfor %}
     {% for op in t.operators %}
     {% if op.name in operator_dict %}
-    {% for py_op in operator_dict[op.name] %}
+    {% for py_op in operator_dict[op.name][str(len(op.args)+1)] %}
         .def("{{py_op}}",
              {{ template_method_pointer(t,op) }},
              py::is_operator(),
