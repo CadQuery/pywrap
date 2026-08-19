@@ -163,7 +163,7 @@ auto {{ns}} = static_cast<py::module>(m.attr("{{ns}}"));
     // operators
     {% for op in c.operators %}
     {% if op.name in operator_dict %}
-    {% for py_op in operator_dict[op.name][str(len(op.args))] %}
+    {% for py_op in operator_dict[op.name][str(len(op.args)+1)] %}
         .def("{{py_op}}",
              {{ method_pointer(c,op) }},
              py::is_operator(),
