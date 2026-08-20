@@ -139,7 +139,7 @@ class TemplateSpecialization(NamedTuple):
 
 
 class config:
-    IGNORE = ("TopTools_ShapeMapHasher",)
+    IGNORE = ()
     COLLECTION = "NCollection"
 
 
