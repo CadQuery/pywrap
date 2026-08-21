@@ -115,7 +115,7 @@ auto {{ns}} = m.def_submodule("{{ns}}");
 
 // preregister user-defined template specializations
 {% for name, spec in module_settings['template_specializations'].items() %}
-    preregister_template_{{spec.base}}<{{spec.args|join(',')}}>(m, "{{name}}")
+    preregister_template_{{spec.base}}<{{spec.args|join(',')}}>(m, "{{name}}");
 {% endfor %}
 
 // user-defined post-inclusion per module in the body
