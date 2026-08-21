@@ -271,6 +271,11 @@ auto m{{ns}} = static_cast<py::module>(m.attr("{{ns}}"));
 {% endfor %}
 {% endfor %}
 
+// register user-defined template specializations
+{% for name, spec in module_settings['template_specializations'].items() %}
+    register_template_{{spec.base}}<{{spec.args|join(',')}}>(m, "{{name}}")
+{% endfor %}
+
 
 // exceptions
 {% for ex in module.exceptions %}
