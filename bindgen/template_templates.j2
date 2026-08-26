@@ -82,17 +82,17 @@ void register_template_{{t.name.replace("::","__")}}(py::object &m, const char *
              { return py::make_iterator<py::return_value_policy::copy>(self.cbegin(), self.cend()); },
              py::keep_alive<0, 1>())
     {% endif %}
-    {% if "Extent" in t.methods_dict %}
+    {% if "Extent" in t.methods_dict.__or__(getattr(classinfo_dict.get(t.superclass[0] if t.superclass else None), "methods_dict", {})) %}
         .def("__len__",[](const {{t.name}}{{template_args(t)}} &self)
              { return self.Extent(); }
              )
     {% endif %}
-    {% if "Size" in t.methods_dict %}
+    {% if "Size" in t.methods_dict.__or__(getattr(classinfo_dict.get(t.superclass[0] if t.superclass else None), "methods_dict", {})) %}
         .def("__len__",[](const {{t.name}}{{template_args(t)}} &self)
              { return self.Size(); }
              )
     {% endif %}
-    {% if "IsEmpty" in t.methods_dict %}
+    {% if "IsEmpty" in t.methods_dict.__or__(getattr(classinfo_dict.get(t.superclass[0] if t.superclass else None), "methods_dict", {})) %}
         .def("__bool__",[](const {{t.name}}{{template_args(t)}} &self)
              { return self.IsEmpty(); }
              )

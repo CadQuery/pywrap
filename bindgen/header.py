@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import List, Tuple, Any, Mapping, Optional, NamedTuple
 from itertools import chain
 from dataclasses import dataclass
@@ -260,11 +262,19 @@ def get_x_multi(cls, kinds):
             yield child
 
 
-def get_xx(cls, kind, access):
+def get_xx(cls, kind: CursorKind, access: AccessSpecifier):
     """Get children entities of the specified type with given access specifier"""
 
     for child in cls.get_children():
         if child.kind is kind and child.access_specifier is access:
+            yield child
+
+
+def get_xx_multi(cls, kinds: tuple[CursorKind, ...], access: AccessSpecifier):
+    """Get children entities of the specified type with given access specifier"""
+
+    for child in cls.get_children():
+        if child.kind is kinds and child.access_specifier is access:
             yield child
 
 
@@ -338,6 +348,12 @@ def get_public_enums(cls):
 
     for child in get_xx(cls, CursorKind.ENUM_DECL, AccessSpecifier.PUBLIC):
         yield child
+
+
+def get_nested_classes(cls):
+    """Nested classes of a given class"""
+
+    yield from get_x_multi(cls, (CursorKind.CLASS_DECL, CursorKind.STRUCT_DECL))
 
 
 def get_public_methods(cls):
@@ -487,7 +503,7 @@ def full_name(cur: Cursor) -> str:
     if cur.semantic_parent.kind == CursorKind.TRANSLATION_UNIT:
         return cur.spelling
     else:
-        return full_name(cur.semantic_parent)+"::"+cur.spelling
+        return full_name(cur.semantic_parent) + "::" + cur.spelling
 
 
 def namespaces(cur: Cursor) -> tuple[str, ...]:
@@ -563,7 +579,7 @@ class FunctionInfo(BaseInfo):
     pointer_by_ref: bool
     args: List[Tuple[str, str, str]]
     default_value_types: List[str]
-    unqualified_return_type : str
+    unqualified_return_type: str
     unqualified_args: List[str]
 
     KIND_DICT = {
@@ -587,7 +603,9 @@ class FunctionInfo(BaseInfo):
             self.namespace = None
 
         self.inline = (
-            cur.get_definition().is_inline() if cur.get_definition() else cur.is_inline()
+            cur.get_definition().is_inline()
+            if cur.get_definition()
+            else cur.is_inline()
         )
         self.pointer_by_ref = any(
             self._pointer_by_ref(el) for el in cur.get_arguments()
@@ -607,7 +625,10 @@ class FunctionInfo(BaseInfo):
         ]
 
         self.unqualified_return_type = cur.result_type.get_unqualified().spelling
-        self.unqualified_args = [(el.type if isinstance(el, Cursor) else el).get_unqualified().spelling for el in cur.get_arguments()]
+        self.unqualified_args = [
+            (el.type if isinstance(el, Cursor) else el).get_unqualified().spelling
+            for el in cur.get_arguments()
+        ]
 
     def _pointer_by_ref(self, cur: Cursor) -> bool:
         """Check is type is a Pointer passed by reference"""
@@ -759,6 +780,7 @@ class ClassInfo(object):
     fields: List[FieldInfo]
 
     enums: List[EnumInfo]
+    classes: List[ClassInfo]
 
     methods: List[MethodInfo]
     protected_virtual_methods: List[MethodInfo]
@@ -802,6 +824,7 @@ class ClassInfo(object):
 
         self.fields = [FieldInfo(el) for el in get_public_fields(cur)]
         self.enums = [EnumInfo(el) for el in get_public_enums(cur)]
+        self.classes = [ClassInfo(el) for el in get_nested_classes(cur)]
 
         self.methods = self.filter_rvalues(
             (MethodInfo(el) for el in get_public_methods(cur))
@@ -870,6 +893,7 @@ class ClassInfo(object):
 
         self.fields += other.fields
         self.enums += other.enums
+        self.classes += other.classes
 
         self.methods_dict = {**self.methods_dict, **other.methods_dict}
         self.protected_virtual_methods_dict = {
@@ -886,9 +910,10 @@ class TemplateParam(NamedTuple):
     """
     Helper used in ClassTemplateInof
     """
-    type: str|None
+
+    type: str | None
     name: str
-    default: str|None
+    default: str | None
 
 
 class ClassTemplateInfo(ClassInfo):
@@ -899,14 +924,16 @@ class ClassTemplateInfo(ClassInfo):
         """
         Workaround for <T> naming when type param is not specified
         """
-        
+
         new_args = []
 
-        for n,t,d in met.args:
-            new_args.append((n, t.replace('<T>', f'<{self.type_params[0].name}>'), d))
+        for n, t, d in met.args:
+            new_args.append((n, t.replace("<T>", f"<{self.type_params[0].name}>"), d))
 
         met.args = new_args
-        met.return_type = met.return_type.replace('<T>', f'<{self.type_params[0].name}>')
+        met.return_type = met.return_type.replace(
+            "<T>", f"<{self.type_params[0].name}>"
+        )
 
     def __init__(self, cur: Cursor):
         super(ClassTemplateInfo, self).__init__(cur)

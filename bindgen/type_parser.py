@@ -41,9 +41,9 @@ cpp_type = Combine(
     Literal("const")[0, 1]
     + (Literal("long ") | Literal("unsigned "))[0, 1]
     + Literal("long")[0, 1]
-    + Combine(name[0, 1]+ZeroOrMore(Literal("::") + name)),
+    + Combine(name[0, 1] + ZeroOrMore(Literal("::") + name)),
     adjacent=False,
-   join_string=' ', 
+    join_string=" ",
 )
 open_bracket = Literal("<")
 close_bracket = Literal(">")
@@ -91,7 +91,7 @@ class TemplateSpecialization(NamedTuple):
                 args.append(el[0])
             # simple argment with multiple tokens
             elif all(isinstance(el_i, str) for el_i in el):
-                args.append(' '.join(el))
+                args.append(" ".join(el))
             # complex argument - recurse
             else:
                 args.append(cls.make(el))
@@ -111,7 +111,7 @@ class TemplateSpecialization(NamedTuple):
             rv = self.template_base
 
         return rv
-    
+
     def leaf_args(self) -> list[str]:
 
         rv = []
@@ -135,7 +135,7 @@ class TemplateSpecialization(NamedTuple):
             else:
                 rv.append(arg.full_type())
 
-        return '{}<{}>'.format(rv[0], ','.join(rv[1:])) 
+        return "{}<{}>".format(rv[0], ",".join(rv[1:]))
 
 
 class config:
@@ -153,12 +153,12 @@ class CollectionTypedef(NamedTuple):
 
         base = res[0]
         args = []
-        
+
         for el in res[1:]:
             if len(el) == 1:
                 args.append(el[0])
             elif all(isinstance(el_i, str) for el_i in el):
-                args.append(' '.join(el))
+                args.append(" ".join(el))
             elif el[0].startswith(config.COLLECTION):
                 args.append(CollectionTypedef.make(el))
             else:
@@ -208,5 +208,4 @@ class CollectionTypedef(NamedTuple):
             else:
                 rv.append(arg.full_type())
 
-        return '{}<{}>'.format(rv[0], ','.join(rv[1:])) 
-
+        return "{}<{}>".format(rv[0], ",".join(rv[1:]))

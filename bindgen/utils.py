@@ -89,9 +89,7 @@ def init_clang(path=None):
             "get_num_overloaded_decl", "clang_getNumOverloadedDecls", [Cursor], c_uint
         )
 
-        monkeypatch_type(
-            "get_unqualified", "clang_getUnqualifiedType", [Type], Type
-        )
+        monkeypatch_type("get_unqualified", "clang_getUnqualifiedType", [Type], Type)
 
         initialized = True
         ix = Index.create()

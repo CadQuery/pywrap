@@ -3,7 +3,7 @@ from itertools import chain
 from operator import add
 from re import match
 from sys import platform
-from typing import List
+from typing import List, Any
 from math import ceil
 
 import logzero
@@ -265,9 +265,21 @@ def transform_module(m, sym, collections, settings, settings_per_module, platfor
             ]
 
         # exclude typedefs based on settings and existing collections
-        m.typedefs = [t for t in m.typedefs if t.name not in s["exclude_typedefs"] and CollectionTypedef.make(arg_type_expr.parse_string(t.type)).name() not in collections ]
+        m.typedefs = [
+            t
+            for t in m.typedefs
+            if t.name not in s["exclude_typedefs"]
+            and CollectionTypedef.make(arg_type_expr.parse_string(t.type)).name()
+            not in collections
+        ]
         for h in m.headers:
-            h.typedefs = [t for t in h.typedefs if t.name not in s["exclude_typedefs"] and CollectionTypedef.make(arg_type_expr.parse_string(t.type)).name() not in collections ]
+            h.typedefs = [
+                t
+                for t in h.typedefs
+                if t.name not in s["exclude_typedefs"]
+                and CollectionTypedef.make(arg_type_expr.parse_string(t.type)).name()
+                not in collections
+            ]
 
     # collect methods and static methods using byref i.s.o. return
     byref_types = settings["byref_types"] + settings["byref_types_smart_ptr"]
@@ -384,7 +396,9 @@ def parse_modules(
     return modules
 
 
-def collect_collections(modules: list[ModuleInfo], settings) -> dict[str, CollectionTypedef]:
+def collect_collections(
+    modules: list[ModuleInfo], settings
+) -> dict[str, CollectionTypedef]:
 
     # collect all used collection types
     logzero.logger.info("Collecting used collection template specializations")
@@ -405,18 +419,37 @@ def collect_collections(modules: list[ModuleInfo], settings) -> dict[str, Collec
                 cls.static_methods,
                 cls.static_methods_byref,
             ):
-                collections_tmp |= set(CollectionTypedef.make(arg_type_expr.parse_string(t)) for _, t, _ in met.args if collection_pat in t)
+                collections_tmp |= set(
+                    CollectionTypedef.make(arg_type_expr.parse_string(t))
+                    for _, t, _ in met.args
+                    if collection_pat in t
+                )
 
                 if collection_pat in met.return_type:
-                    collections_tmp |= set((CollectionTypedef.make(arg_type_expr.parse_string(met.return_type)),))
+                    collections_tmp |= set(
+                        (
+                            CollectionTypedef.make(
+                                arg_type_expr.parse_string(met.return_type)
+                            ),
+                        )
+                    )
 
-
-        # same for functions 
+        # same for functions
         for fun in m.functions:
-                collections_tmp |= set(CollectionTypedef.make(arg_type_expr.parse_string(t)) for _, t, _ in fun.args if collection_pat in t)
+            collections_tmp |= set(
+                CollectionTypedef.make(arg_type_expr.parse_string(t))
+                for _, t, _ in fun.args
+                if collection_pat in t
+            )
 
-                if collection_pat in fun.return_type:
-                    collections_tmp |= set((CollectionTypedef.make(arg_type_expr.parse_string(fun.return_type)),))
+            if collection_pat in fun.return_type:
+                collections_tmp |= set(
+                    (
+                        CollectionTypedef.make(
+                            arg_type_expr.parse_string(fun.return_type)
+                        ),
+                    )
+                )
 
         # collect related existing typedefs
         for t in m.typedefs:
@@ -426,7 +459,11 @@ def collect_collections(modules: list[ModuleInfo], settings) -> dict[str, Collec
                 )
 
     # Remove existing typedefs and typedefs without args. A dict is used for additional deduplication.
-    collections = {el.name(): el for el in collections_tmp if (len(el.template_args) > 0) and el.template_base.startswith(collection_pat) } #and el.name() not in existing_typedefs}
+    collections = {
+        el.name(): el
+        for el in collections_tmp
+        if (len(el.template_args) > 0) and el.template_base.startswith(collection_pat)
+    }  # and el.name() not in existing_typedefs}
 
     return collections
 
@@ -439,7 +476,7 @@ def transform_modules(
     settings_per_module,
     modules,
     platform=None,
-) -> tuple[list, dict, dict, dict, list]:
+) -> tuple[list[ModuleInfo], dict[str, ClassInfo], dict[str, Path], dict[str, Path], dict[str, Path], list[CollectionTypedef]]:
 
     sym = read_symbols(
         settings[platform if platform else current_platform()]["symbols"]
@@ -461,22 +498,25 @@ def transform_modules(
         delayed(_filter_module)(m) for m in tqdm(modules)
     )
 
-    # construct global class dictionary
+    # construct global class:header dictionary
     class_dict = {}
     for m in modules:
         class_dict.update(m.class_dict)
 
-    # construct global class template dictionary
+    # construct global class template:header dictionary
     class_template_dict = {}
     for m in modules:
         class_template_dict.update(m.class_template_dict)
 
-    # construct global symbol dictionary
+    # construct global symbol:header dictionary
     symbol_dict = {}
     for m in modules:
         symbol_dict.update(m.class_dict)
         symbol_dict.update(m.typedef_dict)
         symbol_dict.update(m.enum_dict)
+
+    # construct global name:classinfo dictionary
+    classinfo_dict = {c.name: c for m in modules for c in m.classes}
 
     # sort modules
     logzero.logger.info("sorting")
@@ -525,8 +565,14 @@ def transform_modules(
             for t in to_remove:
                 h.typedefs.remove(t)
 
-    
-    return modules, class_dict, enum_dict, symbol_dict, list(collections.values())
+    return (
+        modules,
+        classinfo_dict,
+        class_dict,
+        enum_dict,
+        symbol_dict,
+        list(collections.values()),
+    )
 
 
 def toposort_modules(modules, module_settings):
@@ -564,7 +610,15 @@ def toposort_modules(modules, module_settings):
 
 
 def render(
-    settings, module_settings, modules, class_dict, symbol_dict, prefix=Path(""), collections=(), platform=None
+    settings: dict[str, Any],
+    module_settings: dict[str, Any],
+    modules: list[ModuleInfo],
+    classinfo_dict: dict[str, ClassInfo],
+    class_dict: dict[str, Path],
+    symbol_dict: dict[str, Path],
+    prefix=Path(""),
+    collections=(),
+    platform=None,
 ):
 
     name = settings["name"]
@@ -618,7 +672,7 @@ def render(
     all_classes = {c.name: c for m in modules for c in m.classes}
     all_enums = {e.name: e for m in modules for e in m.enums}
     all_typedefs = {t.name: t for m in modules for t in m.typedefs}
-    
+
     # collect all types needed for collections
     collection_types = set()
     for c in collections:
@@ -626,7 +680,9 @@ def render(
 
     jinja_env.globals.update(
         {
-            "contains_string": lambda s,pats: any(pat in s for pat in pats if isinstance(pat, str)),
+            "contains_string": lambda s, pats: any(
+                pat in s for pat in pats if isinstance(pat, str)
+            ),
             "parent_has_nonpublic_destructor": lambda c: any(
                 all_classes[p].nonpublic_destructors
                 for p in c.superclasses
@@ -664,9 +720,13 @@ def render(
             "exclude_collections": exclude_collections,
             "collection_pat": settings["collection_pattern"],
             "collection_include_header_pre": settings["collection_include_header_pre"],
-            "collection_include_header_pre_top": settings["collection_include_header_pre_top"], 
+            "collection_include_header_pre_top": settings[
+                "collection_include_header_pre_top"
+            ],
             "len": len,
             "str": str,
+            "classinfo_dict": classinfo_dict,
+            "getattr": getattr,
         }
     )
 
@@ -682,7 +742,12 @@ def render(
 
     # toposort collections - for now regarding the H* - * correspondence
     coll_pat = settings["collection_pattern"]
-    colls_super = {el.name: el.superclasses for m in modules for el in m.class_templates if el.name.startswith(coll_pat)} 
+    colls_super = {
+        el.name: el.superclasses
+        for m in modules
+        for el in m.class_templates
+        if el.name.startswith(coll_pat)
+    }
     coll_names = {c.name(): c for c in collections}
 
     # add missing parents
@@ -692,16 +757,22 @@ def render(
         if coll.template_base in colls_super:
             for sup in colls_super[coll.template_base]:
                 if sup.startswith(coll_pat):
-                    missing_el =  CollectionTypedef(sup.split('<')[0], coll.template_args)
+                    missing_el = CollectionTypedef(
+                        sup.split("<")[0], coll.template_args
+                    )
                     missing[missing_el.name()] = missing_el
-                    
+
                     # add transative deps
                     for sup in colls_super.get(missing_el.template_base, ()):
                         if sup.startswith(coll_pat):
-                            missing_el =  CollectionTypedef(sup.split('<')[0], coll.template_args)
+                            missing_el = CollectionTypedef(
+                                sup.split("<")[0], coll.template_args
+                            )
                             missing[missing_el.name()] = missing_el
 
-    coll_names.update({k:v for k,v in missing.items() if not "_Base" in v.template_base})
+    coll_names.update(
+        {k: v for k, v in missing.items() if not "_Base" in v.template_base}
+    )
 
     # construct a dag for sorting
     dag = {}
@@ -711,9 +782,12 @@ def render(
         if supers is None:
             dag[cname] = set()
         else:
-            dag[cname] = set(CollectionTypedef(sup.split('<')[0], coll.template_args).name() for sup in supers if not "_Base" in sup and sup.startswith(coll_pat))
-        
-        
+            dag[cname] = set(
+                CollectionTypedef(sup.split("<")[0], coll.template_args).name()
+                for sup in supers
+                if not "_Base" in sup and sup.startswith(coll_pat)
+            )
+
     sorted_collections = [coll_names[k] for k in toposort_flatten(dag)]
 
     output_path.mkdir_p()
@@ -792,16 +866,34 @@ def render(
         # split collection registration into multiple TUs due to OOM
         N_coll = len(sorted_collections)
         coll_chunk_size = 100
-        N_chunks = ceil(N_coll/coll_chunk_size)
+        N_chunks = ceil(N_coll / coll_chunk_size)
 
         for i in range(N_chunks):
 
             with open(f"collections_pre_{i}.cpp", "w") as f:
-                f.write(template_collections_pre.render({"collections" : sorted_collections[i*coll_chunk_size:(i+1)*coll_chunk_size], "i_slice": i}))
+                f.write(
+                    template_collections_pre.render(
+                        {
+                            "collections": sorted_collections[
+                                i * coll_chunk_size : (i + 1) * coll_chunk_size
+                            ],
+                            "i_slice": i,
+                        }
+                    )
+                )
 
             with open(f"collections_{i}.cpp", "w") as f:
-                f.write(template_collections.render({"collections" : sorted_collections[i*coll_chunk_size:(i+1)*coll_chunk_size], "i_slice": i}))
- 
+                f.write(
+                    template_collections.render(
+                        {
+                            "collections": sorted_collections[
+                                i * coll_chunk_size : (i + 1) * coll_chunk_size
+                            ],
+                            "i_slice": i,
+                        }
+                    )
+                )
+
         # render entry point and CMakeLists
         with open(f"{name}.cpp", "w") as f:
             f.write(template_main.render({"name": name, "N_coll_chunks": N_chunks}))

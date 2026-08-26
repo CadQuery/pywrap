@@ -87,7 +87,7 @@ class ModuleInfo(object):
             self.namespaces.update(h.namespaces)
 
         # deduplicate typedefs
-        all_typedefs = {t.type : t for t in self.typedefs}
+        all_typedefs = {t.type: t for t in self.typedefs}
         self.typedefs = list(all_typedefs.values())
 
         # deduplicate per header too

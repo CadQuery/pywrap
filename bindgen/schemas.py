@@ -25,13 +25,10 @@ template_schema = Schema(
         Optional("exclude_constructors", default=[]): [int],
         Optional("exclude_methods", default=[]): [str],
         Optional("additional_methods", default={}): {str: method_schema},
-    })
+    }
+)
 
-template_specialization_schema = Schema(
-    {
-        "base": str,
-        "args": list[str]
-    })
+template_specialization_schema = Schema({"base": str, "args": list[str]})
 
 module_schema = Schema(
     {
@@ -50,7 +47,9 @@ module_schema = Schema(
         Optional("preregister_include_body_post", default=None): str,
         Optional("include_body_template_post", default=None): str,
         Optional("include_header_post", default=None): str,
-        Optional("template_specializations", default={}): {str: template_specialization_schema},
+        Optional("template_specializations", default={}): {
+            str: template_specialization_schema
+        },
         Optional("Classes", default={}): {str: class_schema},
         Optional("Templates", default={}): {str: template_schema},
         Optional("additional_functions", default={}): {str: function_schema},

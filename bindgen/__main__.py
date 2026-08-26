@@ -92,7 +92,7 @@ def transform(obj, configuration, platform, input, output):
         modules = pickle.load(f)
 
     settings, module_mapping, module_settings = read_settings(configuration)
-    modules, class_dict, enum_dict, symbol_dict, collections = transform_modules(
+    modules, classinfo_dict, class_dict, enum_dict, symbol_dict, collections = transform_modules(
         obj.verbose,
         obj.njobs,
         settings,
@@ -103,7 +103,7 @@ def transform(obj, configuration, platform, input, output):
     )
 
     with open(output, "wb") as f:
-        pickle.dump((modules, class_dict, enum_dict, symbol_dict, collections), f)
+        pickle.dump((modules, classinfo_dict, class_dict, enum_dict, symbol_dict, collections), f)
 
 
 @main.command()
@@ -125,10 +125,18 @@ def generate(obj, configuration, platform, input):
         out.rmtree_p()
 
     with open(input, "rb") as f:
-        modules, class_dict, enum_dict, symbol_dict, collections = pickle.load(f)
+        modules, classinfo_dict, class_dict, enum_dict, symbol_dict, collections = pickle.load(f)
 
     render(
-        settings, module_settings, modules, class_dict, symbol_dict, obj.prefix, collections=collections, platform=platform
+        settings,
+        module_settings,
+        modules,
+        classinfo_dict,
+        class_dict,
+        symbol_dict,
+        obj.prefix,
+        collections=collections,
+        platform=platform,
     )
 
     pre = settings["Extras"]["include_pre"]
