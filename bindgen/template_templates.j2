@@ -94,7 +94,7 @@ void register_template_{{t.name.replace("::","__")}}(py::object &m, const char *
     {% endif %}
     {% if "IsEmpty" in t.methods_dict.__or__(getattr(classinfo_dict.get(t.superclass[0] if t.superclass else None), "methods_dict", {})) %}
         .def("__bool__",[](const {{t.name}}{{template_args(t)}} &self)
-             { return self.IsEmpty(); }
+             { return !self.IsEmpty(); }
              )
     {% endif %}
     ;
