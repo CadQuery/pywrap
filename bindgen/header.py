@@ -12,6 +12,8 @@ from clang.cindex import (
     Cursor,
     Type,
     PrintingPolicy,
+    PrintingPolicyProperty,
+    ExceptionSpecificationKind,
 )
 from path import Path
 
@@ -519,6 +521,68 @@ def namespaces(cur: Cursor) -> tuple[str, ...]:
     return ()
 
 
+def pretty_printed(
+    cur: Cursor, fully_qualified: bool = True, suppress_initializers=False
+) -> str:
+    """
+    Pretty printing helper.
+    """
+
+    policy = PrintingPolicy.create(cur)
+    policy.set_property(PrintingPolicyProperty.FullyQualifiedName, fully_qualified)
+    policy.set_property(
+        PrintingPolicyProperty.SuppressInitializers, suppress_initializers
+    )
+
+    return cur.pretty_printed(policy)
+
+
+def get_tokens(cur: Cursor) -> list[str]:
+    """
+    Helper for getting tokens as a list.
+    """
+
+    return [toks.spelling for toks in cur.get_tokens()]
+
+
+def get_children(cur: Cursor) -> list[Cursor]:
+    """
+    Helper for getting children as a list.
+    """
+
+    return list(cur.get_children())
+
+
+def get_bottom_child(cur: Cursor) -> Cursor:
+    """
+    Helper for getting most distant grand child.
+    """
+
+    rv = cur
+    tmp = get_children(cur)
+
+    if tmp:
+        rv = get_bottom_child(tmp[-1])
+
+    return rv
+
+
+def expand_decl(cur: Cursor) -> str:
+    """
+    Expand a reference to be absolute.
+    """
+
+    rvs = [cur.spelling]
+
+    parent = cur.get_definition().semantic_parent
+
+    while parent.kind != CursorKind.TRANSLATION_UNIT:
+        rvs.append(parent.spelling)
+        parent = parent.semantic_parent
+
+    return "::".join(rvs[::-1])
+
+
 class BaseInfo(object):
     """Base class for the info objects"""
 
@@ -581,6 +645,7 @@ class FunctionInfo(BaseInfo):
     default_value_types: List[str]
     unqualified_return_type: str
     unqualified_args: List[str]
+    noexcept: bool
 
     KIND_DICT = {
         TypeKind.LVALUEREFERENCE: " &",
@@ -629,6 +694,11 @@ class FunctionInfo(BaseInfo):
             (el.type if isinstance(el, Cursor) else el).get_unqualified().spelling
             for el in cur.get_arguments()
         ]
+
+        self.noexcept = (
+            cur.exception_specification_kind
+            == ExceptionSpecificationKind.BASIC_NOEXCEPT
+        )
 
     def _pointer_by_ref(self, cur: Cursor) -> bool:
         """Check is type is a Pointer passed by reference"""
@@ -722,8 +792,13 @@ class FunctionInfo(BaseInfo):
         """Tries to extract default value"""
 
         rv = None
-        tokens = [t.spelling for t in cur.get_tokens()]
+        tokens = get_tokens(cur)
         if "=" in tokens:
+            # special case for enum values handling gracefully locally defined enums
+            bot = get_bottom_child(cur)
+            if bot.kind == CursorKind.DECL_REF_EXPR:
+                return expand_decl(bot)
+
             rv = " ".join(tokens[tokens.index("=") + 1 :])
 
             # handle default initalization of complex types

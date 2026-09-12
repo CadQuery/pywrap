@@ -18,7 +18,7 @@
 {%- endmacro -%}
 
 {%- macro prototype(f) -%}
-    {{f.return_type}} {{f.name}}({% for n,t,d in f.args %}{{ t }} {{ n }}{{ "," if not loop.last }}{% endfor %}){% if f.const %} const {%endif%}
+    {{f.return_type}} {{f.name}}({% for n,t,d in f.args %}{{ t }} {{ n }}{{ "," if not loop.last }}{% endfor %}){% if f.const %} const {%endif%}{% if f.noexcept %} noexcept {%endif%}
 {%- endmacro -%}
 
 {%- macro pybind_overload(c,m) -%}

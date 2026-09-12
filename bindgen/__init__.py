@@ -30,7 +30,14 @@ from jinja2 import Environment, FileSystemLoader
 from toposort import toposort_flatten
 
 from .module import ModuleInfo
-from .header import parse_tu, ClassInfo, get_symbols, get_namespaces, TypedefInfo
+from .header import (
+    parse_tu,
+    ClassInfo,
+    get_symbols,
+    get_namespaces,
+    TypedefInfo,
+    MethodInfo,
+)
 from .utils import current_platform, get_includes, init_clang
 from .schemas import global_schema, module_schema
 from .type_parser import CollectionTypedef, arg_type_expr, config as collection_config
@@ -158,7 +165,7 @@ def is_byref_arg(arg, byref_types):
     return rv
 
 
-def is_byref_return(met):
+def is_byref_return(met: MethodInfo):
 
     rv = False
 
@@ -476,7 +483,14 @@ def transform_modules(
     settings_per_module,
     modules,
     platform=None,
-) -> tuple[list[ModuleInfo], dict[str, ClassInfo], dict[str, Path], dict[str, Path], dict[str, Path], list[CollectionTypedef]]:
+) -> tuple[
+    list[ModuleInfo],
+    dict[str, ClassInfo],
+    dict[str, Path],
+    dict[str, Path],
+    dict[str, Path],
+    list[CollectionTypedef],
+]:
 
     sym = read_symbols(
         settings[platform if platform else current_platform()]["symbols"]
