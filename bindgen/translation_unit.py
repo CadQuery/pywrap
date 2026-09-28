@@ -1,9 +1,38 @@
 import logzero
 import pybind11
+import os
+import tempfile
 
 from clang.cindex import TranslationUnit as TU
 
 from .utils import get_index, get_includes
+
+_pch = {}
+_pch_dirs = []
+
+
+def preamble_pch(ix, args, text):
+    """Precompiled header of the preamble shared by every translation unit, built once per process"""
+
+    key = (tuple(args), text)
+    if key not in _pch:
+        _pch_dirs.append(tempfile.TemporaryDirectory())
+        path = os.path.join(_pch_dirs[-1].name, "preamble.hxx")
+        with open(path, "w") as f:
+            f.write(text)
+        tu = ix.parse(
+            path,
+            [a for a in args if a not in ("-x", "c++")] + ["-x", "c++-header"],
+            options=TU.PARSE_INCOMPLETE,
+        )
+        if tu.diagnostics:
+            logzero.logger.warning(path)
+        for d in tu.diagnostics:
+            logzero.logger.warning(d)
+        tu.save(path + ".pch")
+        _pch[key] = path + ".pch"
+
+    return _pch[key]
 
 
 def parse_tu(
@@ -26,6 +55,7 @@ def parse_tu(
 ):
     """Run a translation unit thorugh clang"""
 
+    args = list(args)
     args.append(f"-I{pybind11.get_include()}")
     args.append(f"-I{input_folder}")
 
@@ -33,6 +63,8 @@ def parse_tu(
         args.append("--target=x86_64-pc-windows-msvc")
         args.append("-fms-compatibility")
         args.append("-fms-extensions")
+    elif target_platform == "OSX":
+        args.append("--target=x86_64-apple-darwin")
 
     if prefix:
         args.append(f"--sysroot={prefix}")
@@ -52,11 +84,12 @@ def parse_tu(
     if src[0] == "\ufeff":
         src = src[1:]
 
+    pch = preamble_pch(ix, args, f"{parsing_header}\n{platform_parsing_header}\n")
     dummy_code = f"{parsing_header}\n{platform_parsing_header}\n{
             tu_parsing_header}\n{src}"
     tr_unit = ix.parse(
         "dummy.cxx",
-        args,
+        args + ["-include-pch", pch],
         unsaved_files=[("dummy.cxx", dummy_code)],
         options=TU.PARSE_INCOMPLETE,
     )

@@ -20,7 +20,6 @@ from path import Path
 
 from .type_parser import parse_type
 from .translation_unit import parse_tu
-from .utils import current_platform
 
 EXCLUDE_NS: List[str] = []
 
@@ -1180,11 +1179,11 @@ class HeaderInfo(object):
         tr_unit = parse_tu(
             path,
             input_folder,
-            prefix=settings[current_platform()]["prefix"],
-            platform_includes=settings[current_platform()]["includes"],
+            prefix=settings[target_platform]["prefix"],
+            platform_includes=settings[target_platform]["includes"],
             parsing_header=settings["parsing_header"],
             tu_parsing_header=tu_parsing_header,
-            platform_parsing_header=settings[current_platform()]["parsing_header"],
+            platform_parsing_header=settings[target_platform]["parsing_header"],
             target_platform=target_platform,
         )
 

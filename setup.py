@@ -12,7 +12,6 @@ setup(
         "path",
         "clang",
         "toml",
-        "pandas",
         "joblib",
         "tqdm",
         "jinja2",

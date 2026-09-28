@@ -5,10 +5,10 @@ from re import match
 from sys import platform
 from typing import List, Any
 from math import ceil
+from bisect import bisect_left
 
 import logzero
 import toml as toml
-import pandas as pd
 
 from pyparsing import (
     Word,
@@ -66,21 +66,28 @@ def read_settings(p):
     return settings, module_mapping, module_settings
 
 
-def read_symbols(p):
-    """Read provided symbols file and return a dataframe
+class Symbols:
+    """Mangled names of the library symbols, looked up by prefix or suffix
 
     This information is used later for flagging undefined symbols
     """
 
-    if int(pd.__version__.split(".")[0]) >= 2:
-        sym = pd.read_csv(
-            p, header=None, names=["name"], sep="\\s+", on_bad_lines="skip"
-        ).dropna()
-    else:
-        sym = pd.read_csv(
-            p, header=None, names=["name"], delim_whitespace=True, error_bad_lines=False
-        ).dropna()
-    return sym
+    def __init__(self, p):
+        with open(p) as f:
+            names = sorted({line.split()[0] for line in f if line.strip()})
+        self.forward = names
+        self.reverse = sorted(n[::-1] for n in names)
+
+    @staticmethod
+    def _has_prefix(names, s):
+        i = bisect_left(names, s)
+        return i < len(names) and names[i].startswith(s)
+
+    def has_prefix(self, s):
+        return self._has_prefix(self.forward, s)
+
+    def has_suffix(self, s):
+        return self._has_prefix(self.reverse, s[::-1])
 
 
 def remove_undefined_mangled(m, sym):
@@ -97,7 +104,7 @@ def remove_undefined_mangled(m, sym):
         c.methods = [
             el
             for el in c.methods
-            if sym.name.str.endswith(el.mangled_name).any()
+            if sym.has_suffix(el.mangled_name)
             or el.inline
             or el.pure_virtual
             or el.virtual
@@ -105,7 +112,7 @@ def remove_undefined_mangled(m, sym):
         c.methods_byref = [
             el
             for el in c.methods_byref
-            if sym.name.str.endswith(el.mangled_name).any()
+            if sym.has_suffix(el.mangled_name)
             or el.inline
             or el.pure_virtual
             or el.virtual
@@ -113,7 +120,7 @@ def remove_undefined_mangled(m, sym):
         c.methods_return_byref = [
             el
             for el in c.methods_return_byref
-            if sym.name.str.endswith(el.mangled_name).any()
+            if sym.has_suffix(el.mangled_name)
             or el.inline
             or el.pure_virtual
             or el.virtual
@@ -121,17 +128,17 @@ def remove_undefined_mangled(m, sym):
         c.static_methods = [
             el
             for el in c.static_methods
-            if sym.name.str.endswith(el.mangled_name).any() or el.inline
+            if sym.has_suffix(el.mangled_name) or el.inline
         ]
         c.static_methods_byref = [
             el
             for el in c.static_methods_byref
-            if sym.name.str.endswith(el.mangled_name).any() or el.inline
+            if sym.has_suffix(el.mangled_name) or el.inline
         ]
         c.constructors = [
             el
             for el in sorted(c.constructors, key=lambda el: el.full_name)
-            if sym.name.str.endswith(el.mangled_name).any()
+            if sym.has_suffix(el.mangled_name)
             or (el.inline and not el.deleted)
             or el.pure_virtual
             or el.virtual
@@ -139,20 +146,12 @@ def remove_undefined_mangled(m, sym):
         ]
 
     # exclude functions
-    m.functions = [
-        f
-        for f in m.functions
-        if sym.name.str.startswith(f.mangled_name).any() or f.inline
-    ]
+    m.functions = [f for f in m.functions if sym.has_prefix(f.mangled_name) or f.inline]
 
     # exclude functions per header
     for h in m.headers:
         h.functions_unfiltered = h.functions
-        h.functions = [
-            f
-            for f in h.functions
-            if sym.name.str.startswith(f.mangled_name).any() or f.inline
-        ]
+        h.functions = [f for f in h.functions if sym.has_prefix(f.mangled_name) or f.inline]
 
 
 def is_byref_arg(arg, byref_types):
@@ -492,9 +491,7 @@ def transform_modules(
     list[CollectionTypedef],
 ]:
 
-    sym = read_symbols(
-        settings[platform if platform else current_platform()]["symbols"]
-    )
+    sym = Symbols(settings[platform if platform else current_platform()]["symbols"])
 
     # collect collections *before* filtering
     collections = collect_collections(modules, settings)
@@ -880,7 +877,7 @@ def render(
 
         # split collection registration into multiple TUs due to OOM
         N_coll = len(sorted_collections)
-        coll_chunk_size = 100
+        coll_chunk_size = 25
         N_chunks = ceil(N_coll / coll_chunk_size)
 
         for i in range(N_chunks):
