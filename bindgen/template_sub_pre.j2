@@ -1,7 +1,7 @@
 {% from "macros.j2" import cls_name,pointer,super,argtypes,argnames,method_pointer,
 static_method_pointer,function_pointer,template_args_typename,template_args,
 template_method_pointer,template_static_method_pointer, template_pointer,
-prototype, pybind_overload, trampoline_class %}
+prototype, pybind_overload, trampoline_class, replace_ns_separator %}
 
 // pybind 11 related includes
 #include <pybind11/pybind11.h>
@@ -95,12 +95,12 @@ auto {{ns}} = m.def_submodule("{{ns}}");
 // pre-register typdefs+classes (topologically sorted)
 {% for el in  classes_typedefs %}
 {% if 'TypedefInfo' in str(type(el)) %}
-{% if not el.pod and not "_H" in el.name and el.template_base.__len__()>0 and not el.type.startswith("opencascade::handle") %}
+{% if not el.pod and el.specialization and not "_H" in el.name and el.template_base.__len__()>0 and not el.type.startswith("opencascade::handle") %}
 {% set dep_module = el.template_base[0].split("_") %}
 {% set arg = el.type.split(el.template_base[0])[-1] %}
 {% set base =  el.template_base[0] %}
 {% if not arg.endswith("::Iterator") %}
-    preregister_template_{{ base }}{{ arg }}(m,"{{el.name}}");
+    preregister_template_{{ replace_ns_separator(base) }}{{ arg }}(m,"{{el.name}}");
 {% endif %}
 {% endif %}
 {% else %}
@@ -115,7 +115,7 @@ auto {{ns}} = m.def_submodule("{{ns}}");
 
 // preregister user-defined template specializations
 {% for name, spec in module_settings['template_specializations'].items() %}
-    preregister_template_{{spec.base}}<{{spec.args|join(',')}}>(m, "{{name}}");
+    preregister_template_{{replace_ns_separator(spec.base)}}<{{spec.args|join(',')}}>(m, "{{name}}");
 {% endfor %}
 
 // user-defined post-inclusion per module in the body

@@ -15,6 +15,7 @@ from clang.cindex import (
     PrintingPolicyProperty,
     ExceptionSpecificationKind,
 )
+from cxxheaderparser.simple import parse_typename
 from path import Path
 
 from .type_parser import parse_type
@@ -358,6 +359,12 @@ def get_nested_classes(cls):
     yield from get_x_multi(cls, (CursorKind.CLASS_DECL, CursorKind.STRUCT_DECL))
 
 
+def get_nested_templates(cls: Cursor):
+    """Nested classes of a given class"""
+
+    yield from get_x(cls, CursorKind.CLASS_TEMPLATE)
+
+
 def get_public_methods(cls):
     """Public methods of a given class"""
 
@@ -537,6 +544,18 @@ def pretty_printed(
     return cur.pretty_printed(policy)
 
 
+def fully_qualified_type(t: Type|Cursor, ctx: Cursor|None = None) -> str:
+    """
+    Fully qualified name of the type t. ctx is needed to create a PrintingPolicy.
+    """
+
+    if isinstance(t, Cursor):
+        ctx = t
+        t = t.type
+
+    return t.get_fully_qualified_name(PrintingPolicy.create(ctx))
+
+
 def get_tokens(cur: Cursor) -> list[str]:
     """
     Helper for getting tokens as a list.
@@ -637,6 +656,7 @@ class FunctionInfo(BaseInfo):
 
     namespace: Optional[str]
     full_name: str
+    pretty_printed: str
     mangled_name: str
     return_type: str
     inline: bool
@@ -660,7 +680,8 @@ class FunctionInfo(BaseInfo):
         self.comment = cur.brief_comment
         self.full_name = cur.displayname
         self.mangled_name = cur.mangled_name
-        self.return_type = self._underlying_type(cur.result_type, cur)
+        self.return_type = fully_qualified_type(cur.result_type, cur) #self._underlying_type(cur.result_type, cur)
+        self.pretty_printed = pretty_printed(cur)
 
         if cur.semantic_parent.kind == CursorKind.NAMESPACE:
             self.namespace = cur.semantic_parent.spelling
@@ -678,7 +699,7 @@ class FunctionInfo(BaseInfo):
         self.args = [
             (
                 f"{el.spelling}_" if el.spelling in KWORDS else el.spelling,
-                self._underlying_type(el, cur),
+                fully_qualified_type(el, cur), #self._underlying_type(el, cur),
                 self._default_value(el),
             )
             for el in cur.get_arguments()
@@ -791,7 +812,20 @@ class FunctionInfo(BaseInfo):
     def _default_value(self, cur: Cursor) -> Optional[str]:
         """Tries to extract default value"""
 
-        rv = None
+        rv: str|None = None
+
+        tmp = pretty_printed(cur)
+
+        if "=" in tmp:
+            rv = tmp.split("=")[-1].lstrip()
+
+            # special case for enum values handling gracefully locally defined enums
+            bot = get_bottom_child(cur)
+            if bot.kind == CursorKind.DECL_REF_EXPR:
+                rv =  expand_decl(bot)
+
+        return rv
+
         tokens = get_tokens(cur)
         if "=" in tokens:
             # special case for enum values handling gracefully locally defined enums
@@ -848,6 +882,7 @@ class ClassInfo(object):
     namespaces: tuple[str, ...]
     comment: str
     abstract: bool
+    parent: str
 
     constructors: List[ConstructorInfo]
     nonpublic_constructors: List[ConstructorInfo]
@@ -856,6 +891,7 @@ class ClassInfo(object):
 
     enums: List[EnumInfo]
     classes: List[ClassInfo]
+    templates: List[ClassTemplateInfo]
 
     methods: List[MethodInfo]
     protected_virtual_methods: List[MethodInfo]
@@ -886,6 +922,7 @@ class ClassInfo(object):
         self.name = cur.type.spelling
         self.short_name = cur.spelling
         self.namespaces = namespaces(cur)
+        self.parent = cur.semantic_parent.type.spelling if cur.semantic_parent.kind != CursorKind.TRANSLATION_UNIT else ""
 
         self.comment = cur.brief_comment
         self.abstract = cur.is_abstract_record()
@@ -900,6 +937,7 @@ class ClassInfo(object):
         self.fields = [FieldInfo(el) for el in get_public_fields(cur)]
         self.enums = [EnumInfo(el) for el in get_public_enums(cur)]
         self.classes = [ClassInfo(el) for el in get_nested_classes(cur)]
+        self.templates = [ClassTemplateInfo(el) for el in get_nested_templates(cur)]
 
         self.methods = self.filter_rvalues(
             (MethodInfo(el) for el in get_public_methods(cur))
@@ -1017,7 +1055,7 @@ class ClassTemplateInfo(ClassInfo):
 
         self.type_params = [
             TemplateParam(
-                None if el.spelling == el.type.spelling else el.type.spelling,
+                None if el.spelling == el.type.spelling else fully_qualified_type(el),
                 el.spelling,
                 default,
             )
@@ -1035,6 +1073,7 @@ class TypedefInfo(BaseInfo):
     pod: bool
     template_base: List[str]
     template_args: List[str]
+    specialization: bool
 
     def __init__(self, cur: Cursor):
 
@@ -1044,18 +1083,21 @@ class TypedefInfo(BaseInfo):
 
         self.type = t.spelling
         self.pod = t.is_pod()
+        self.specialization = False
 
         if not self.pod:
-            self.template_base = [
-                ch.spelling
-                for ch in cur.get_children()
-                if ch.kind == CursorKind.TEMPLATE_REF
-            ]
-            self.template_args = [
-                ch.spelling
-                for ch in cur.get_children()
-                if ch.kind == CursorKind.TYPE_REF
-            ]
+            parsed = parse_typename(self.type)
+
+            self.template_base = ["::".join(seg.name for seg in parsed.typename.segments)]
+
+            if parsed.typename.segments[-1].specialization:
+                self.template_args = [
+                    arg.format() for arg in parsed.typename.segments[-1].specialization.args
+                ]
+
+                self.specialization = True
+            else:
+                self.template_args = []
 
 
 class ForwardInfo(BaseInfo):

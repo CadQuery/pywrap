@@ -3,7 +3,7 @@ static_method_pointer,function_pointer,template_args_typename,template_args,
 template_method_pointer,template_static_method_pointer, template_pointer,
 prototype, pybind_overload, argtypes_names, argnames_wo_type, argnames_byref,
 argtypes_names_not_byref, init_outputs_byref, argnames_not_byref, trampoline_class,
-handle_results_ptr_byref, argnames_byref_with_smart_ptr %}
+handle_results_ptr_byref, argnames_byref_with_smart_ptr, replace_ns_separator %}
 
 // std lib related includes
 #include <tuple>
@@ -260,12 +260,12 @@ auto m{{ns}} = static_cast<py::module>(m.attr("{{ns}}"));
 // register typdefs
 {% for h in module.headers %}
 {% for td in h.typedefs %}
-{% if not td.pod and not "_H" in td.name and td.template_base.__len__()>0 and not td.type.startswith("opencascade::handle") %}
+{% if not td.pod and not "_H" in td.name and td.template_base.__len__()>0 and not td.type.startswith("opencascade::handle") and td.specialization %}
 {% set dep_module = td.template_base[0].split("_") %}
 {% set arg = td.type.split(td.template_base[0])[-1] %}
 {% set base =  td.template_base[0] %}
 {% if not arg.endswith("::Iterator") %}
-    register_template_{{ base }}{{ arg }}(m,"{{td.name}}");
+    register_template_{{ replace_ns_separator(base) }}{{ arg }}(m,"{{td.name}}");
 {% endif %}
 {% endif %}
 {% endfor %}

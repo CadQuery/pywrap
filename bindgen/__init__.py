@@ -741,6 +741,7 @@ def render(
             "str": str,
             "classinfo_dict": classinfo_dict,
             "getattr": getattr,
+            "all_templates": lambda mod: chain(mod.class_templates, *(el.templates for el in mod.classes)),
         }
     )
 

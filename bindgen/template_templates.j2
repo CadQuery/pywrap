@@ -35,8 +35,8 @@ namespace py = pybind11;
 #include "{{ include_pre }}"
 {% endif %}
 
-// Class template handling functions
-{% for t in module.class_templates %}
+// Class template (including nested templates) handling functions
+{% for t in all_templates(module) %}
 
 template {{template_args_typename(t)}}
 void preregister_template_{{t.name.replace("::","__")}}(py::object &m, const char *name){
@@ -74,7 +74,7 @@ void register_template_{{t.name.replace("::","__")}}(py::object &m, const char *
     {% endif %}
     {% endfor %}
     {% if "begin" in t.methods_dict and "end" in t.methods_dict %}
-        .def("__iter__",[](const {{t.name}}{{template_args(t)}} &self)
+        .def("__iter__",[]({{t.name}}{{template_args(t)}} &self)
              { return py::make_iterator<py::return_value_policy::copy>(self.begin(), self.end()); },
              py::keep_alive<0, 1>())
     {% elif "cbegin" in t.methods_dict and "cend" in t.methods_dict %}
