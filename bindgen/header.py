@@ -1082,10 +1082,10 @@ class TypedefInfo(BaseInfo):
         t = cur.underlying_typedef_type
 
         self.type = t.spelling
-        self.pod = t.is_pod()
+        self.pod = t.is_pod() or t.kind in (TypeKind.FUNCTIONPROTO, TypeKind.VOID)
         self.specialization = False
 
-        if not self.pod and not t.kind in (TypeKind.FUNCTIONPROTO, TypeKind.VOID):
+        if not self.pod:
             parsed = parse_typename(self.type)
 
             self.template_base = ["::".join(seg.name for seg in parsed.typename.segments)]
