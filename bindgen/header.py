@@ -1085,7 +1085,7 @@ class TypedefInfo(BaseInfo):
         self.pod = t.is_pod()
         self.specialization = False
 
-        if not self.pod:
+        if not self.pod and not t.kind in (TypeKind.FUNCTIONPROTO, TypeKind.VOID):
             parsed = parse_typename(self.type)
 
             self.template_base = ["::".join(seg.name for seg in parsed.typename.segments)]

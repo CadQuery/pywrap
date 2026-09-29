@@ -58,7 +58,7 @@ def parse_tu(
         "dummy.cxx",
         args,
         unsaved_files=[("dummy.cxx", dummy_code)],
-        options=TU.PARSE_INCOMPLETE,
+        options=TU.PARSE_INCOMPLETE|TU.PARSE_SKIP_FUNCTION_BODIES,
     )
 
     diag = list(tr_unit.diagnostics)
