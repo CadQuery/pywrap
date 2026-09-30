@@ -83,7 +83,7 @@ def read_symbols(p):
     return sym
 
 
-def remove_undefined_mangled(m, sym):
+def remove_undefined_mangled(m, sym: set[str]):
 
     # exclude methods
     for c in m.classes:
@@ -97,7 +97,7 @@ def remove_undefined_mangled(m, sym):
         c.methods = [
             el
             for el in c.methods
-            if sym.name.str.endswith(el.mangled_name).any()
+            if el.mangled_name in sym
             or el.inline
             or el.pure_virtual
             or el.virtual
@@ -105,7 +105,7 @@ def remove_undefined_mangled(m, sym):
         c.methods_byref = [
             el
             for el in c.methods_byref
-            if sym.name.str.endswith(el.mangled_name).any()
+            if el.mangled_name in sym
             or el.inline
             or el.pure_virtual
             or el.virtual
@@ -113,7 +113,7 @@ def remove_undefined_mangled(m, sym):
         c.methods_return_byref = [
             el
             for el in c.methods_return_byref
-            if sym.name.str.endswith(el.mangled_name).any()
+            if el.mangled_name in sym
             or el.inline
             or el.pure_virtual
             or el.virtual
@@ -121,17 +121,17 @@ def remove_undefined_mangled(m, sym):
         c.static_methods = [
             el
             for el in c.static_methods
-            if sym.name.str.endswith(el.mangled_name).any() or el.inline
+            if el.mangled_name in sym or el.inline
         ]
         c.static_methods_byref = [
             el
             for el in c.static_methods_byref
-            if sym.name.str.endswith(el.mangled_name).any() or el.inline
+            if el.mangled_name in sym or el.inline
         ]
         c.constructors = [
             el
             for el in sorted(c.constructors, key=lambda el: el.full_name)
-            if sym.name.str.endswith(el.mangled_name).any()
+            if el.mangled_name in sym
             or (el.inline and not el.deleted)
             or el.pure_virtual
             or el.virtual
@@ -142,7 +142,7 @@ def remove_undefined_mangled(m, sym):
     m.functions = [
         f
         for f in m.functions
-        if sym.name.str.startswith(f.mangled_name).any() or f.inline
+        if f.mangled_name in sym or f.inline
     ]
 
     # exclude functions per header
@@ -151,7 +151,7 @@ def remove_undefined_mangled(m, sym):
         h.functions = [
             f
             for f in h.functions
-            if sym.name.str.startswith(f.mangled_name).any() or f.inline
+            if f.mangled_name in sym or f.inline
         ]
 
 
@@ -492,9 +492,9 @@ def transform_modules(
     list[CollectionTypedef],
 ]:
 
-    sym = read_symbols(
+    sym = set(read_symbols(
         settings[platform if platform else current_platform()]["symbols"]
-    )
+    ))
 
     # collect collections *before* filtering
     collections = collect_collections(modules, settings)
