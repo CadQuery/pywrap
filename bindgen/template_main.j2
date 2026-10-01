@@ -25,27 +25,48 @@ void register_collections_pre_{{i_coll}}(py::module&);
 void register_collections_{{i_coll}}(py::module&);
 {% endfor %}
 
+// collection chunks wrapped so that every table row takes the main module
+static void register_collections_enums(py::module &main_module) {
+    py::module m_coll = main_module.def_submodule("collections", R"#(Artifical module with instantiated collection types)#");
+{% for i_coll in range(N_coll_chunks) %}
+    register_collections_pre_{{i_coll}}(m_coll);
+{% endfor %}
+}
+
+static void register_collections(py::module &main_module) {
+    py::module m_coll = static_cast<py::module>(main_module.attr("collections"));
+{% for i_coll in range(N_coll_chunks) %}
+    register_collections_{{i_coll}}(m_coll);
+{% endfor %}
+}
+
+{% if settings['lazy'] %}
+static const lazy::desc {{name}}_modules[] = {
+{% for mod in sorted_modules %}
+    {"{{mod}}", &register_{{mod}}_enums, &register_{{mod}}, "{{ module_deps[mod]|sort|join(',') }}"},
+{% endfor %}
+    {"collections", &register_collections_enums, &register_collections, "{{ collections_deps|sort|join(',') }}"},
+};
+{% endif %}
+
 // main module definiiton
 PYBIND11_MODULE({{name}}, m) {
 
+{% if settings['lazy'] %}
+// phase 1 of every package
+    for (const auto &d : {{name}}_modules) d.enums(m);
+{% else %}
 // register submodules
-
 {% for mod in sorted_modules %}
     register_{{mod}}_enums(m);
 {% endfor %}
-
-// define the collections module
-py::module m_coll = m.def_submodule("collections", R"#(Artifical module with instantiated collection types)#");
-
 // preregister collections
-{% for i_coll in range(N_coll_chunks) %}
-register_collections_pre_{{i_coll}}(m_coll);
-{% endfor %}
-
+    register_collections_enums(m);
 // register modules
 {% for mod in sorted_modules %}
     register_{{mod}}(m);
 {% endfor %}
+{% endif %}
 
 // Add attributes if present
 
@@ -53,9 +74,12 @@ register_collections_pre_{{i_coll}}(m_coll);
     m.attr("{{k}}") = py::cast("{{v}}");
 {% endfor %}
 
+{% if settings['lazy'] %}
+// phase 2: per package on first use
+    lazy::install(m, {{name}}_modules);
+{% else %}
 // register collection types
-{% for i_coll in range(N_coll_chunks) %}
-register_collections_{{i_coll}}(m_coll);
-{% endfor %}
+    register_collections(m);
+{% endif %}
 
 }

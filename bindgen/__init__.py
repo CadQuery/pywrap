@@ -589,7 +589,7 @@ def transform_modules(
     )
 
 
-def toposort_modules(modules, module_settings):
+def module_deps(modules, module_settings):
 
     deps = {}
 
@@ -613,14 +613,30 @@ def toposort_modules(modules, module_settings):
         )
 
         # iterate over all classes, templates and typedefs
-        deps[m.name] = set(
-            cls_dict[s]
-            for c in m.classes + m.class_templates + typedefs
-            for s in c.superclass
-            if s in cls_dict
-        ) | custom_deps - {m.name}
+        deps[m.name] = (
+            set(
+                cls_dict[s]
+                for c in m.classes + m.class_templates + typedefs
+                for s in c.superclass
+                if s in cls_dict
+            )
+            | custom_deps
+        ) - {m.name}
 
-    return toposort_flatten(deps)
+    return deps
+
+
+def collections_deps(modules, collection_pat):
+    # owners of the superclasses of the collection class templates
+    cls_dict = {c.name: m.name for m in modules for c in m.classes}
+    templates = [
+        t
+        for m in modules
+        for t in m.class_templates
+        if t.name.startswith(collection_pat)
+    ]
+
+    return {cls_dict[s] for t in templates for s in t.superclass if s in cls_dict}
 
 
 def render(
@@ -692,6 +708,8 @@ def render(
     for c in collections:
         collection_types |= set(c.leaf_args())
 
+    deps = module_deps(modules, module_settings)
+
     jinja_env.globals.update(
         {
             "contains_string": lambda s, pats: any(
@@ -728,7 +746,11 @@ def render(
             "proper_new_operator": proper_new_operator,
             "proper_delete_operator": proper_delete_operator,
             "module_names": module_names,
-            "sorted_modules": toposort_modules(modules, module_settings),
+            "sorted_modules": toposort_flatten(deps),
+            "module_deps": deps,
+            "collections_deps": collections_deps(
+                modules, settings["collection_pattern"]
+            ),
             "settings": settings,
             "collection_types": collection_types,
             "exclude_collections": exclude_collections,

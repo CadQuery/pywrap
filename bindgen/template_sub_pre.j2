@@ -62,6 +62,7 @@ void register_{{module.name}}_enums(py::module &main_module) {
 
 
 py::module m = main_module.def_submodule("{{module.name}}", R"#({{module.doc}})#");
+py::object klass;
 
 // add namespaces as submodules
 {% for ns in module.namespaces %}
@@ -116,6 +117,28 @@ auto {{ns}} = m.def_submodule("{{ns}}");
 // preregister user-defined template specializations
 {% for name, spec in module_settings['template_specializations'].items() %}
     preregister_template_{{replace_ns_separator(spec.base)}}<{{spec.args|join(',')}}>(m, "{{name}}");
+{% endfor %}
+
+// nested enums
+{% for c in module.classes %}{% if c.enums and ((proper_new_operator(c) and proper_delete_operator(c)) or 'Standard_Transient' in c.rootclass) %}
+    klass = {{ "m" if not c.namespaces else c.namespaces[0] }}.attr("{{cls_name(c)}}");
+    {% for enum in c.enums %}
+    {% if enum.anonymous %}
+        {% for val in enum.values %}
+        klass.attr("{{ val | replace("None", "None_")}}") = py::cast(int({{ enum.name+"::" if enum.name}}{{ val }}));
+        {% endfor %}
+    {% else %}
+        py::enum_<{{enum.name}}>(klass, "{{ enum.name.split('::')[-1] + '_e' }}", R"#({{enum.comment}})#")
+        {% for val in enum.values %}
+            .value("{{val | replace("None", "None_")}}", {{enum.name}}::{{val}}){{ ";" if loop.last }}
+        {% endfor %}
+    {% endif %}
+    {% endfor %}
+{% endif %}{% endfor %}
+
+// exceptions
+{% for ex in module.exceptions %}
+register_occ_exception<{{ex.name}}>(m, "{{ex.name}}");
 {% endfor %}
 
 // user-defined post-inclusion per module in the body

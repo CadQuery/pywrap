@@ -89,6 +89,8 @@ global_schema = Schema(
         Optional("byref_types", default=[]): [str],
         Optional("byref_types_smart_ptr", default=[]): [str],
         Optional("parsing_header", default=""): str,
+        # members of a package registered on first use; needs lazy::desc and lazy::install from include_pre
+        Optional("lazy", default=False): bool,
         Optional("collection_pattern", default=None): str,
         Optional("exclude_collection", default=[]): [str],
         Optional("collection_include_header_pre", default=None): str,
