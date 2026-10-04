@@ -596,7 +596,9 @@ def expand_decl(cur: Cursor) -> str:
     parent = cur.get_definition().semantic_parent
 
     while parent.kind != CursorKind.TRANSLATION_UNIT:
-        rvs.append(parent.spelling)
+        # anonymous enums spell for clang like (unnamed...
+        if not parent.spelling.startswith('(unnamed'):
+            rvs.append(parent.spelling)
         parent = parent.semantic_parent
 
     return "::".join(rvs[::-1])
