@@ -34,7 +34,7 @@ namespace py = pybind11;
 // template related includes
 {% for h in module.headers %}
 {% for td in h.typedefs %}
-{% if not td.pod and not "_H" in td.name and td.template_base.__len__()>0
+{% if td.specialization and not "_H" in td.name and td.template_base.__len__()>0
     and not td.type.startswith("opencascade::handle")
     and not td.type.startswith("std::") %}
 
