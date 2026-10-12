@@ -89,20 +89,6 @@ auto {{ns}} = static_cast<py::module>(m.attr("{{ns}}"));
     register_default_constructor<{{c.name}} {{pointer(c)}}>({{mod}},"{{cls_name(c)}}");
     {% endif %}
 
-    // nested enums
-    {% for enum in c.enums %}
-    {% if enum.anonymous %}
-        {% for val in enum.values %}
-        klass.attr("{{ val | replace("None", "None_")}}") = py::cast(int({{ enum.name+"::" if enum.name}}{{ val }}));
-        {% endfor %}
-    {% else %}
-        py::enum_<{{enum.name}}>(klass, "{{ enum.name.split('::')[-1] + '_e' }}", R"#({{enum.comment}})#")
-        {% for val in enum.values %}
-            .value("{{val | replace("None", "None_")}}", {{enum.name}}::{{val}}){{ ";" if loop.last }}
-        {% endfor %}
-    {% endif %}
-    {% endfor %}
-
     static_cast<py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,class_dict,module.typedef_dict)}}>>(klass)
     // constructors
     {% for i,con in enumerate(c.constructors) %}
@@ -276,11 +262,6 @@ auto m{{ns}} = static_cast<py::module>(m.attr("{{ns}}"));
     register_template_{{spec.base}}<{{spec.args|join(',')}}>(m, "{{name}}");
 {% endfor %}
 
-
-// exceptions
-{% for ex in module.exceptions %}
-register_occ_exception<{{ex.name}}>(m, "{{ex.name}}");
-{% endfor %}
 
 // user-defined post-inclusion per module in the body
 {% if module_settings['include_body_post'] %}
