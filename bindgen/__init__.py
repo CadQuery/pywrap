@@ -494,7 +494,7 @@ def transform_modules(
 
     sym = set(read_symbols(
         settings[platform if platform else current_platform()]["symbols"]
-    ))
+    ).name)
 
     # collect collections *before* filtering
     collections = collect_collections(modules, settings)
