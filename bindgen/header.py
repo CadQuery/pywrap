@@ -359,6 +359,12 @@ def get_nested_classes(cls):
     yield from get_x_multi(cls, (CursorKind.CLASS_DECL, CursorKind.STRUCT_DECL))
 
 
+def get_nested_typedefs(cls: Cursor):
+    """Nested typedefs of a given class"""
+
+    yield from get_x_multi(cls, (CursorKind.TYPEDEF_DECL, CursorKind.TYPE_ALIAS_DECL))
+
+
 def get_nested_templates(cls: Cursor):
     """Nested classes of a given class"""
 
@@ -501,6 +507,9 @@ def get_named_type(T: Type) -> Type:
 
     if rv.kind == TypeKind.ELABORATED:
         rv = rv.get_named_type()
+
+    if rv.is_const_qualified():
+        rv = rv.get_unqualified()
 
     return rv
 
@@ -826,23 +835,11 @@ class FunctionInfo(BaseInfo):
             if bot.kind == CursorKind.DECL_REF_EXPR:
                 rv =  expand_decl(bot)
 
-        return rv
-
-        tokens = get_tokens(cur)
-        if "=" in tokens:
-            # special case for enum values handling gracefully locally defined enums
-            bot = get_bottom_child(cur)
-            if bot.kind == CursorKind.DECL_REF_EXPR:
-                return expand_decl(bot)
-
-            rv = " ".join(tokens[tokens.index("=") + 1 :])
-
-            # handle default initalization of complex types
-            if "{ }" == rv:
-                rv = f"{get_named_type(cur.type).spelling}{rv}"
+        # handle default initalization of complex types
+        if "{}" == rv:
+            rv = f"{get_named_type(cur.type).spelling}{rv}"
 
         return rv
-
 
 class MethodInfo(FunctionInfo):
     """Container for method parsing results"""
@@ -894,6 +891,7 @@ class ClassInfo(object):
     enums: List[EnumInfo]
     classes: List[ClassInfo]
     templates: List[ClassTemplateInfo]
+    typedefs: List[TypedefInfo]
 
     methods: List[MethodInfo]
     protected_virtual_methods: List[MethodInfo]
@@ -940,6 +938,7 @@ class ClassInfo(object):
         self.enums = [EnumInfo(el) for el in get_public_enums(cur)]
         self.classes = [ClassInfo(el) for el in get_nested_classes(cur)]
         self.templates = [ClassTemplateInfo(el) for el in get_nested_templates(cur)]
+        self.typedefs = [TypedefInfo(el) for el in get_nested_typedefs(cur)]
 
         self.methods = self.filter_rvalues(
             (MethodInfo(el) for el in get_public_methods(cur))
@@ -1035,6 +1034,20 @@ class ClassTemplateInfo(ClassInfo):
 
     type_params: List[TemplateParam]
 
+    def _add_typename(self, name: str) -> str:
+        """
+        Helper to add typename to dependnat types.
+        """
+
+        if f"<{self.type_params[0].name}" in name and ">::" in name:
+
+            if name.startswith("const"):
+                return f"const typename {name[6:]}"
+
+            return f"typename {name}"
+
+        return name
+
     def _replace_type_args(self, met: MethodInfo):
         """
         Workaround for <T> naming when type param is not specified
@@ -1043,12 +1056,13 @@ class ClassTemplateInfo(ClassInfo):
         new_args = []
 
         for n, t, d in met.args:
-            new_args.append((n, t.replace("<T>", f"<{self.type_params[0].name}>"), d))
+            new_args.append((n, self._add_typename(t.replace("<T>", f"<{self.type_params[0].name}>")), d))
 
         met.args = new_args
-        met.return_type = met.return_type.replace(
-            "<T>", f"<{self.type_params[0].name}>"
+        met.return_type = self._add_typename(
+            met.return_type.replace("<T>", f"<{self.type_params[0].name}>")
         )
+
 
     def __init__(self, cur: Cursor):
         super(ClassTemplateInfo, self).__init__(cur)
@@ -1071,11 +1085,13 @@ class ClassTemplateInfo(ClassInfo):
 
 class TypedefInfo(BaseInfo):
 
+    name: str
     type: str
     pod: bool
     template_base: List[str]
     template_args: List[str]
     specialization: bool
+    invalid: bool
 
     def __init__(self, cur: Cursor):
 
@@ -1083,23 +1099,29 @@ class TypedefInfo(BaseInfo):
 
         t = cur.underlying_typedef_type
 
+        self.name = cur.spelling
         self.type = t.spelling
-        self.pod = t.is_pod() or t.kind in (TypeKind.FUNCTIONPROTO, TypeKind.VOID)
+        self.pod = t.is_pod() or t.kind in (TypeKind.FUNCTIONPROTO, TypeKind.VOID, TypeKind.POINTER, TypeKind.LVALUEREFERENCE)
         self.specialization = False
+        self.invalid = False
 
         if not self.pod:
-            parsed = parse_typename(self.type)
+            try:
+                parsed = parse_typename(self.type)
 
-            self.template_base = ["::".join(seg.name for seg in parsed.typename.segments)]
+                self.template_base = ["::".join(seg.name for seg in parsed.typename.segments)]
 
-            if parsed.typename.segments[-1].specialization:
-                self.template_args = [
-                    arg.format() for arg in parsed.typename.segments[-1].specialization.args
-                ]
+                if parsed.typename.segments[-1].specialization:
+                    self.template_args = [
+                        arg.format() for arg in parsed.typename.segments[-1].specialization.args
+                    ]
 
-                self.specialization = True
-            else:
-                self.template_args = []
+                    self.specialization = True
+                else:
+                    self.template_args = []
+
+            except Exception:
+                self.invalid = True
 
 
 class ForwardInfo(BaseInfo):
@@ -1206,7 +1228,11 @@ class HeaderInfo(object):
             else:
                 self.classes[ci.name] = ci
 
+        # class_dict contains also nested classes and typdefs
         self.class_dict = {k: self.name for k in self.classes}
+        self.class_dict.update({k.name: self.name for c in self.classes.values() for k in c.classes})
+        self.class_dict.update({f"{c.name}::{k.name}": self.name for c in self.classes.values() for k in c.typedefs})
+
         self.enum_dict = {e.name: self.name for e in self.enums}
         self.class_templates = {
             el.displayname: ClassTemplateInfo(el) for el in get_class_templates(tr_unit)
@@ -1246,51 +1272,3 @@ def process_header(path, input_folder, settings, module_name, target_platform):
 
     return hi
 
-
-__all__ = [
-    process_header,
-]
-
-if __name__ == "__main__":
-
-    from os import getenv
-    from .utils import init_clang
-
-    init_clang()
-
-    conda_prefix = Path(getenv("CONDA_PREFIX"))
-
-    gp_Ax1 = process_header(conda_prefix / "include" / "opencascade" / "gp_Ax1.hxx")
-
-    for el in gp_Ax1.classes.values():
-        print(el.name)
-
-    # try public methods
-    for el in el.methods:
-        print(el.name, el.args, el.return_type)
-
-    # try enums
-    gp_TrsfForm = process_header(
-        conda_prefix / "include" / "opencascade" / "gp_TrsfForm.hxx"
-    )
-
-    for el in gp_TrsfForm.enums:
-        print(el.name)
-        print(el.values)
-
-    # try functions
-    gp_Vec2d = process_header(conda_prefix / "include" / "opencascade" / "gp_Vec2d.hxx")
-
-    for el in gp_Vec2d.functions:
-        print(el.name)
-
-    for el in gp_Vec2d.operators:
-        print(el.name)
-
-    # try inheritance
-    TopoDS = process_header(
-        conda_prefix / "include" / "opencascade" / "TopoDS_Solid.hxx"
-    )
-
-    for k in TopoDS.inheritance:
-        print(k, TopoDS.inheritance[k])
