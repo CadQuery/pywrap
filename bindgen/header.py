@@ -562,7 +562,11 @@ def fully_qualified_type(t: Type|Cursor, ctx: Cursor|None = None) -> str:
         ctx = t
         t = t.type
 
-    return t.get_fully_qualified_name(PrintingPolicy.create(ctx))
+    policy = PrintingPolicy.create(ctx)
+    policy.set_property(PrintingPolicyProperty.FullyQualifiedName, True)
+    
+
+    return t.get_fully_qualified_name(policy)
 
 
 def get_tokens(cur: Cursor) -> list[str]:
@@ -711,14 +715,14 @@ class FunctionInfo(BaseInfo):
             (
                 f"{el.spelling}_" if el.spelling in KWORDS else el.spelling,
                 fully_qualified_type(el, cur), #self._underlying_type(el, cur),
-                self._default_value(el),
+                self._default_value(el, cur),
             )
             for el in cur.get_arguments()
         ]
         self.default_value_types = [
             self._underlying_type(el, cur, False)
             for el in cur.get_arguments()
-            if self._default_value(el)
+            if self._default_value(el, cur)
         ]
 
         self.unqualified_return_type = cur.result_type.get_unqualified().spelling
@@ -820,7 +824,7 @@ class FunctionInfo(BaseInfo):
 
         return rv
 
-    def _default_value(self, cur: Cursor) -> Optional[str]:
+    def _default_value(self, cur: Cursor, ctx: Cursor) -> Optional[str]:
         """Tries to extract default value"""
 
         rv: str|None = None
@@ -833,7 +837,7 @@ class FunctionInfo(BaseInfo):
             # special case for enum values handling gracefully locally defined enums
             bot = get_bottom_child(cur)
             if bot.kind == CursorKind.DECL_REF_EXPR:
-                rv =  expand_decl(bot)
+                rv = f"{get_named_type(cur.type).spelling}({expand_decl(bot)})"
 
         # handle default initalization of complex types
         if "{}" == rv:
@@ -1050,13 +1054,13 @@ class ClassTemplateInfo(ClassInfo):
 
     def _replace_type_args(self, met: MethodInfo):
         """
-        Workaround for <T> naming when type param is not specified
+        Workaround for <T> naming when type param is not specified and lack of type args in dependant types
         """
 
         new_args = []
 
         for n, t, d in met.args:
-            new_args.append((n, self._add_typename(t.replace("<T>", f"<{self.type_params[0].name}>")), d))
+            new_args.append((n, self._add_typename(t.replace("<T>", f"<{self.type_params[0].name}>").replace(f"{self.name}::", f"{self.full_name}::")), d))
 
         met.args = new_args
         met.return_type = self._add_typename(
@@ -1077,6 +1081,8 @@ class ClassTemplateInfo(ClassInfo):
             )
             for el, default in get_template_type_params(cur)
         ]
+
+        self.full_name = self.name + "<" + ','.join(t.name for t in self.type_params) + ">"
 
         # replace <T> type params with proper names in methods
         for met in chain(self.methods, self.constructors, self.operators):
