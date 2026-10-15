@@ -105,7 +105,7 @@ auto {{ns}} = m.def_submodule("{{ns}}");
 {% endif %}
 {% else %}
 {% if (proper_new_operator(el) and proper_delete_operator(el)) or 'Standard_Transient' in el.rootclass %}
-    py::class_<{{el.name}} {{pointer(el)}} {% if el.abstract %},Py_{{el.name}}{% endif %} {{super(el,class_dict,module.typedef_dict)}}>(
+    py::class_<{{el.name}} {{pointer(el)}} {% if el.abstract %},Py_{{el.name}}{% endif %} {{super(el,classinfo_dict,module.typedef_dict)}}>(
       {{ "m" if not el.namespaces else el.namespaces[0]}},
       "{{cls_name(el)}}",R"#({{el.comment}})#"
     );

@@ -103,7 +103,7 @@ auto {{ns}} = static_cast<py::module>(m.attr("{{ns}}"));
     {% endif %}
     {% endfor %}
 
-    static_cast<py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,class_dict,module.typedef_dict)}}>>(klass)
+    static_cast<py::class_<{{c.name}} {{pointer(c)}} {% if c.abstract %},Py_{{c.name}}{% endif %} {{super(c,classinfo_dict,module.typedef_dict)}}>>(klass)
     // constructors
     {% for i,con in enumerate(c.constructors) %}
     {% set con_excludes = module_settings['Classes'].get(c.name,{}).get('exclude_constructors',[]) %}

@@ -176,7 +176,7 @@ def is_byref_return(met: MethodInfo):
     return rv
 
 
-def is_byref(met, byref_types):
+def is_byref(met, byref_types) -> bool:
 
     rv = False
 
