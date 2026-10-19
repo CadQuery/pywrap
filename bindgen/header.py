@@ -362,13 +362,13 @@ def get_nested_classes(cls):
 def get_nested_typedefs(cls: Cursor):
     """Nested typedefs of a given class"""
 
-    yield from get_x_multi(cls, (CursorKind.TYPEDEF_DECL, CursorKind.TYPE_ALIAS_DECL))
+    yield from get_xx_multi(cls, (CursorKind.TYPEDEF_DECL, CursorKind.TYPE_ALIAS_DECL), AccessSpecifier.PUBLIC)
 
 
 def get_nested_templates(cls: Cursor):
-    """Nested classes of a given class"""
+    """Nested templates of a given class"""
 
-    yield from get_x(cls, CursorKind.CLASS_TEMPLATE)
+    yield from get_xx(cls, CursorKind.CLASS_TEMPLATE, AccessSpecifier.PUBLIC)
 
 
 def get_public_methods(cls):
