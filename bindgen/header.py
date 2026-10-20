@@ -363,7 +363,11 @@ def get_nested_classes(cls):
 def get_nested_typedefs(cls: Cursor):
     """Nested typedefs of a given class"""
 
-    yield from get_xx_multi(cls, (CursorKind.TYPEDEF_DECL, CursorKind.TYPE_ALIAS_DECL), AccessSpecifier.PUBLIC)
+    yield from get_xx_multi(
+        cls,
+        (CursorKind.TYPEDEF_DECL, CursorKind.TYPE_ALIAS_DECL),
+        AccessSpecifier.PUBLIC,
+    )
 
 
 def get_nested_templates(cls: Cursor):
@@ -554,7 +558,7 @@ def pretty_printed(
     return cur.pretty_printed(policy)
 
 
-def fully_qualified_type(t: Type|Cursor, ctx: Cursor|None = None) -> str:
+def fully_qualified_type(t: Type | Cursor, ctx: Cursor | None = None) -> str:
     """
     Fully qualified name of the type t. ctx is needed to create a PrintingPolicy.
     """
@@ -565,7 +569,6 @@ def fully_qualified_type(t: Type|Cursor, ctx: Cursor|None = None) -> str:
 
     policy = PrintingPolicy.create(ctx)
     policy.set_property(PrintingPolicyProperty.FullyQualifiedName, True)
-    
 
     return t.get_fully_qualified_name(policy)
 
@@ -611,7 +614,7 @@ def expand_decl(cur: Cursor) -> str:
 
     while parent.kind != CursorKind.TRANSLATION_UNIT:
         # anonymous enums spell for clang like (unnamed...
-        if not parent.spelling.startswith('(unnamed'):
+        if not parent.spelling.startswith("(unnamed"):
             rvs.append(parent.spelling)
         parent = parent.semantic_parent
 
@@ -696,7 +699,9 @@ class FunctionInfo(BaseInfo):
         self.comment = cur.brief_comment
         self.full_name = cur.displayname
         self.mangled_name = cur.mangled_name
-        self.return_type = fully_qualified_type(cur.result_type, cur) #self._underlying_type(cur.result_type, cur)
+        self.return_type = fully_qualified_type(
+            cur.result_type, cur
+        )  # self._underlying_type(cur.result_type, cur)
         self.pretty_printed = pretty_printed(cur)
 
         if cur.semantic_parent.kind == CursorKind.NAMESPACE:
@@ -715,7 +720,7 @@ class FunctionInfo(BaseInfo):
         self.args = [
             (
                 f"{el.spelling}_" if el.spelling in KWORDS else el.spelling,
-                fully_qualified_type(el, cur), #self._underlying_type(el, cur),
+                fully_qualified_type(el, cur),  # self._underlying_type(el, cur),
                 self._default_value(el, cur),
             )
             for el in cur.get_arguments()
@@ -828,7 +833,7 @@ class FunctionInfo(BaseInfo):
     def _default_value(self, cur: Cursor, ctx: Cursor) -> Optional[str]:
         """Tries to extract default value"""
 
-        rv: str|None = None
+        rv: str | None = None
 
         tmp = pretty_printed(cur)
 
@@ -845,6 +850,7 @@ class FunctionInfo(BaseInfo):
             rv = f"{get_named_type(cur.type).spelling}{rv}"
 
         return rv
+
 
 class MethodInfo(FunctionInfo):
     """Container for method parsing results"""
@@ -927,7 +933,11 @@ class ClassInfo(object):
         self.name = cur.type.spelling
         self.short_name = cur.spelling
         self.namespaces = namespaces(cur)
-        self.parent = cur.semantic_parent.type.spelling if cur.semantic_parent.kind != CursorKind.TRANSLATION_UNIT else ""
+        self.parent = (
+            cur.semantic_parent.type.spelling
+            if cur.semantic_parent.kind != CursorKind.TRANSLATION_UNIT
+            else ""
+        )
 
         self.comment = cur.brief_comment
         self.abstract = cur.is_abstract_record()
@@ -1044,6 +1054,10 @@ class ClassTemplateInfo(ClassInfo):
         Helper to add typename to dependnat types.
         """
 
+        # prevent "typename typenames", seems to happen on mac
+        if "typename" in name:
+            return name
+
         if f"<{self.type_params[0].name}" in name and ">::" in name:
 
             if name.startswith("const"):
@@ -1061,13 +1075,22 @@ class ClassTemplateInfo(ClassInfo):
         new_args = []
 
         for n, t, d in met.args:
-            new_args.append((n, self._add_typename(t.replace("<T>", f"<{self.type_params[0].name}>").replace(f"{self.name}::", f"{self.full_name}::")), d))
+            new_args.append(
+                (
+                    n,
+                    self._add_typename(
+                        t.replace("<T>", f"<{self.type_params[0].name}>").replace(
+                            f"{self.name}::", f"{self.full_name}::"
+                        )
+                    ),
+                    d,
+                )
+            )
 
         met.args = new_args
         met.return_type = self._add_typename(
             met.return_type.replace("<T>", f"<{self.type_params[0].name}>")
         )
-
 
     def __init__(self, cur: Cursor):
         super(ClassTemplateInfo, self).__init__(cur)
@@ -1083,10 +1106,19 @@ class ClassTemplateInfo(ClassInfo):
             for el, default in get_template_type_params(cur)
         ]
 
-        self.full_name = self.name + "<" + ','.join(t.name for t in self.type_params) + ">"
+        self.full_name = (
+            self.name + "<" + ",".join(t.name for t in self.type_params) + ">"
+        )
 
         # replace <T> type params with proper names in methods
-        for met in chain(self.methods, self.constructors, self.operators):
+        for met in chain(
+            self.methods,
+            self.static_methods,
+            self.static_methods_byref,
+            self.constructors,
+            self.operators,
+            self.static_operators,
+        ):
             self._replace_type_args(met)
 
 
@@ -1108,7 +1140,12 @@ class TypedefInfo(BaseInfo):
 
         self.name = cur.spelling
         self.type = t.spelling
-        self.pod = t.is_pod() or t.kind in (TypeKind.FUNCTIONPROTO, TypeKind.VOID, TypeKind.POINTER, TypeKind.LVALUEREFERENCE)
+        self.pod = t.is_pod() or t.kind in (
+            TypeKind.FUNCTIONPROTO,
+            TypeKind.VOID,
+            TypeKind.POINTER,
+            TypeKind.LVALUEREFERENCE,
+        )
         self.specialization = False
         self.invalid = False
 
@@ -1116,11 +1153,14 @@ class TypedefInfo(BaseInfo):
             try:
                 parsed = parse_typename(self.type)
 
-                self.template_base = ["::".join(seg.name for seg in parsed.typename.segments)]
+                self.template_base = [
+                    "::".join(seg.name for seg in parsed.typename.segments)
+                ]
 
                 if parsed.typename.segments[-1].specialization:
                     self.template_args = [
-                        arg.format() for arg in parsed.typename.segments[-1].specialization.args
+                        arg.format()
+                        for arg in parsed.typename.segments[-1].specialization.args
                     ]
 
                     self.specialization = True
@@ -1237,8 +1277,16 @@ class HeaderInfo(object):
 
         # class_dict contains also nested classes and typdefs
         self.class_dict = {k: self.name for k in self.classes}
-        self.class_dict.update({k.name: self.name for c in self.classes.values() for k in c.classes})
-        self.class_dict.update({f"{c.name}::{k.name}": self.name for c in self.classes.values() for k in c.typedefs})
+        self.class_dict.update(
+            {k.name: self.name for c in self.classes.values() for k in c.classes}
+        )
+        self.class_dict.update(
+            {
+                f"{c.name}::{k.name}": self.name
+                for c in self.classes.values()
+                for k in c.typedefs
+            }
+        )
 
         self.enum_dict = {e.name: self.name for e in self.enums}
         self.class_templates = {
@@ -1278,4 +1326,3 @@ def process_header(path, input_folder, settings, module_name, target_platform):
     hi.parse(path, input_folder, settings, module_name, target_platform)
 
     return hi
-
