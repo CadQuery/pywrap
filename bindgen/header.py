@@ -14,6 +14,7 @@ from clang.cindex import (
     PrintingPolicy,
     PrintingPolicyProperty,
     ExceptionSpecificationKind,
+    TranslationUnit,
 )
 from cxxheaderparser.simple import parse_typename
 from path import Path
@@ -41,7 +42,7 @@ def is_public(el):
 
 
 def get_symbols(
-    tu,
+    tu: TranslationUnit,
     kind: CursorKind,
     ignore_forwards=True,
     search_in=(CursorKind.NAMESPACE,),
@@ -88,7 +89,7 @@ def get_symbols(
 
 
 def get_symbols_multi(
-    tu,
+    tu: TranslationUnit,
     kind: tuple[CursorKind, ...],
     ignore_forwards=True,
     search_in=(CursorKind.NAMESPACE,),
@@ -134,7 +135,7 @@ def get_symbols_multi(
     yield from _get_symbols(tu.cursor, kind)
 
 
-def get_forward_declarations(tu):
+def get_forward_declarations(tu: TranslationUnit):
     """Get all symbols that are forward declared"""
     tu_path = tu.path
 
@@ -144,7 +145,7 @@ def get_forward_declarations(tu):
                 yield child
 
 
-def get_all_symbols(tu, kind):
+def get_all_symbols(tu: TranslationUnit, kind):
     """All defined symbols of given kind"""
     tu_path = tu.path
 
@@ -156,7 +157,7 @@ def get_all_symbols(tu, kind):
             yield child
 
 
-def get_all_symbols_multi(tu, kinds):
+def get_all_symbols_multi(tu: TranslationUnit, kinds):
     """All defined symbols of given kinds"""
     tu_path = tu.path
 
@@ -167,7 +168,7 @@ def get_all_symbols_multi(tu, kinds):
             yield child
 
 
-def get_functions(tu):
+def get_functions(tu: TranslationUnit):
     """Functions defined locally (i.e. without includes)"""
 
     return (
@@ -177,7 +178,7 @@ def get_functions(tu):
     )
 
 
-def get_function_templates(tu):
+def get_function_templates(tu: TranslationUnit):
     """Function templates defined locally (i.e. without includes)"""
 
     return (
@@ -187,7 +188,7 @@ def get_function_templates(tu):
     )
 
 
-def get_operators(tu):
+def get_operators(tu: TranslationUnit):
     """Functions defined locally (i.e. without includes)"""
 
     return (
@@ -197,7 +198,7 @@ def get_operators(tu):
     )
 
 
-def get_operator_templates(tu):
+def get_operator_templates(tu: TranslationUnit):
     """Operator templates defined locally (i.e. without includes)"""
 
     return (
@@ -207,7 +208,7 @@ def get_operator_templates(tu):
     )
 
 
-def get_enums(tu):
+def get_enums(tu: TranslationUnit):
     """Enums defined locally (i.e. without includes)"""
 
     return get_symbols(tu, CursorKind.ENUM_DECL)
@@ -221,13 +222,13 @@ def get_enum_values(cur: Cursor):
             yield child
 
 
-def get_typedefs(tu):
+def get_typedefs(tu: TranslationUnit):
     """Typedefs defined locally (i.e. without includes)"""
 
     return get_symbols_multi(tu, (CursorKind.TYPEDEF_DECL, CursorKind.TYPE_ALIAS_DECL))
 
 
-def get_classes(tu):
+def get_classes(tu: TranslationUnit):
     """Classes defined locally (i.e. without includes)"""
 
     return chain(
@@ -235,13 +236,13 @@ def get_classes(tu):
     )
 
 
-def get_class_templates(tu):
+def get_class_templates(tu: TranslationUnit):
     """Class templates defined locally (i.e. without includes)"""
 
     return get_symbols(tu, CursorKind.CLASS_TEMPLATE)
 
 
-def get_namespaces(tu, ignore_ns=[]):
+def get_namespaces(tu: TranslationUnit, ignore_ns=[]):
     """Namepspaces defined locally (i.e. without includes)."""
 
     for el in get_symbols(tu, CursorKind.NAMESPACE):
@@ -249,7 +250,7 @@ def get_namespaces(tu, ignore_ns=[]):
             yield el
 
 
-def get_x(cls, kind):
+def get_x(cls: Cursor, kind: CursorKind):
     """Get children entities of the specified type excluding forward declataions"""
 
     for child in cls.get_children():
@@ -257,31 +258,31 @@ def get_x(cls, kind):
             yield child
 
 
-def get_x_multi(cls, kinds):
+def get_x_multi(cls: Cursor, kinds: tuple[CursorKind, ...]):
     """Get children entities of the specified types excluding forward declataions"""
 
     for child in cls.get_children():
-        if any((child.kind is kind for kind in kinds)) and child.get_definition():
+        if child.kind in kinds and child.get_definition():
             yield child
 
 
-def get_xx(cls, kind: CursorKind, access: AccessSpecifier):
+def get_xx(cls: Cursor, kind: CursorKind, access: AccessSpecifier):
     """Get children entities of the specified type with given access specifier"""
 
     for child in cls.get_children():
-        if child.kind is kind and child.access_specifier is access:
+        if child.kind == kind and child.access_specifier == access:
             yield child
 
 
-def get_xx_multi(cls, kinds: tuple[CursorKind, ...], access: AccessSpecifier):
+def get_xx_multi(cls: Cursor, kinds: tuple[CursorKind, ...], access: AccessSpecifier):
     """Get children entities of the specified type with given access specifier"""
 
     for child in cls.get_children():
-        if child.kind is kinds and child.access_specifier is access:
+        if child.kind in kinds and child.access_specifier == access:
             yield child
 
 
-def get_template_type_params(cls):
+def get_template_type_params(cls: Cursor):
     """Get all template type params"""
 
     for t in get_x_multi(
@@ -301,7 +302,7 @@ def get_template_type_params(cls):
             yield t, default
 
 
-def get_base_class(c):
+def get_base_class(c: Cursor):
     """Get all class-baseclass pairs with public or protected inheritance"""
 
     if c.get_definition():
@@ -325,7 +326,7 @@ def get_base_class(c):
         return [el.type.spelling for el in rv]
 
 
-def get_inheritance_relations(tu):
+def get_inheritance_relations(tu: TranslationUnit):
     """Inheritance relations pairs"""
 
     all_classes = get_x(tu.cursor, CursorKind.CLASS_DECL)
@@ -469,7 +470,7 @@ def get_protected_destructors(cls):
         yield child
 
 
-def get_free_method_definitions(tu):
+def get_free_method_definitions(tu: TranslationUnit):
     """Free method definitions"""
 
     return (
