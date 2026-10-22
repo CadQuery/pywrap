@@ -843,11 +843,11 @@ class FunctionInfo(BaseInfo):
             # special case for enum values handling gracefully locally defined enums
             bot = get_bottom_child(cur)
             if bot.kind == CursorKind.DECL_REF_EXPR:
-                rv = f"{get_named_type(cur.type).spelling}({expand_decl(bot)})"
+                rv = f"{fully_qualified_type(get_named_type(cur.type), cur)}({expand_decl(bot)})"
 
         # handle default initalization of complex types
         if "{}" == rv:
-            rv = f"{get_named_type(cur.type).spelling}{rv}"
+            rv = f"{fully_qualified_type(get_named_type(cur.type), cur)}{rv}"
 
         return rv
 
@@ -1139,7 +1139,7 @@ class TypedefInfo(BaseInfo):
         t = cur.underlying_typedef_type
 
         self.name = cur.spelling
-        self.type = t.spelling
+        self.type = fully_qualified_type(t, cur)
         self.pod = t.is_pod() or t.kind in (
             TypeKind.FUNCTIONPROTO,
             TypeKind.VOID,
@@ -1292,7 +1292,8 @@ class HeaderInfo(object):
         self.class_templates = {
             el.displayname: ClassTemplateInfo(el) for el in get_class_templates(tr_unit)
         }
-        self.class_template_dict = {k: self.name for k in self.class_templates}
+        self.class_template_dict = {ct.name: self.name for ct in self.class_templates.values()}
+        self.class_template_dict |= {ct.name: self.name for c in self.classes.values() for ct in c.templates}
         self.inheritance = {k: v for k, v in get_inheritance_relations(tr_unit) if v}
         self.typedefs = [TypedefInfo(el) for el in get_typedefs(tr_unit)]
         self.typedef_dict = {t.name: self.name for t in self.typedefs}
