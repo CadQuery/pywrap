@@ -40,8 +40,7 @@ namespace py = pybind11;
 {% if td.specialization and td.template_base.__len__()>0
     and not td.type.startswith("opencascade::handle")
     and not td.type.startswith("std::") %}
-{% set dep_module = td.type.split("_") %}
-#include "{{dep_module[0]}}_tmpl.hxx"
+#include "{{header_module_dict[class_template_dict[td.template_base[0]]].name}}_tmpl.hxx"
 {% endif %}
 {% endif %}
 {% endfor %}

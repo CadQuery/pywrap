@@ -245,7 +245,7 @@ def transform_module(m, sym, collections, settings, settings_per_module, platfor
 
     if s:
         # exclude classes
-        m.classes = [c for c in m.classes if c.name not in s["exclude_classes"]]
+        m.classes = [c for c in m.classes if not any(match(pat, c.name) for pat in s["exclude_classes"])]
         m.class_dict = {
             k: v for k, v, in m.class_dict.items() if k not in s["exclude_classes"]
         }
@@ -489,6 +489,7 @@ def transform_modules(
     dict[str, Path],
     dict[str, Path],
     dict[str, Path],
+    dict[str, Path],
     list[CollectionTypedef],
 ]:
 
@@ -583,6 +584,7 @@ def transform_modules(
         modules,
         classinfo_dict,
         class_dict,
+        class_template_dict,
         enum_dict,
         symbol_dict,
         list(collections.values()),
@@ -629,6 +631,7 @@ def render(
     modules: list[ModuleInfo],
     classinfo_dict: dict[str, ClassInfo],
     class_dict: dict[str, Path],
+    class_template_dict: dict[str, Path],
     symbol_dict: dict[str, Path],
     prefix=Path(""),
     collections=(),
@@ -715,6 +718,8 @@ def render(
             "enumerate": enumerate,
             "platform": platform if platform else current_platform(),
             "class_dict": class_dict,
+            "class_template_dict": class_template_dict,
+            "header_module_dict": {h.name:m for m in modules for h in m.headers},
             "symbol_dict": symbol_dict,
             "all_classes": all_classes,
             "all_enums": all_enums,

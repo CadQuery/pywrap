@@ -92,7 +92,7 @@ def transform(obj, configuration, platform, input, output):
         modules = pickle.load(f)
 
     settings, module_mapping, module_settings = read_settings(configuration)
-    modules, classinfo_dict, class_dict, enum_dict, symbol_dict, collections = (
+    result = (
         transform_modules(
             obj.verbose,
             obj.njobs,
@@ -106,7 +106,7 @@ def transform(obj, configuration, platform, input, output):
 
     with open(output, "wb") as f:
         pickle.dump(
-            (modules, classinfo_dict, class_dict, enum_dict, symbol_dict, collections),
+            result,
             f,
         )
 
@@ -130,7 +130,7 @@ def generate(obj, configuration, platform, input):
         out.rmtree_p()
 
     with open(input, "rb") as f:
-        modules, classinfo_dict, class_dict, enum_dict, symbol_dict, collections = (
+        modules, classinfo_dict, class_dict, class_template_dict, enum_dict, symbol_dict, collections = (
             pickle.load(f)
         )
 
@@ -140,6 +140,7 @@ def generate(obj, configuration, platform, input):
         modules,
         classinfo_dict,
         class_dict,
+        class_template_dict,
         symbol_dict,
         obj.prefix,
         collections=collections,
