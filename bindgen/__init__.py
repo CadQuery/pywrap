@@ -226,6 +226,17 @@ def _exclude_methods(classes, exclusions):
             c.operators = [m for m in c.operators if not match(m_pat, m.name)]
 
 
+def _mymatch(pat: str, name: str) -> bool:
+    """
+    Regex helper to prevent too eager exlusion.
+    """
+
+    if pat.endswith("*"):
+        return bool(match(pat, name))
+
+    return pat == name
+
+
 def transform_module(m, sym, collections, settings, settings_per_module, platform=None):
 
     s = settings_per_module.get(m.name, None)
@@ -235,7 +246,7 @@ def transform_module(m, sym, collections, settings, settings_per_module, platfor
 
     # handle global excludes
     m.classes = [
-        c for c in m.classes if not any(match(pat, c.name) for pat in global_excludes)
+        c for c in m.classes if not any(_mymatch(pat, c.name) for pat in global_excludes)
     ]
     m.class_dict = {
         k: v
@@ -243,9 +254,11 @@ def transform_module(m, sym, collections, settings, settings_per_module, platfor
         if not any(match(pat, k) for pat in global_excludes)
     }
 
+
+
     if s:
         # exclude classes
-        m.classes = [c for c in m.classes if not any(match(pat, c.name) for pat in s["exclude_classes"])]
+        m.classes = [c for c in m.classes if not any(_mymatch(pat, c.name) for pat in s["exclude_classes"])]
         m.class_dict = {
             k: v for k, v, in m.class_dict.items() if k not in s["exclude_classes"]
         }
