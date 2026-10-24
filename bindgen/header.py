@@ -1089,7 +1089,9 @@ class ClassTemplateInfo(ClassInfo):
 
         met.args = new_args
         met.return_type = self._add_typename(
-            met.return_type.replace("<T>", f"<{self.type_params[0].name}>")
+            met.return_type.replace("<T>", f"<{self.type_params[0].name}>").replace(
+                            f"{self.name}::", f"{self.full_name}::"
+                )
         )
 
     def __init__(self, cur: Cursor):
