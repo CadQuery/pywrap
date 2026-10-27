@@ -439,6 +439,13 @@ def get_public_constructors(cls):
         yield child
 
 
+def get_public_aliases(cls):
+    """Public type aliases of a given class"""
+
+    for child in get_xx_multi(cls, (CursorKind.TYPE_ALIAS_DECL, CursorKind.TYPE_ALIAS_TEMPLATE_DECL), AccessSpecifier.PUBLIC):
+        yield child
+
+
 def get_private_constructors(cls):
     """Private constructors of a given class"""
 
@@ -1037,7 +1044,7 @@ class ClassInfo(object):
 
 class TemplateParam(NamedTuple):
     """
-    Helper used in ClassTemplateInof
+    Helper used in ClassTemplateInfo.
     """
 
     type: str | None
@@ -1045,9 +1052,26 @@ class TemplateParam(NamedTuple):
     default: str | None
 
 
+class Alias(BaseInfo):
+    """
+    Type alias.
+    """
+
+    type: str
+    typename: bool
+
+    def __init__(self, cur: Cursor):
+
+        super().__init__(cur)
+
+        self.type = pretty_printed(cur).split("=")[-1].lstrip()
+        self.typename = ("typename" in self.type)
+
+
 class ClassTemplateInfo(ClassInfo):
 
     type_params: List[TemplateParam]
+    aliases: List[Alias]
 
     def _add_typename(self, name: str) -> str:
         """
@@ -1067,6 +1091,19 @@ class ClassTemplateInfo(ClassInfo):
 
         return name
 
+    def _process_type(self, typ: str) -> str:
+        """
+        Internal helper to add typename and template args.
+        """
+
+        for alias in self.aliases:
+            if alias.typename:
+                type = typ.replace(f"{self.name}::{alias.name}", f"typename {self.name}::{alias.name}")
+
+        typ = typ.replace(f"{self.name}::", f"{self.full_name}::")
+
+        return typ
+
     def _replace_type_args(self, met: MethodInfo):
         """
         Workaround for <T> naming when type param is not specified and lack of type args in dependant types
@@ -1075,23 +1112,25 @@ class ClassTemplateInfo(ClassInfo):
         new_args = []
 
         for n, t, d in met.args:
-            new_args.append(
-                (
-                    n,
-                    self._add_typename(
-                        t.replace("<T>", f"<{self.type_params[0].name}>").replace(
-                            f"{self.name}::", f"{self.full_name}::"
-                        )
-                    ),
-                    d,
-                )
-            )
+            new_args.append((
+                n,
+                self._process_type(
+                    t.replace(
+                        "<T>", f"<{self.type_params[0].name}>"
+                    )
+                ),
+                d,
+            ))
 
         met.args = new_args
-        met.return_type = self._add_typename(
-            met.return_type.replace("<T>", f"<{self.type_params[0].name}>").replace(
-                            f"{self.name}::", f"{self.full_name}::"
-                )
+        met.return_type = (
+            met.return_type.replace(
+                "<T>", f"<{self.type_params[0].name}>"
+            ).replace(
+                f"{self.name}::", f"typename {self.full_name}::"
+            ).replace(
+                "typename typename", "typename"
+            )
         )
 
     def __init__(self, cur: Cursor):
@@ -1111,6 +1150,11 @@ class ClassTemplateInfo(ClassInfo):
         self.full_name = (
             self.name + "<" + ",".join(t.name for t in self.type_params) + ">"
         )
+
+        self.aliases = [Alias(el) for el in get_public_aliases(cur)]
+        if self.name == "BRepGraph_ReverseIterator::IdsOfRefs":
+            import pdbpp; pdbpp.set_trace()
+
 
         # replace <T> type params with proper names in methods
         for met in chain(
@@ -1294,8 +1338,12 @@ class HeaderInfo(object):
         self.class_templates = {
             el.displayname: ClassTemplateInfo(el) for el in get_class_templates(tr_unit)
         }
-        self.class_template_dict = {ct.name: self.name for ct in self.class_templates.values()}
-        self.class_template_dict |= {ct.name: self.name for c in self.classes.values() for ct in c.templates}
+        self.class_template_dict = {
+            ct.name: self.name for ct in self.class_templates.values()
+        }
+        self.class_template_dict |= {
+            ct.name: self.name for c in self.classes.values() for ct in c.templates
+        }
         self.inheritance = {k: v for k, v in get_inheritance_relations(tr_unit) if v}
         self.typedefs = [TypedefInfo(el) for el in get_typedefs(tr_unit)]
         self.typedef_dict = {t.name: self.name for t in self.typedefs}
