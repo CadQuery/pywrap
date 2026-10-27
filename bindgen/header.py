@@ -1152,9 +1152,6 @@ class ClassTemplateInfo(ClassInfo):
         )
 
         self.aliases = [Alias(el) for el in get_public_aliases(cur)]
-        if self.name == "BRepGraph_ReverseIterator::IdsOfRefs":
-            import pdbpp; pdbpp.set_trace()
-
 
         # replace <T> type params with proper names in methods
         for met in chain(
