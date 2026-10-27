@@ -97,36 +97,23 @@ def remove_undefined_mangled(m, sym: set[str]):
         c.methods = [
             el
             for el in c.methods
-            if el.mangled_name in sym
-            or el.inline
-            or el.pure_virtual
-            or el.virtual
+            if el.mangled_name in sym or el.inline or el.pure_virtual or el.virtual
         ]
         c.methods_byref = [
             el
             for el in c.methods_byref
-            if el.mangled_name in sym
-            or el.inline
-            or el.pure_virtual
-            or el.virtual
+            if el.mangled_name in sym or el.inline or el.pure_virtual or el.virtual
         ]
         c.methods_return_byref = [
             el
             for el in c.methods_return_byref
-            if el.mangled_name in sym
-            or el.inline
-            or el.pure_virtual
-            or el.virtual
+            if el.mangled_name in sym or el.inline or el.pure_virtual or el.virtual
         ]
         c.static_methods = [
-            el
-            for el in c.static_methods
-            if el.mangled_name in sym or el.inline
+            el for el in c.static_methods if el.mangled_name in sym or el.inline
         ]
         c.static_methods_byref = [
-            el
-            for el in c.static_methods_byref
-            if el.mangled_name in sym or el.inline
+            el for el in c.static_methods_byref if el.mangled_name in sym or el.inline
         ]
         c.constructors = [
             el
@@ -139,20 +126,12 @@ def remove_undefined_mangled(m, sym: set[str]):
         ]
 
     # exclude functions
-    m.functions = [
-        f
-        for f in m.functions
-        if f.mangled_name in sym or f.inline
-    ]
+    m.functions = [f for f in m.functions if f.mangled_name in sym or f.inline]
 
     # exclude functions per header
     for h in m.headers:
         h.functions_unfiltered = h.functions
-        h.functions = [
-            f
-            for f in h.functions
-            if f.mangled_name in sym or f.inline
-        ]
+        h.functions = [f for f in h.functions if f.mangled_name in sym or f.inline]
 
 
 def is_byref_arg(arg, byref_types):
@@ -246,7 +225,9 @@ def transform_module(m, sym, collections, settings, settings_per_module, platfor
 
     # handle global excludes
     m.classes = [
-        c for c in m.classes if not any(_mymatch(pat, c.name) for pat in global_excludes)
+        c
+        for c in m.classes
+        if not any(_mymatch(pat, c.name) for pat in global_excludes)
     ]
     m.class_dict = {
         k: v
@@ -254,11 +235,13 @@ def transform_module(m, sym, collections, settings, settings_per_module, platfor
         if not any(match(pat, k) for pat in global_excludes)
     }
 
-
-
     if s:
         # exclude classes
-        m.classes = [c for c in m.classes if not any(_mymatch(pat, c.name) for pat in s["exclude_classes"])]
+        m.classes = [
+            c
+            for c in m.classes
+            if not any(_mymatch(pat, c.name) for pat in s["exclude_classes"])
+        ]
         m.class_dict = {
             k: v for k, v, in m.class_dict.items() if k not in s["exclude_classes"]
         }
@@ -506,9 +489,11 @@ def transform_modules(
     list[CollectionTypedef],
 ]:
 
-    sym = set(read_symbols(
-        settings[platform if platform else current_platform()]["symbols"]
-    ).name)
+    sym = set(
+        read_symbols(
+            settings[platform if platform else current_platform()]["symbols"]
+        ).name
+    )
 
     # collect collections *before* filtering
     collections = collect_collections(modules, settings)
@@ -732,7 +717,7 @@ def render(
             "platform": platform if platform else current_platform(),
             "class_dict": class_dict,
             "class_template_dict": class_template_dict,
-            "header_module_dict": {h.name:m for m in modules for h in m.headers},
+            "header_module_dict": {h.name: m for m in modules for h in m.headers},
             "symbol_dict": symbol_dict,
             "all_classes": all_classes,
             "all_enums": all_enums,
@@ -759,7 +744,9 @@ def render(
             "str": str,
             "classinfo_dict": classinfo_dict,
             "getattr": getattr,
-            "all_templates": lambda mod: chain(mod.class_templates, *(el.templates for el in mod.classes)),
+            "all_templates": lambda mod: chain(
+                mod.class_templates, *(el.templates for el in mod.classes)
+            ),
         }
     )
 
