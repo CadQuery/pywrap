@@ -33,6 +33,7 @@ from .module import ModuleInfo
 from .header import (
     parse_tu,
     ClassInfo,
+    ClassTemplateInfo,
     get_symbols,
     get_namespaces,
     TypedefInfo,
@@ -470,6 +471,53 @@ def collect_collections(
 
     return collections
 
+def _process_type(typ: str, aliases: list[str], parent: str) -> str:
+
+    for alias in aliases:
+        typ = typ.replace(f"{parent}::{alias}", f"typename {parent}::{alias}")
+
+    # replace possible "typename typname" occurances
+    typ = typ.replace("typename typename", "typename")
+
+    return typ
+
+def _add_typenames(t: ClassTemplateInfo, d: dict[str, ClassTemplateInfo]):
+    """
+    Helper for adding "typename" keyword to args and return type.
+    """
+
+    # collect all aliases and inner classes including parent classes
+    aliases: list[str] = [a.name for a in t.aliases]
+    aliases += [a.short_name for a in t.classes]
+
+    for s in t.superclasses:
+        # NB parsing is needed bc some template superclasses are specialized
+        if superclass:=d.get(CollectionTypedef.make(arg_type_expr.parse_string(s)).template_base):
+            aliases += [a.name for a in getattr(superclass, "aliases",[])]
+            aliases += [a.short_name for a in superclass.classes] 
+
+    for m in chain(
+        t.methods,
+        t.static_methods,
+        t.static_methods_byref,
+        t.constructors,
+        t.operators,
+        t.static_operators,
+    ):
+        # process args
+        new_args = []
+        for name,typ,default in m.args:
+            new_args.append((
+                name,
+                _process_type(typ, aliases, t.full_name),
+                default
+                ))
+
+        m.args = new_args
+
+        # process return type
+        m.return_type = _process_type(m.return_type, aliases, t.full_name)
+
 
 def transform_modules(
     verbose,
@@ -531,6 +579,9 @@ def transform_modules(
     # construct global name:classinfo dictionary
     classinfo_dict = {c.name: c for m in modules for c in m.classes}
 
+    # construct global name:templateinfo dictionary
+    templateinfo_dict = {c.name: c for m in modules for c in m.class_templates}
+
     # sort modules
     logzero.logger.info("sorting")
 
@@ -560,6 +611,13 @@ def transform_modules(
                 m.dependencies.add(cls_dict[t])
             # elif t in enum_dict and enum_dict[t] != m.name:
             #    m.dependencies.add(enum_dict[t])
+
+    # add missing typename keywords
+    logzero.logger.info("Adding missing typename keywords")
+    symbolinfo_dict = templateinfo_dict|classinfo_dict
+
+    for t in templateinfo_dict.values():
+        _add_typenames(t, symbolinfo_dict)
 
     # remove duplicate typedefs
     logzero.logger.info("Removing duplicate typedefs")

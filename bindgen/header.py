@@ -442,7 +442,7 @@ def get_public_constructors(cls):
 def get_public_aliases(cls):
     """Public type aliases of a given class"""
 
-    for child in get_xx_multi(cls, (CursorKind.TYPE_ALIAS_DECL, CursorKind.TYPE_ALIAS_TEMPLATE_DECL), AccessSpecifier.PUBLIC):
+    for child in get_xx_multi(cls, (CursorKind.TYPE_ALIAS_DECL, CursorKind.TYPE_ALIAS_TEMPLATE_DECL, CursorKind.TYPEDEF_DECL), AccessSpecifier.PUBLIC):
         yield child
 
 
@@ -1064,8 +1064,9 @@ class Alias(BaseInfo):
 
         super().__init__(cur)
 
+        self.decl = pretty_printed(cur)
         self.type = pretty_printed(cur).split("=")[-1].lstrip()
-        self.typename = ("typename" in self.type)
+        self.typename = True; #("typename" in self.type)
 
 
 class ClassTemplateInfo(ClassInfo):
@@ -1096,9 +1097,9 @@ class ClassTemplateInfo(ClassInfo):
         Internal helper to add typename and template args.
         """
 
-        for alias in self.aliases:
-            if alias.typename:
-                type = typ.replace(f"{self.name}::{alias.name}", f"typename {self.name}::{alias.name}")
+        # replace wrong referneces to type params due too libclang pretty_printing weirdness
+        for tp in self.type_params:
+            typ = typ.replace(f"{self.name}::{tp.name}",f"{tp.name}")
 
         typ = typ.replace(f"{self.name}::", f"{self.full_name}::")
 
@@ -1123,15 +1124,10 @@ class ClassTemplateInfo(ClassInfo):
             ))
 
         met.args = new_args
-        met.return_type = (
-            met.return_type.replace(
-                "<T>", f"<{self.type_params[0].name}>"
-            ).replace(
-                f"{self.name}::", f"typename {self.full_name}::"
-            ).replace(
-                "typename typename", "typename"
-            )
+        met.return_type = self._process_type(
+            met.return_type.replace("<T>", f"<{self.type_params[0].name}>")
         )
+        
 
     def __init__(self, cur: Cursor):
         super(ClassTemplateInfo, self).__init__(cur)
@@ -1153,7 +1149,7 @@ class ClassTemplateInfo(ClassInfo):
 
         self.aliases = [Alias(el) for el in get_public_aliases(cur)]
 
-        # replace <T> type params with proper names in methods
+        # replace <T>, add template params if needed, add typename if needed
         for met in chain(
             self.methods,
             self.static_methods,
