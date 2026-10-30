@@ -471,10 +471,14 @@ def collect_collections(
 
     return collections
 
-def _process_type(typ: str, aliases: list[str], parent: str) -> str:
+def _process_type(typ: str, aliases: list[str], private_aliases: list[str], parent: str) -> str:
 
     for alias in aliases:
         typ = typ.replace(f"{parent}::{alias}", f"typename {parent}::{alias}")
+
+    # For some aliases (probably private) the parent is not specified
+    for alias in private_aliases:
+        typ = typ.replace(f"{alias}", f"typename {parent}::{alias}")
 
     # replace possible "typename typname" occurances
     typ = typ.replace("typename typename", "typename")
@@ -487,6 +491,7 @@ def _add_typenames(t: ClassTemplateInfo, d: dict[str, ClassTemplateInfo]):
     """
 
     # collect all aliases and inner classes including parent classes
+    private_aliases: list[str] = [a.name for a in t.private_aliases]
     aliases: list[str] = [a.name for a in t.aliases]
     aliases += [a.short_name for a in t.classes]
 
@@ -509,14 +514,14 @@ def _add_typenames(t: ClassTemplateInfo, d: dict[str, ClassTemplateInfo]):
         for name,typ,default in m.args:
             new_args.append((
                 name,
-                _process_type(typ, aliases, t.full_name),
+                _process_type(typ, aliases, private_aliases, t.full_name),
                 default
                 ))
 
         m.args = new_args
 
         # process return type
-        m.return_type = _process_type(m.return_type, aliases, t.full_name)
+        m.return_type = _process_type(m.return_type, aliases, private_aliases, t.full_name)
 
 
 def transform_modules(

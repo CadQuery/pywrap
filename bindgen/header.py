@@ -446,6 +446,13 @@ def get_public_aliases(cls):
         yield child
 
 
+def get_private_aliases(cls):
+    """Private type aliases of a given class"""
+
+    for child in get_xx_multi(cls, (CursorKind.TYPE_ALIAS_DECL, CursorKind.TYPE_ALIAS_TEMPLATE_DECL, CursorKind.TYPEDEF_DECL), AccessSpecifier.PRIVATE):
+        yield child
+
+
 def get_private_constructors(cls):
     """Private constructors of a given class"""
 
@@ -1073,6 +1080,7 @@ class ClassTemplateInfo(ClassInfo):
 
     type_params: List[TemplateParam]
     aliases: List[Alias]
+    private_aliases: List[Alias]
 
     def _add_typename(self, name: str) -> str:
         """
@@ -1148,6 +1156,7 @@ class ClassTemplateInfo(ClassInfo):
         )
 
         self.aliases = [Alias(el) for el in get_public_aliases(cur)]
+        self.private_aliases = [Alias(el) for el in get_private_aliases(cur)]
 
         # replace <T>, add template params if needed, add typename if needed
         for met in chain(
