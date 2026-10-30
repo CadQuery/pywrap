@@ -26,6 +26,7 @@ def parse_tu(
 ):
     """Run a translation unit thorugh clang"""
 
+    args = list(args)
     args.append(f"-I{pybind11.get_include()}")
     args.append(f"-I{input_folder}")
 
