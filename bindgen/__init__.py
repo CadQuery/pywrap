@@ -494,12 +494,14 @@ def _add_typenames(t: ClassTemplateInfo, d: dict[str, ClassTemplateInfo]):
     private_aliases: list[str] = [a.name for a in t.private_aliases]
     aliases: list[str] = [a.name for a in t.aliases]
     aliases += [a.short_name for a in t.classes]
+    aliases += [a.short_name for a in t.enums]
 
     for s in t.superclasses:
         # NB parsing is needed bc some template superclasses are specialized
         if superclass:=d.get(CollectionTypedef.make(arg_type_expr.parse_string(s)).template_base):
             aliases += [a.name for a in getattr(superclass, "aliases",[])]
             aliases += [a.short_name for a in superclass.classes] 
+            aliases += [a.short_name for a in superclass.enums]
 
     for m in chain(
         t.methods,

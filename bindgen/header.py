@@ -669,6 +669,7 @@ class EnumInfo(BaseInfo):
     comment: str
     values: List[str]
     anonymous: bool
+    short_name: str
 
     def __init__(self, cur: Cursor):
 
@@ -678,6 +679,7 @@ class EnumInfo(BaseInfo):
         self.values = [el.spelling for el in get_enum_values(cur)]
         self.anonymous = False
         self.name = cur.type.spelling
+        self.short_name = cur.spelling
 
         if any(x in self.name for x in ["anonymous", "unnamed"]):
             self.anonymous = True
