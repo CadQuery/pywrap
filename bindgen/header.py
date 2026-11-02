@@ -19,7 +19,7 @@ from clang.cindex import (
 from cxxheaderparser.simple import parse_typename
 from path import Path
 
-from .type_parser import parse_type
+from .type_parser import parse_type, TemplateSpecialization, arg_type_expr
 from .translation_unit import parse_tu
 from .utils import current_platform
 
@@ -651,16 +651,20 @@ class FieldInfo(BaseInfo):
     """Container for field parsing reults"""
 
     type: str
+    simple_type: str
     const: bool
     pod: bool
+    array: bool
 
     def __init__(self, cur: Cursor):
 
         super(FieldInfo, self).__init__(cur)
 
         self.type = cur.type.spelling
+        self.simple_type = TemplateSpecialization.make(arg_type_expr.parse_string(self.type)).template_base
         self.const = cur.type.is_const_qualified()
         self.pod = cur.type.is_pod()
+        self.array = (cur.type.kind in (TypeKind.CONSTANTARRAY, TypeKind.VARIABLEARRAY))
 
 
 class EnumInfo(BaseInfo):

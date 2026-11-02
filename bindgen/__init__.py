@@ -752,6 +752,7 @@ def render(
     all_classes = {c.name: c for m in modules for c in m.classes}
     all_enums = {e.name: e for m in modules for e in m.enums}
     all_typedefs = {t.name: t for m in modules for t in m.typedefs}
+    all_collections = {c.full_type(): c for c in collections}
 
     # collect all types needed for collections
     collection_types = set()
@@ -787,6 +788,7 @@ def render(
             "all_classes": all_classes,
             "all_enums": all_enums,
             "all_typedefs": all_typedefs,
+            "all_collections": all_collections,
             "project_name": name,
             "operator_dict": operator_dict,
             "include_pre": pre,

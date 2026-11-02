@@ -174,7 +174,7 @@ auto {{ns}} = static_cast<py::module>(m.attr("{{ns}}"));
     {% endfor %}
     {% endif %}
     // properties
-    {% for f in c.fields if f.type in all_classes or f.type in all_enums or f.type in all_typedefs or f.type in settings['byref_types'] %}
+    {% for f in c.fields if not f.array and (f.simple_type in all_classes or f.type in all_collections or f.type in all_enums or f.type in all_typedefs or f.type in settings['byref_types']) %}
     {% if f.const %}
         .def_readonly("{{f.name}}", &{{c.name}}::{{f.name}})
     {% else %}
